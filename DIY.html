@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Je-DIY - Calculateur Expert</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: { brand: tailwind.colors.amber, base: tailwind.colors.stone }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f5f5f4; color: #1c1917; }
+        /* Style des sliders pour un rendu plus qualitatif */
+        input[type=range] {
+            -webkit-appearance: none; width: 100%; background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 24px;
+            border-radius: 50%; background: #d97706; cursor: pointer;
+            margin-top: -8px; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 8px; cursor: pointer;
+            background: #e7e5e4; border-radius: 4px;
+        }
+        .hide-arrows::-webkit-outer-spin-button, .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .hide-arrows { -moz-appearance: textfield; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Style pour l'impression de la recette */
+        @media print {
+            @page { margin: 1cm; }
+            body { background-color: white !important; }
+            #main_app_container { display: none !important; }
+            #recipe_modal { position: static !important; display: flex !important; padding: 0 !important; }
+            .modal-backdrop, .modal-buttons { display: none !important; }
+            #print_prompt_modal, #help_modal { display: none !important; }
+            .recipe-card-wrapper { 
+                border: 1px solid #e7e5e4 !important; 
+                box-shadow: none !important; 
+                padding: 1rem !important; 
+                margin: 0 auto !important; 
+                width: 100% !important; 
+                max-width: 600px !important; 
+                max-height: none !important; 
+                overflow: visible !important; 
+            }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto relative" id="main_app_container">
+        
+        <!-- Bouton d'aide global -->
+        <button onclick="openHelpModal()" class="absolute top-0 right-0 sm:right-2 md:right-4 w-12 h-12 flex items-center justify-center bg-white hover:bg-stone-100 rounded-full text-brand-600 shadow-sm border border-stone-200 transition-all z-10" title="Comment ça marche ?">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+        </button>
+
+        <header class="mb-8 text-center pt-2 sm:pt-0">
+            <h1 class="text-4xl font-black text-stone-800 tracking-tight mb-2">Je-<span class="text-brand-600">DIY</span></h1>
+            <p class="text-stone-500 font-medium">Calculateur de e-liquide avancé & intelligent by Helmicretro</p>
+        </header>
+
+        <!-- Tabs Navigation -->
+        <div class="bg-stone-200/70 p-1.5 rounded-2xl flex flex-col md:flex-row gap-1.5 mb-6 shadow-inner">
+            <button onclick="switchTab('tab_complet')" id="btn_tab_complet" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all bg-white text-brand-600 shadow ring-1 ring-black/5">Liquide Complet</button>
+            <button onclick="switchTab('tab_booster')" id="btn_tab_booster" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 hover:text-stone-700 hover:bg-stone-200">Prêt à Booster</button>
+            <button onclick="switchTab('tab_manuel')" id="btn_tab_manuel" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 hover:text-stone-700 hover:bg-stone-200">Mode Manuel</button>
+        </div>
+
+        <div id="tab_complet" class="tab-content active">
+            <div class="space-y-6">
+                <!-- Valeurs souhaitées -->
+                <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 max-w-3xl mx-auto w-full">
+                    <h2 class="text-xl font-extrabold text-stone-800 mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-lg">🎯</span> Objectifs
+                        </h2>
+                        
+                        <!-- Selecteur de mode de volume -->
+                        <div class="flex bg-stone-100 p-1 rounded-xl mb-6">
+                            <button id="t1_mode_vol_def" onclick="toggleVolMode('t1', 'defined')" class="flex-1 py-2 rounded-lg text-sm font-bold bg-white text-stone-800 shadow-sm transition-all">Volume défini</button>
+                            <button id="t1_mode_vol_max" onclick="toggleVolMode('t1', 'max_aroma')" class="flex-1 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all">Volume d'arôme fixe</button>
+                        </div>
+
+                        <!-- Volume -->
+                        <div id="t1_vol_panel" class="mb-8">
+                            <label class="block text-sm font-bold text-stone-500 mb-2">Quantité finale souhaitée (ml)</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustVal('t1_vol', -10)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="t1_vol" value="200" class="hide-arrows flex-1 h-12 bg-stone-50 border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" oninput="updateAromaPreview('t1'); triggerCalc()">
+                                <button onclick="adjustVal('t1_vol', 10)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Aroma Possédé (Mode Max Aroma) -->
+                        <div id="t1_aroma_avail_panel" class="mb-8 hidden">
+                            <label class="block text-sm font-bold text-stone-500 mb-2">Quantité d'arôme possédée (ml)</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustVal('t1_aroma_avail', -1)" class="w-12 h-12 rounded-xl bg-brand-50 hover:bg-brand-100 font-bold text-brand-600 text-xl flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="t1_aroma_avail" value="30" class="hide-arrows flex-1 h-12 bg-stone-50 border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" oninput="updateAromaPreview('t1')" onchange="triggerCalc()">
+                                <button onclick="adjustVal('t1_aroma_avail', 1)" class="w-12 h-12 rounded-xl bg-brand-50 hover:bg-brand-100 font-bold text-brand-600 text-xl flex items-center justify-center transition-colors">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Arôme -->
+                        <div class="bg-stone-50 p-5 rounded-2xl border border-stone-100 mb-8">
+                            <div class="flex justify-between items-center mb-4">
+                                <label class="text-sm font-bold text-stone-800">Concentration de l'arôme</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="t1_adv_aroma" class="rounded text-brand-600 focus:ring-brand-500" onchange="toggleAdvAroma('t1'); triggerCalc()">
+                                    <label for="t1_adv_aroma" class="text-xs text-stone-500 cursor-pointer">Arôme non full PG</label>
+                                </div>
+                            </div>
+                            
+                            <div id="t1_aroma_pg_panel" class="hidden mb-4 p-3 bg-white rounded-xl border border-stone-200">
+                                <label class="block text-xs font-bold text-stone-500 mb-2">Ratio PG de l'arôme (%)</label>
+                                <input type="range" id="t1_aroma_pg" min="0" max="100" step="10" value="100" oninput="document.getElementById('t1_aroma_pg_val').innerText = this.value + '%'; triggerCalc()">
+                                <div class="text-right text-sm font-bold text-brand-600 mt-1" id="t1_aroma_pg_val">100%</div>
+                            </div>
+
+                            <div id="t1_aroma_perc_panel">
+                                <div class="flex justify-between mb-2">
+                                    <span class="text-xs text-stone-500">Dosage</span>
+                                    <span class="text-lg font-bold text-brand-600" id="t1_aroma_perc_disp">15%</span>
+                                </div>
+                                <input type="range" id="t1_aroma_perc" min="0.5" max="40" step="0.5" value="15" oninput="updateAromaPreview('t1'); triggerCalc()">
+                                
+                                <!-- Sync ML direct -->
+                                <div id="t1_aroma_sync_wrapper" class="flex items-center justify-between mt-4 p-2 bg-white rounded-xl border border-stone-200 shadow-sm transition-all">
+                                    <span class="text-xs font-bold text-stone-500 ml-2">Quantité requise :</span>
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" id="t1_aroma_sync_ml" value="30" class="w-20 h-8 text-center bg-stone-50 border border-stone-200 rounded-lg font-bold text-brand-600 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none hide-arrows" oninput="syncAromaFromMl('t1')">
+                                        <span class="text-xs font-bold text-stone-400 mr-2">ml</span>
+                                    </div>
+                                </div>
+
+                                <!-- Preview Temps Réel (Mode Tout l'arôme) -->
+                                <div id="t1_vol_preview_container" class="hidden mt-4 p-4 bg-brand-50 rounded-xl border border-brand-200 text-center shadow-inner transition-all">
+                                    <div class="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-1">Volume final estimé</div>
+                                    <div class="text-2xl font-black text-stone-800" id="t1_vol_preview">0 ml</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ratio PG/VG -->
+                        <div class="mb-8">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-sm font-bold text-stone-500">Ratio PG/VG cible</label>
+                                <span class="text-xl font-bold text-brand-600" id="t1_ratio_disp">50/50</span>
+                            </div>
+                            <input type="range" id="t1_ratio_pg" min="0" max="100" step="5" value="50" oninput="updateRatioDisp('t1'); triggerCalc()">
+                            <div class="flex justify-between text-xs text-stone-400 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                        </div>
+
+                        <!-- Nicotine -->
+                        <div>
+                            <label class="block text-sm font-bold text-stone-500 mb-3">Nicotine souhaitée</label>
+                            <div class="flex gap-2 mb-4 bg-stone-100 p-1 rounded-xl">
+                                <button id="t1_nic_mode_mg_btn" onclick="setNicMode('t1', 'mg')" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-800 shadow-sm transition-all">Taux (mg/ml)</button>
+                                <button id="t1_nic_mode_boost_btn" onclick="setNicMode('t1', 'boost')" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 hover:text-stone-700 transition-all">Boosters entiers</button>
+                            </div>
+
+                            <div id="t1_nic_mg_panel" class="flex flex-col mb-4">
+                                <div class="flex items-center gap-3">
+                                    <button onclick="adjustVal('t1_nic_mg', -0.5)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl">-</button>
+                                    <input type="number" id="t1_nic_mg" value="6" step="0.5" class="hide-arrows flex-1 h-12 bg-stone-50 border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
+                                    <button onclick="adjustVal('t1_nic_mg', 0.5)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl">+</button>
+                                </div>
+                                <div class="text-center text-xs font-bold text-stone-500 mt-2" id="t1_nic_mg_preview">Quantité : <span class="text-emerald-600">0 ml</span> <span class="text-stone-400 font-normal">(soit 0 booster)</span></div>
+                            </div>
+
+                            <div id="t1_nic_boost_panel" class="hidden flex-col mb-4">
+                                <div class="flex items-center gap-3">
+                                    <button onclick="adjustVal('t1_nic_boost', -1)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl">-</button>
+                                    <input type="number" id="t1_nic_boost" value="8" step="1" class="hide-arrows flex-1 h-12 bg-stone-50 border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
+                                    <button onclick="adjustVal('t1_nic_boost', 1)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl">+</button>
+                                </div>
+                                <div class="text-center text-xs font-bold text-stone-500 mt-2" id="t1_nic_boost_preview">Taux final : <span class="text-emerald-600">0 mg/ml</span></div>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 bg-stone-50 rounded-xl border border-stone-100">
+                                <span class="text-xs font-bold text-stone-500">Taux du booster utilisé</span>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="t1_booster_str" value="20" class="w-16 h-8 text-center bg-white border border-stone-200 rounded font-bold text-stone-800 text-sm" oninput="updateAromaPreview('t1')" onchange="triggerCalc()">
+                                    <span class="text-xs text-stone-400">mg/ml</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Matériel dispo -->
+                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 max-w-3xl mx-auto w-full">
+                        <h2 class="text-xl font-extrabold text-stone-800 mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">🎒</span> Matériel dispo
+                        </h2>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Bases Neutres</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="t1_bases_list">
+                                <!-- Généré en JS -->
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Boosters</h3>
+                            <div class="grid grid-cols-2 gap-2" id="t1_boosters_list">
+                                <!-- Généré en JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Résultats -->
+                    <div id="t1_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4">
+                        <!-- Recettes générées ici -->
+                    </div>
+                </div>
+        </div>
+
+        <div id="tab_booster" class="tab-content">
+            <div class="space-y-6">
+                <!-- Valeurs souhaitées -->
+                <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 max-w-3xl mx-auto w-full">
+                    <h2 class="text-xl font-extrabold text-stone-800 mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-lg">🧪</span> Création Shortfill
+                        </h2>
+
+                        <!-- Selecteur de mode de volume -->
+                        <div class="flex bg-stone-100 p-1 rounded-xl mb-6">
+                            <button id="t2_mode_vol_def" onclick="toggleVolMode('t2', 'defined')" class="flex-1 py-2 rounded-lg text-sm font-bold bg-white text-stone-800 shadow-sm transition-all">Volume préparé</button>
+                            <button id="t2_mode_vol_max" onclick="toggleVolMode('t2', 'max_aroma')" class="flex-1 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all">Volume d'arôme fixe</button>
+                        </div>
+
+                        <!-- Volume -->
+                        <div id="t2_vol_panel" class="mb-8">
+                            <label class="block text-sm font-bold text-stone-500 mb-1">Volume à préparer (Avant boost)</label>
+                            <p class="text-[10px] text-stone-400 mb-2">C'est la quantité de liquide sur-concentré à créer.</p>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustVal('t2_vol', -10)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl">-</button>
+                                <input type="number" id="t2_vol" value="100" class="hide-arrows flex-1 h-12 bg-stone-50 border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800" oninput="updateAromaPreview('t2'); triggerCalc()">
+                                <button onclick="adjustVal('t2_vol', 10)" class="w-12 h-12 rounded-xl bg-stone-100 hover:bg-stone-200 font-bold text-stone-600 text-xl">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Aroma Possédé (Mode Max Aroma) -->
+                        <div id="t2_aroma_avail_panel" class="mb-8 hidden">
+                            <label class="block text-sm font-bold text-stone-500 mb-2">Quantité d'arôme possédée (ml)</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustVal('t2_aroma_avail', -1)" class="w-12 h-12 rounded-xl bg-brand-50 hover:bg-brand-100 font-bold text-brand-600 text-xl flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="t2_aroma_avail" value="30" class="hide-arrows flex-1 h-12 bg-stone-50 border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent" oninput="updateAromaPreview('t2')" onchange="triggerCalc()">
+                                <button onclick="adjustVal('t2_aroma_avail', 1)" class="w-12 h-12 rounded-xl bg-brand-50 hover:bg-brand-100 font-bold text-brand-600 text-xl flex items-center justify-center transition-colors">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Nicotine Max & Arôme -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                                <label class="block text-xs font-bold text-stone-500 mb-2">Taux Nicotine Max visé</label>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <input type="number" id="t2_max_nic" value="6" step="1" class="w-full h-10 bg-white border border-stone-200 rounded-lg text-center font-bold text-stone-800" oninput="updateAromaPreview('t2'); triggerCalc()">
+                                    <span class="text-sm font-bold text-stone-400">mg/ml</span>
+                                </div>
+                                <div class="flex items-center justify-between pt-2 border-t border-stone-200">
+                                    <span class="text-[10px] font-bold text-stone-500">Booster:</span>
+                                    <input type="number" id="t2_booster_str" value="20" class="w-12 text-center bg-white border border-stone-200 rounded text-xs py-0.5" oninput="updateAromaPreview('t2'); triggerCalc()">
+                                </div>
+                            </div>
+
+                            <div class="bg-brand-50 p-4 rounded-2xl border border-brand-100">
+                                <label class="block text-xs font-bold text-brand-600 mb-2">Dosage Arôme IDÉAL</label>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xl font-black text-brand-700" id="t2_aroma_perc_disp">15%</span>
+                                </div>
+                                <input type="range" id="t2_aroma_perc" min="1" max="30" step="0.5" value="15" oninput="updateAromaPreview('t2'); triggerCalc()">
+                                
+                                <!-- Sync ML direct -->
+                                <div id="t2_aroma_sync_wrapper" class="flex items-center justify-between mt-4 p-2 bg-white rounded-xl border border-brand-200 shadow-sm transition-all">
+                                    <span class="text-[10px] font-bold text-stone-500 ml-1">Quantité requise :</span>
+                                    <div class="flex items-center gap-1">
+                                        <input type="number" id="t2_aroma_sync_ml" value="15" class="w-16 h-7 text-center bg-stone-50 border border-stone-200 rounded font-bold text-brand-600 text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none hide-arrows" oninput="syncAromaFromMl('t2')">
+                                        <span class="text-[10px] font-bold text-stone-400 mr-1">ml</span>
+                                    </div>
+                                </div>
+
+                                <p class="text-[10px] text-brand-600/70 mt-3 leading-tight">Le % souhaité une fois le liquide complètement boosté.</p>
+                            </div>
+                        </div>
+
+                        <!-- Preview Temps Réel (Mode Tout l'arôme T2) -->
+                        <div id="t2_vol_preview_container" class="hidden mb-8 p-4 bg-stone-100 rounded-2xl border border-stone-200 text-center shadow-inner transition-all">
+                            <div class="text-xs font-black text-stone-500 uppercase tracking-widest mb-1">Résultat estimé</div>
+                            <div class="text-2xl font-black text-stone-800" id="t2_vol_preview">0 ml total</div>
+                            <div class="text-sm font-bold text-brand-600 mt-1" id="t2_vol_preview_sub">soit 0 ml à préparer (avant boost)</div>
+                        </div>
+
+                        <!-- Ratio -->
+                        <div class="mb-4">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-sm font-bold text-stone-500">Ratio PG/VG final cible</label>
+                                <span class="text-xl font-bold text-brand-600" id="t2_ratio_disp">50/50</span>
+                            </div>
+                            <input type="range" id="t2_ratio_pg" min="0" max="100" step="5" value="50" oninput="updateRatioDisp('t2'); triggerCalc()">
+                            <div class="flex justify-between text-xs text-stone-400 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Matériel dispo -->
+                    <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 max-w-3xl mx-auto w-full">
+                        <h2 class="text-xl font-extrabold text-stone-800 mb-6 flex items-center gap-2">
+                            <span class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">🎒</span> Matériel dispo
+                        </h2>
+                        
+                        <div>
+                            <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Bases Neutres</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="t2_bases_list"></div>
+                        </div>
+                    </div>
+
+                    <!-- Résultats -->
+                    <div id="t2_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4"></div>
+                </div>
+        </div>
+
+        <div id="tab_manuel" class="tab-content">
+            <div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 max-w-2xl mx-auto">
+                <h2 class="text-xl font-extrabold text-stone-800 mb-6 flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center text-lg">🧮</span> Mélange Manuel
+                </h2>
+                <p class="text-sm text-stone-500 mb-6">Entrez les volumes exacts que vous allez mélanger pour connaître le résultat final.</p>
+
+                <div class="space-y-6 mb-8">
+                    <!-- Arôme -->
+                    <div class="flex flex-col gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <label class="block text-sm font-bold text-stone-600">Arôme (ml)</label>
+                        <div class="flex items-center gap-3">
+                            <button onclick="adjustVal('t3_aroma_vol', -5)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 h-12 bg-white border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_aroma_vol', 5)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">+</button>
+                        </div>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span class="w-24 text-xs font-bold text-stone-500">Ratio PG/VG :</span>
+                            <input type="range" id="t3_aroma_pg" min="0" max="100" step="5" value="100" class="flex-1" oninput="document.getElementById('t3_aroma_pg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                            <span class="text-xs font-bold text-brand-600 w-16 text-right" id="t3_aroma_pg_val">100% PG</span>
+                        </div>
+                    </div>
+
+                    <!-- Base Neutre -->
+                    <div class="flex flex-col gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <label class="block text-sm font-bold text-stone-600">Base Neutre (ml)</label>
+                        <div class="flex items-center gap-3">
+                            <button onclick="adjustVal('t3_base_vol', -10)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_base_vol" value="120" class="hide-arrows flex-1 h-12 bg-white border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_base_vol', 10)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">+</button>
+                        </div>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span class="w-24 text-xs font-bold text-stone-500">Ratio PG/VG :</span>
+                            <input type="range" id="t3_base_pg" min="0" max="100" step="5" value="50" class="flex-1" oninput="document.getElementById('t3_base_pg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                            <span class="text-xs font-bold text-brand-600 w-16 text-right" id="t3_base_pg_val">50/50</span>
+                        </div>
+                    </div>
+
+                    <!-- Boosters -->
+                    <div class="flex flex-col gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <label class="block text-sm font-bold text-stone-600">Boosters (ml)</label>
+                        <div class="flex items-center gap-3">
+                            <button onclick="adjustVal('t3_boost_vol', -10)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_boost_vol" value="50" class="hide-arrows flex-1 h-12 bg-white border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_boost_vol', 10)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">+</button>
+                        </div>
+                        <div class="flex items-center gap-3 mt-1">
+                            <span class="w-24 text-xs font-bold text-stone-500">Ratio PG/VG :</span>
+                            <input type="range" id="t3_boost_pg" min="0" max="100" step="5" value="50" class="flex-1" oninput="document.getElementById('t3_boost_pg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                            <span class="text-xs font-bold text-brand-600 w-16 text-right" id="t3_boost_pg_val">50/50</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Taux Boosters -->
+                    <div class="flex flex-col gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
+                        <label class="block text-sm font-bold text-stone-600">Taux des Boosters (mg/ml)</label>
+                        <div class="flex items-center gap-3">
+                            <button onclick="adjustVal('t3_boost_str', -1)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_boost_str" value="20" class="hide-arrows flex-1 h-12 bg-white border border-stone-200 rounded-xl text-center font-bold text-xl text-stone-800 focus:outline-none focus:ring-2 focus:ring-brand-500" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_boost_str', 1)" class="w-12 h-12 rounded-xl bg-white border border-stone-200 hover:bg-stone-100 font-bold text-stone-600 text-xl flex items-center justify-center transition-colors">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="t3_results" class="p-6 bg-brand-50 rounded-2xl border border-brand-200 text-center">
+                    <!-- Résultat manuel ici -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal d'Aide (Plein écran) -->
+    <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6">
+        <!-- Fond assombri et flouté -->
+        <div class="modal-backdrop absolute inset-0 bg-stone-900/80 backdrop-blur-md cursor-pointer" onclick="closeHelpModal()"></div>
+        <!-- Conteneur central -->
+        <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-3xl shadow-2xl z-10 p-6 sm:p-10 hide-scrollbar border border-stone-200">
+            <!-- Bouton fermer sticky -->
+            <div class="sticky top-0 float-right -mt-2 -mr-2 bg-white rounded-full z-20 shadow-sm border border-stone-100">
+                <button onclick="closeHelpModal()" class="w-10 h-10 flex items-center justify-center hover:bg-stone-100 rounded-full text-stone-600 transition-colors" title="Fermer l'aide">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <h2 class="text-3xl font-black text-stone-800 mb-6 flex items-center gap-3">
+                <span class="text-brand-600">💡</span> Comment ça marche ?
+            </h2>
+            
+            <p class="text-stone-600 mb-8 font-medium">C'est parti pour faire du jus ! Ce calculateur bosse pour toi en cherchant les meilleures combinaisons mathématiques. Voici le mode d'emploi pour l'exploiter à 100%.</p>
+
+            <div class="space-y-8">
+                <!-- Section Matériel -->
+                <div class="bg-brand-50 p-5 rounded-2xl border border-brand-200">
+                    <h3 class="text-lg font-extrabold text-brand-700 mb-2">1. Le Secret du Matériel Dispo</h3>
+                    <p class="text-sm text-stone-700 leading-relaxed mb-3">
+                        Si tu dois privilégier deux bases, <strong>procure-toi du 100% PG et du 100% VG.</strong>
+                    </p>
+                    <p class="text-sm text-stone-700 leading-relaxed">
+                        Pourquoi ? Parce que mélanger ces deux extrêmes donne le plus de flexibilité pour tomber <em>pile poil</em> sur ton ratio cible. Si tu ne possède que des bases intermédiaires (genre 50/50), l'outil fera de son mieux mais te sortira souvent des "Alternatives proches" au lieu de "Recettes parfaites". Coche ce que tu as vraiment dans tes placards pour qu'il te donne les bons volumes !
+                    </p>
+                </div>
+
+                <!-- Section Liquide Complet -->
+                <div>
+                    <h3 class="text-xl font-extrabold text-stone-800 mb-4 pb-2 border-b border-stone-200 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-stone-800 text-white flex items-center justify-center text-xs">1</span> 
+                        L'onglet Liquide Complet
+                    </h3>
+                    <p class="text-sm text-stone-600 mb-4 leading-relaxed">Il sert à fabriquer un e-liquide fini, directement prêt à vaper (arôme + base + nicotine).</p>
+                    
+                    <ul class="space-y-3 text-sm text-stone-600">
+                        <li class="flex gap-3"><strong class="text-stone-800 w-24 shrink-0">1. L'objectif :</strong> <span>Choisis si tu veux fabriquer un volume précis (ex: 200ml) ou si tu veux vider une fiole d'arôme (Volume d'arôme fixe).</span></li>
+                        <li class="flex gap-3"><strong class="text-stone-800 w-24 shrink-0">2. L'arôme :</strong> <span>Règle ton pourcentage de dosage. Tu verras instantanément en dessous la quantité en ml que ça représente !</span></li>
+                        <li class="flex gap-3"><strong class="text-stone-800 w-24 shrink-0">3. Le Ratio :</strong> <span>Sélectionne le ratio PG/VG que tu veux obtenir à la fin.</span></li>
+                        <li class="flex gap-3"><strong class="text-stone-800 w-24 shrink-0">4. Nicotine :</strong> <span>Définis ton taux. Magie : en bougeant la valeur, ça t'indique en direct combien de boosters ça va te demander (ou inversement le taux final si tu raisonnes en "nombre de boosters").</span></li>
+                    </ul>
+                </div>
+
+                <!-- Section Shortfill -->
+                <div>
+                    <h3 class="text-xl font-extrabold text-stone-800 mb-4 pb-2 border-b border-stone-200 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-stone-800 text-white flex items-center justify-center text-xs">2</span> 
+                        L'onglet Prêt à Booster (Shortfill)
+                    </h3>
+                    <p class="text-sm text-stone-600 mb-4 leading-relaxed">Ici, on prépare une base sur-concentrée en arôme. L'idée c'est de créer une grosse bouteille dans laquelle tu (ou tes potes) ajouteras la nicotine plus tard.</p>
+                    
+                    <ul class="space-y-3 text-sm text-stone-600 mb-5">
+                        <li class="flex gap-3"><strong class="text-stone-800 w-24 shrink-0">1. Le Volume :</strong> <span>C'est la taille du mix SANS les boosters.</span></li>
+                        <li class="flex gap-3"><strong class="text-stone-800 w-24 shrink-0">2. Nico Max :</strong> <span>Le calculateur doit savoir quelle place garder pour les futurs boosters. Si tu vises 6mg max avec des boosters de 20mg, il va calculer une sur-concentration prévue pour ça.</span></li>
+                        <li class="flex gap-3"><strong class="text-stone-800 w-24 shrink-0">3. % IDÉAL :</strong> <span>C'est le dosage que ton liquide aura <strong>APRÈS</strong> l'ajout des boosters (quand le jus sera fini).</span></li>
+                    </ul>
+
+                    <div class="bg-stone-100 p-4 rounded-xl border border-stone-200">
+                        <h4 class="font-bold text-stone-800 text-sm mb-2">🧪 Les simulations en bas des recettes :</h4>
+                        <p class="text-sm text-stone-600 leading-relaxed">
+                            Dans les recettes Shortfill, un encart gris te permet de tester ton mélange. <em>"Si je prélève 50ml de ce gros bidon, et que je lui colle 2 boosters de 50/50 à 20mg... ça donne quoi ?"</em> Le script te donne ton taux exact. <br><br>
+                            <strong>L'Alerte :</strong> Si tu ajoutes trop de boosters et que ta concentration d'arôme passe sous ton "Dosage idéal" de départ, un message rouge te prévient que ton jus risque d'être fadasse !
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Section Recettes (Exactes vs Alternatives) -->
+                <div>
+                    <h3 class="text-xl font-extrabold text-stone-800 mb-4 pb-2 border-b border-stone-200 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-stone-800 text-white flex items-center justify-center text-xs">3</span> 
+                        Parfaites vs Alternatives
+                    </h3>
+                    <p class="text-sm text-stone-600 leading-relaxed mb-3">
+                        Le script cherche toujours à te proposer des <strong>Recettes Parfaites</strong> en utilisant 1 ou 2 bases que tu as cochées pour tomber au dixième de ml près sur ton ratio.
+                    </p>
+                    <p class="text-sm text-stone-600 leading-relaxed">
+                        S'il n'y arrive pas (par exemple si tu veux faire du 20/80 mais que tu n'as que du 50/50 en stock), il te proposera des <strong>Alternatives Proches</strong>. C'est le meilleur compromis possible avec ton matériel, et il t'affiche en jaune le ratio réel que tu obtiendras.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Section Contact -->
+            <div class="mt-8 pt-6 border-t border-stone-200 text-center">
+                <h3 class="text-sm font-extrabold text-stone-800 mb-2">Une idée ? Un bug ?</h3>
+                <p class="text-xs text-stone-600 mb-3">N'hésite pas à me contacter (Helmicretro) si tu as des suggestions pour améliorer l'outil.</p>
+                <a href="mailto:lehcimcramtrebor.ztriw@gmail.com" class="inline-flex items-center gap-2 px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 rounded-lg text-sm font-bold transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                    lehcimcramtrebor.ztriw@gmail.com
+                </a>
+            </div>
+            
+            <div class="mt-8 text-center text-sm font-bold text-stone-400">
+                Bonne vape ! 💨
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal Recette (Plein écran) -->
+    <div id="recipe_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6">
+        <!-- Fond assombri et flouté -->
+        <div class="modal-backdrop absolute inset-0 bg-stone-900/70 backdrop-blur-md cursor-pointer" onclick="closeRecipeModal()"></div>
+        <!-- Conteneur central -->
+        <div class="relative w-full max-w-lg z-10 flex flex-col items-center">
+            <!-- Boutons extérieurs (Cachés à l'impression) -->
+            <div class="modal-buttons absolute -top-14 right-0 flex gap-2">
+                <button onclick="showPrintPrompt()" class="w-10 h-10 flex items-center justify-center bg-white hover:bg-stone-100 rounded-full text-brand-600 shadow-xl border border-stone-200 transition-colors" title="Imprimer la recette">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                </button>
+                <button onclick="closeRecipeModal()" class="w-10 h-10 flex items-center justify-center bg-white hover:bg-stone-100 rounded-full text-stone-600 shadow-xl border border-stone-200 transition-colors" title="Fermer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="recipe_modal_content" class="w-full">
+                <!-- La carte clonée arrive ici -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nom de la recette (Impression) -->
+    <div id="print_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6">
+        <div class="absolute inset-0 bg-stone-900/70 backdrop-blur-sm cursor-pointer" onclick="cancelPrint()"></div>
+        <div class="relative bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100">
+            <h3 class="text-lg font-extrabold text-stone-800 mb-2">Nom de la recette</h3>
+            <p class="text-xs text-stone-500 mb-4">Il apparaîtra en haut de la fiche imprimée.</p>
+            <input type="text" id="recipe_name_input" class="w-full bg-stone-50 border border-stone-200 rounded-xl p-3 mb-6 text-stone-800 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="Ex: Red Astaire Maison">
+            <div class="flex justify-end gap-3">
+                <button onclick="cancelPrint()" class="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-600 font-bold text-sm rounded-xl transition-colors">Annuler</button>
+                <button onclick="confirmPrint()" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    Imprimer
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const RATIOS = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
+        
+        function formatRatioStr(pg, labels = false) {
+            let p = Math.round(pg);
+            if (p === 100) return "100% PG";
+            if (p === 0) return "100% VG";
+            return labels ? `${p}PG / ${100-p}VG` : `${p}/${100-p}`;
+        }
+        
+        // État de l'interface
+        let state = {
+            t1: { vol_mode: 'defined', nic_mode: 'mg' },
+            t2: { vol_mode: 'defined' }
+        };
+
+        function init() {
+            generateCheckboxes('t1');
+            generateCheckboxes('t2');
+            document.getElementById('t1_aroma_pg_val').innerText = document.getElementById('t1_aroma_pg').value + '%';
+            updateRatioDisp('t1');
+            updateRatioDisp('t2');
+            updateAromaPreview('t1');
+            updateAromaPreview('t2');
+            triggerCalc();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('button[id^="btn_tab_"]').forEach(el => {
+                el.classList.remove('bg-white', 'shadow', 'text-brand-600', 'ring-1', 'ring-black/5');
+                el.classList.add('text-stone-500');
+            });
+            document.getElementById(tabId).classList.add('active');
+            let btn = document.getElementById('btn_' + tabId);
+            btn.classList.remove('text-stone-500');
+            btn.classList.add('bg-white', 'shadow', 'text-brand-600', 'ring-1', 'ring-black/5');
+            triggerCalc();
+        }
+
+        function toggleVolMode(prefix, mode) {
+            state[prefix].vol_mode = mode;
+            
+            // UI Toggle Buttons
+            let btnDef = document.getElementById(`${prefix}_mode_vol_def`);
+            let btnMax = document.getElementById(`${prefix}_mode_vol_max`);
+            
+            if(mode === 'defined') {
+                btnDef.className = "flex-1 py-2 rounded-lg text-sm font-bold bg-white text-stone-800 shadow-sm transition-all";
+                btnMax.className = "flex-1 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
+                document.getElementById(`${prefix}_vol_panel`).classList.remove('hidden');
+                document.getElementById(`${prefix}_aroma_avail_panel`).classList.add('hidden');
+                document.getElementById(`${prefix}_vol_preview_container`).classList.add('hidden');
+                document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.remove('hidden');
+                document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.add('flex');
+            } else {
+                btnMax.className = "flex-1 py-2 rounded-lg text-sm font-bold bg-white text-stone-800 shadow-sm transition-all";
+                btnDef.className = "flex-1 py-2 rounded-lg text-sm font-bold text-stone-500 hover:text-stone-700 transition-all";
+                document.getElementById(`${prefix}_vol_panel`).classList.add('hidden');
+                document.getElementById(`${prefix}_aroma_avail_panel`).classList.remove('hidden');
+                document.getElementById(`${prefix}_vol_preview_container`).classList.remove('hidden');
+                document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.add('hidden');
+                document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.remove('flex');
+            }
+            updateAromaPreview(prefix);
+            triggerCalc();
+        }
+
+        function setNicMode(prefix, mode) {
+            state[prefix].nic_mode = mode;
+            let btnMg = document.getElementById(`${prefix}_nic_mode_mg_btn`);
+            let btnBoost = document.getElementById(`${prefix}_nic_mode_boost_btn`);
+            if(mode === 'mg') {
+                btnMg.className = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-800 shadow-sm transition-all";
+                btnBoost.className = "flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 hover:text-stone-700 transition-all";
+                document.getElementById(`${prefix}_nic_mg_panel`).classList.remove('hidden');
+                document.getElementById(`${prefix}_nic_mg_panel`).classList.add('flex');
+                document.getElementById(`${prefix}_nic_boost_panel`).classList.add('hidden');
+                document.getElementById(`${prefix}_nic_boost_panel`).classList.remove('flex');
+            } else {
+                btnBoost.className = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-white text-stone-800 shadow-sm transition-all";
+                btnMg.className = "flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 hover:text-stone-700 transition-all";
+                document.getElementById(`${prefix}_nic_boost_panel`).classList.remove('hidden');
+                document.getElementById(`${prefix}_nic_boost_panel`).classList.add('flex');
+                document.getElementById(`${prefix}_nic_mg_panel`).classList.add('hidden');
+                document.getElementById(`${prefix}_nic_mg_panel`).classList.remove('flex');
+            }
+            if(prefix === 't1') updateNicPreview('t1');
+            triggerCalc();
+        }
+
+        function toggleAdvAroma(prefix) {
+            let chk = document.getElementById(`${prefix}_adv_aroma`).checked;
+            let panel = document.getElementById(`${prefix}_aroma_pg_panel`);
+            if(chk) panel.classList.remove('hidden');
+            else { panel.classList.add('hidden'); document.getElementById(`${prefix}_aroma_pg`).value = 100; document.getElementById(`${prefix}_aroma_pg_val`).innerText = '100%'; }
+        }
+
+        function adjustVal(id, step) {
+            let el = document.getElementById(id);
+            if(!el) return;
+            let val = parseFloat(el.value) || 0;
+            let newVal = val + step;
+            if(newVal < 0) newVal = 0;
+            el.value = newVal;
+            
+            // Met à jour la preview (et le champ ML sync) pour tout ce qui impacte le volume
+            let prefix = id.substring(0, 2);
+            if (prefix === 't1' || prefix === 't2') {
+                updateAromaPreview(prefix);
+            }
+            triggerCalc();
+        }
+
+        function adjustSimVal(btn, step) {
+            let container = btn.parentElement;
+            let input = container.querySelector('input[type="number"]');
+            if (!input) return;
+            let val = parseFloat(input.value) || 0;
+            let newVal = val + step;
+            if(newVal < 0) newVal = 0;
+            input.value = newVal;
+            updateSim(input);
+        }
+
+        function updateNicPreview(prefix) {
+            if (prefix !== 't1') return;
+
+            let finalVol = 0;
+            if(state.t1.vol_mode === 'defined') {
+                finalVol = parseFloat(document.getElementById('t1_vol').value) || 0;
+            } else {
+                let avail = parseFloat(document.getElementById('t1_aroma_avail').value) || 0;
+                let perc = parseFloat(document.getElementById('t1_aroma_perc').value) || 0;
+                if(perc > 0) finalVol = avail / (perc / 100);
+            }
+
+            let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
+
+            if (state.t1.nic_mode === 'mg') {
+                let targetMg = parseFloat(document.getElementById('t1_nic_mg').value) || 0;
+                let nicVol = (finalVol * targetMg) / bStr;
+                let boostersCount = nicVol / 10;
+                document.getElementById('t1_nic_mg_preview').innerHTML = `Quantité : <span class="text-emerald-600">${round1(nicVol)} ml</span> <span class="text-stone-400 font-normal">(soit ${round1(boostersCount)} booster${boostersCount > 1 ? 's' : ''})</span>`;
+            } else {
+                let bCount = parseFloat(document.getElementById('t1_nic_boost').value) || 0;
+                let nicVol = bCount * 10;
+                let finalMg = finalVol > 0 ? (nicVol * bStr) / finalVol : 0;
+                document.getElementById('t1_nic_boost_preview').innerHTML = `Taux final : <span class="text-emerald-600">${round1(finalMg)} mg/ml</span>`;
+            }
+        }
+
+        function updateRatioDisp(prefix) {
+            let sliderVal = document.getElementById(`${prefix}_ratio_pg`).value;
+            let pg = 100 - sliderVal;
+            document.getElementById(`${prefix}_ratio_disp`).innerText = formatRatioStr(pg);
+        }
+
+        function updateAromaPreview(prefix) {
+            let percEl = document.getElementById(`${prefix}_aroma_perc`);
+            if(percEl) {
+                document.getElementById(`${prefix}_aroma_perc_disp`).innerText = `${percEl.value}%`;
+            }
+
+            if(state[prefix].vol_mode === 'max_aroma') {
+                let avail = parseFloat(document.getElementById(`${prefix}_aroma_avail`).value) || 0;
+                let perc = parseFloat(document.getElementById(`${prefix}_aroma_perc`).value) || 0;
+                
+                if(perc > 0) {
+                    if(prefix === 't1') {
+                        let finalVol = avail / (perc / 100);
+                        document.getElementById('t1_vol_preview').innerText = `${round1(finalVol)} ml`;
+                    } else if(prefix === 't2') {
+                        let finalVol = avail / (perc / 100);
+                        let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
+                        let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+                        let bVol = (finalVol * maxNic) / bStr;
+                        let prepVol = finalVol - bVol;
+                        document.getElementById('t2_vol_preview').innerText = `${round1(finalVol)} ml total`;
+                        document.getElementById('t2_vol_preview_sub').innerText = `soit ${round1(prepVol)} ml à préparer (avant boost)`;
+                    }
+                } else {
+                    document.getElementById(`${prefix}_vol_preview`).innerText = `Erreur %`;
+                }
+            } else if (state[prefix].vol_mode === 'defined') {
+                // Mise à jour de l'input ML synchronisé sous le slider
+                let syncInput = document.getElementById(`${prefix}_aroma_sync_ml`);
+                if(syncInput) {
+                    let perc = parseFloat(percEl.value) || 0;
+                    let vol = 0;
+                    if(prefix === 't1') {
+                        vol = parseFloat(document.getElementById('t1_vol').value) || 0;
+                    } else if(prefix === 't2') {
+                        let prepVol = parseFloat(document.getElementById('t2_vol').value) || 0;
+                        let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
+                        let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+                        if(1 - maxNic/bStr > 0) {
+                            vol = prepVol / (1 - maxNic/bStr);
+                        }
+                    }
+                    syncInput.value = round2(vol * (perc / 100));
+                }
+            }
+            if(prefix === 't1') updateNicPreview('t1');
+        }
+
+        function syncAromaFromMl(prefix) {
+            let syncInput = document.getElementById(`${prefix}_aroma_sync_ml`);
+            let percInput = document.getElementById(`${prefix}_aroma_perc`);
+            let ml = parseFloat(syncInput.value) || 0;
+            let vol = 0;
+            
+            if(prefix === 't1') {
+                vol = parseFloat(document.getElementById('t1_vol').value) || 0;
+            } else if(prefix === 't2') {
+                let prepVol = parseFloat(document.getElementById('t2_vol').value) || 0;
+                let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
+                let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+                if(1 - maxNic/bStr > 0) {
+                    vol = prepVol / (1 - maxNic/bStr);
+                }
+            }
+            
+            if(vol > 0) {
+                let perc = (ml / vol) * 100;
+                
+                // On s'assure que le pourcentage calculé reste dans les limites du slider
+                let min = parseFloat(percInput.min);
+                let max = parseFloat(percInput.max);
+                if(perc < min) perc = min;
+                if(perc > max) perc = max;
+                
+                percInput.value = round1(perc);
+                document.getElementById(`${prefix}_aroma_perc_disp`).innerText = `${percInput.value}%`;
+                triggerCalc();
+            }
+        }
+
+        function generateCheckboxes(prefix) {
+            let baseContainer = document.getElementById(`${prefix}_bases_list`);
+            let boostContainer = document.getElementById(`${prefix}_boosters_list`);
+            let baseHtml = '', boostHtml = '';
+
+            let defaultsBase = [100, 0];
+            let defaultsBoost = prefix === 't1' ? [50] : [];
+
+            RATIOS.forEach(pg => {
+                let isBaseChecked = defaultsBase.includes(pg) ? 'checked' : '';
+                let isBoostChecked = defaultsBoost.includes(pg) ? 'checked' : '';
+                
+                baseHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors ${isBaseChecked?'bg-brand-50 border-brand-200':''}"><input type="checkbox" class="${prefix}_base_chk text-brand-600 focus:ring-brand-500 rounded" value="${pg}" ${isBaseChecked} onchange="this.parentElement.classList.toggle('bg-brand-50'); this.parentElement.classList.toggle('border-brand-200'); triggerCalc()"><span class="text-xs font-bold text-stone-700">${formatRatioStr(pg, true)}</span></label>`;
+                
+                boostHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 cursor-pointer hover:bg-stone-50 transition-colors ${isBoostChecked?'bg-emerald-50 border-emerald-200':''}"><input type="checkbox" class="${prefix}_boost_chk text-emerald-600 focus:ring-emerald-500 rounded" value="${pg}" ${isBoostChecked} onchange="this.parentElement.classList.toggle('bg-emerald-50'); this.parentElement.classList.toggle('border-emerald-200'); triggerCalc()"><span class="text-xs font-bold text-stone-700">${formatRatioStr(pg, true)}</span></label>`;
+            });
+
+            if(baseContainer) baseContainer.innerHTML = baseHtml;
+            if(boostContainer) boostContainer.innerHTML = boostHtml;
+        }
+
+        function getChecked(className) {
+            let arr = [];
+            document.querySelectorAll(`.${className}:checked`).forEach(el => arr.push(parseInt(el.value)));
+            return arr.sort((a,b)=>b-a);
+        }
+
+        function round1(num) { return Math.round(num * 10) / 10; }
+        function round2(num) { return Math.round(num * 100) / 100; }
+
+        function deduplicateRecipes(arr) {
+            let seen = new Set();
+            return arr.filter(r => {
+                // On crée une empreinte unique pour la recette
+                let basesKey = r.bases.filter(b => b.vol >= 0.1).map(b => `${b.pgRatio}-${round1(b.vol)}`).sort().join('|');
+                let nicKey = r.nic > 0 ? `${r.nicRatio}-${round1(r.nic)}` : '0';
+                let key = `${round1(r.aroma)}_${nicKey}_${basesKey}`;
+                if(seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+        }
+
+        function findBaseMixes(targetVol, targetPgMl, basesObj) {
+            let results = [];
+            let targetRatio = (targetPgMl / targetVol) * 100;
+
+            // Simple match (1 base)
+            for(let basePg of basesObj) {
+                if(Math.abs(basePg - targetRatio) < 0.5) {
+                    results.push([{ pgRatio: basePg, vol: targetVol }]);
+                }
+            }
+
+            // Mix match (2 bases)
+            for(let i=0; i<basesObj.length; i++) {
+                for(let j=i+1; j<basesObj.length; j++) {
+                    let pg1 = basesObj[i];
+                    let pg2 = basesObj[j];
+                    if(pg1 === pg2) continue;
+                    
+                    let v1 = (targetPgMl - targetVol * (pg2/100)) / ((pg1/100) - (pg2/100));
+                    let v2 = targetVol - v1;
+                    
+                    // On ignore si l'un des volumes est < 0.1ml (évite les doublons de single base)
+                    if(v1 >= 0.1 && v2 >= 0.1) {
+                        results.push([
+                            { pgRatio: pg1, vol: v1 },
+                            { pgRatio: pg2, vol: v2 }
+                        ]);
+                    }
+                }
+            }
+            return results.length > 0 ? results : null;
+        }
+
+        function triggerCalc() {
+            let activeTab = document.querySelector('.tab-content.active').id;
+            if(activeTab === 'tab_complet') calcTab1();
+            else if(activeTab === 'tab_booster') calcTab2();
+            else if(activeTab === 'tab_manuel') calcTab3();
+        }
+
+        function calcTab1() {
+            let finalVol, aromaVol;
+            let aromaPg = parseInt(document.getElementById('t1_aroma_pg').value) || 100;
+
+            if(state.t1.vol_mode === 'defined') {
+                finalVol = parseFloat(document.getElementById('t1_vol').value) || 0;
+                let p = parseFloat(document.getElementById('t1_aroma_perc').value) || 0;
+                aromaVol = finalVol * (p/100);
+            } else {
+                aromaVol = parseFloat(document.getElementById('t1_aroma_avail').value) || 0;
+                let p = parseFloat(document.getElementById('t1_aroma_perc').value) || 0;
+                if(p <= 0) { renderRecipes('t1', [], [{err: "Le pourcentage d'arôme doit être supérieur à 0."}]); return; }
+                finalVol = aromaVol / (p/100);
+            }
+
+            if(finalVol <= 0 || aromaVol > finalVol) {
+                 renderRecipes('t1', [], [{err: "Volumes incohérents."}]); return;
+            }
+
+            let targetPgRatio = 100 - parseInt(document.getElementById('t1_ratio_pg').value);
+            let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
+            
+            let nicVol = 0;
+            if(state.t1.nic_mode === 'mg') {
+                let mg = parseFloat(document.getElementById('t1_nic_mg').value) || 0;
+                nicVol = (finalVol * mg) / bStr;
+            } else {
+                let bCount = parseFloat(document.getElementById('t1_nic_boost').value) || 0;
+                nicVol = bCount * 10;
+            }
+
+            let baseVol = finalVol - aromaVol - nicVol;
+            if(baseVol < -0.1) {
+                renderRecipes('t1', [], [{err: "Pas de place pour la base ! Réduisez l'arôme ou la nicotine."}]); return;
+            }
+            baseVol = Math.max(0, baseVol);
+
+            let basesAvail = getChecked('t1_base_chk');
+            let boostsAvail = getChecked('t1_boost_chk');
+            
+            if(basesAvail.length === 0 || boostsAvail.length === 0) {
+                renderRecipes('t1', [], [{err: "Cochez au moins une base et un booster."}]); return;
+            }
+
+            let targetPgMl = finalVol * (targetPgRatio / 100);
+            let aromaPgMl = aromaVol * (aromaPg / 100);
+
+            let exactRecipes = [];
+            let altRecipes = [];
+
+            for(let bPg of boostsAvail) {
+                let boostPgMl = nicVol * (bPg / 100);
+                let remainingPgNeeded = targetPgMl - aromaPgMl - boostPgMl;
+                
+                let mixes = findBaseMixes(baseVol, remainingPgNeeded, basesAvail);
+                
+                if(mixes) {
+                    for(let mix of mixes) {
+                        exactRecipes.push({
+                            aroma: aromaVol, nic: nicVol, nicRatio: bPg, bases: mix,
+                            finalVol: finalVol, realPgRatio: targetPgRatio
+                        });
+                    }
+                } else {
+                    let bestBase = basesAvail[0];
+                    let minDiff = 9999;
+                    for(let bp of basesAvail) {
+                        let testPg = aromaPgMl + boostPgMl + (baseVol * (bp/100));
+                        let diff = Math.abs(testPg - targetPgMl);
+                        if(diff < minDiff) { minDiff = diff; bestBase = bp; }
+                    }
+                    let realPg = ((aromaPgMl + boostPgMl + (baseVol * (bestBase/100))) / finalVol) * 100;
+                    altRecipes.push({
+                        aroma: aromaVol, nic: nicVol, nicRatio: bPg,
+                        bases: [{pgRatio: bestBase, vol: baseVol}],
+                        finalVol: finalVol, realPgRatio: realPg, isAlt: true
+                    });
+                }
+            }
+
+            exactRecipes = deduplicateRecipes(exactRecipes);
+            altRecipes = deduplicateRecipes(altRecipes);
+            altRecipes.sort((a,b) => Math.abs(a.realPgRatio - targetPgRatio) - Math.abs(b.realPgRatio - targetPgRatio));
+
+            renderRecipes('t1', exactRecipes, altRecipes);
+        }
+
+        function calcTab2() {
+            let finalVolAfterBoost, prepVol, aromaVol;
+            let targetAromaPerc = parseFloat(document.getElementById('t2_aroma_perc').value) || 15;
+            let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
+            let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+
+            if(state.t2.vol_mode === 'defined') {
+                prepVol = parseFloat(document.getElementById('t2_vol').value) || 0;
+                if(1 - maxNic/bStr <= 0) {
+                    renderRecipes('t2', [], [{err: "Taux max nicotine impossible avec ce booster."}]); return;
+                }
+                finalVolAfterBoost = prepVol / (1 - maxNic/bStr);
+                aromaVol = finalVolAfterBoost * (targetAromaPerc / 100);
+            } else {
+                aromaVol = parseFloat(document.getElementById('t2_aroma_avail').value) || 0;
+                if(targetAromaPerc <= 0) { renderRecipes('t2', [], [{err: "Pourcentage d'arôme > 0 requis."}]); return; }
+                finalVolAfterBoost = aromaVol / (targetAromaPerc / 100);
+                let boosterMaxVol = (finalVolAfterBoost * maxNic) / bStr;
+                prepVol = finalVolAfterBoost - boosterMaxVol;
+            }
+
+            if(prepVol <= 0 || aromaVol > prepVol) {
+                renderRecipes('t2', [], [{err: "La concentration demandée ne laisse pas de place pour la base neutre !"}]); return;
+            }
+
+            let baseVol = prepVol - aromaVol;
+            let targetPgRatio = 100 - parseInt(document.getElementById('t2_ratio_pg').value);
+            let aromaPg = 100;
+
+            let avgBoosterPg = 50; 
+            let targetPgMl = finalVolAfterBoost * (targetPgRatio / 100);
+            let aromaPgMl = aromaVol * (aromaPg / 100);
+            let futureBoosterPgMl = (finalVolAfterBoost - prepVol) * (avgBoosterPg / 100);
+            
+            let remainingPgNeededInBase = targetPgMl - aromaPgMl - futureBoosterPgMl;
+
+            let basesAvail = getChecked('t2_base_chk');
+            if(basesAvail.length === 0) { renderRecipes('t2', [], [{err: "Cochez au moins une base."}]); return; }
+
+            let exactRecipes = [];
+            let altRecipes = [];
+
+            let mixes = findBaseMixes(baseVol, remainingPgNeededInBase, basesAvail);
+            
+            if(mixes) {
+                for(let mix of mixes) {
+                    exactRecipes.push({
+                        aroma: aromaVol, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost,
+                        realPgRatio: targetPgRatio, nicMax: maxNic
+                    });
+                }
+            } else {
+                let bestBase = basesAvail[0];
+                let minDiff = 9999;
+                for(let bp of basesAvail) {
+                    let testPg = aromaPgMl + futureBoosterPgMl + (baseVol * (bp/100));
+                    let diff = Math.abs(testPg - targetPgMl);
+                    if(diff < minDiff) { minDiff = diff; bestBase = bp; }
+                }
+                let realPg = ((aromaPgMl + futureBoosterPgMl + (baseVol * (bestBase/100))) / finalVolAfterBoost) * 100;
+                altRecipes.push({
+                    aroma: aromaVol, bases: [{pgRatio: bestBase, vol: baseVol}],
+                    prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic
+                });
+            }
+
+            exactRecipes = deduplicateRecipes(exactRecipes);
+            altRecipes = deduplicateRecipes(altRecipes);
+            altRecipes.sort((a,b) => Math.abs(a.realPgRatio - targetPgRatio) - Math.abs(b.realPgRatio - targetPgRatio));
+
+            renderRecipes('t2', exactRecipes, altRecipes);
+        }
+
+        function calcTab3() {
+            let aVol = parseFloat(document.getElementById('t3_aroma_vol').value)||0;
+            let aPg = parseFloat(document.getElementById('t3_aroma_pg').value)||100;
+            let bVol = parseFloat(document.getElementById('t3_base_vol').value)||0;
+            let bPg = parseFloat(document.getElementById('t3_base_pg').value)||50;
+            let nVol = parseFloat(document.getElementById('t3_boost_vol').value)||0;
+            let nPg = parseFloat(document.getElementById('t3_boost_pg').value)||50;
+            let str = parseFloat(document.getElementById('t3_boost_str').value)||20;
+
+            let tVol = aVol + bVol + nVol;
+            if(tVol === 0) { document.getElementById('t3_results').innerHTML = "Aucun volume."; return; }
+
+            let totalPg = (aVol*(aPg/100)) + (bVol*(bPg/100)) + (nVol*(nPg/100));
+            let pgRatio = (totalPg / tVol) * 100;
+            let aRatio = (aVol / tVol) * 100;
+            let finalNic = (nVol * str) / tVol;
+
+            document.getElementById('t3_results').innerHTML = `
+                <div class="text-sm font-bold text-brand-600 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 block">${round1(tVol)} ml</span></div>
+                <div class="grid grid-cols-3 gap-2 mt-4 text-left">
+                    <div class="bg-white p-3 rounded-xl shadow-sm"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800">${formatRatioStr(pgRatio)}</span></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600">${round1(aRatio)} %</span></div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm"><span class="text-[10px] text-stone-400 block uppercase">Nicotine</span><span class="font-bold text-stone-800">${round1(finalNic)} mg</span></div>
+                </div>
+            `;
+        }
+
+        function renderRecipes(prefix, exact, alt) {
+            let container = document.getElementById(`${prefix}_results_container`);
+            container.innerHTML = '';
+
+            let hasErr = alt.length > 0 && alt[0].err;
+            if(hasErr) {
+                container.innerHTML = `<div class="col-span-full p-4 bg-red-50 text-red-600 border border-red-200 rounded-2xl font-bold text-sm text-center shadow-inner">${alt[0].err}</div>`;
+                return;
+            }
+
+            let allHtml = '';
+            
+            if (exact.length > 0 || alt.length > 0) {
+                allHtml += `
+                <div class="col-span-full mb-2 p-4 bg-brand-50/50 border border-brand-200 rounded-2xl flex items-center gap-3 text-sm text-stone-700 shadow-sm">
+                    <span class="text-xl">💡</span>
+                    <p><strong>Astuce :</strong> Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> pour agrandir la recette, puis sur <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> pour lui donner un nom avant de l'imprimer au propre.</p>
+                </div>`;
+            }
+
+            if(exact.length > 0) {
+                allHtml += `<div class="col-span-full text-xs font-black text-emerald-600 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${exact.length} Recette(s) Parfaite(s)</div>`;
+                exact.forEach(r => allHtml += buildCard(r, prefix, false));
+            }
+
+            if(exact.length === 0 && alt.length > 0) {
+                allHtml += `<div class="col-span-full text-xs font-black text-amber-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Alternatives Proches</div>`;
+                alt.slice(0,3).forEach(r => allHtml += buildCard(r, prefix, true));
+            }
+
+            if(exact.length === 0 && alt.length === 0) {
+                allHtml = `<div class="col-span-full p-4 bg-stone-100 text-stone-500 border border-stone-200 rounded-2xl font-bold text-sm text-center shadow-inner">Aucune recette possible. Ajustez vos paramètres.</div>`;
+            }
+
+            container.innerHTML = allHtml;
+            
+            // Forcer le calcul des simulations fraîchement générées
+            container.querySelectorAll('select').forEach(s => updateSim(s));
+        }
+
+        function buildCard(r, prefix, isAlt) {
+            let bColor = isAlt ? 'border-amber-200 bg-amber-50/30' : 'border-emerald-200 bg-emerald-50/30';
+            let tColor = isAlt ? 'text-amber-700' : 'text-emerald-700';
+
+            // Ajout de la classe recipe-card-wrapper pour faciliter la modale
+            let html = `<div class="p-5 border ${bColor} rounded-3xl shadow-sm flex flex-col h-full recipe-card-wrapper">`;
+            
+            html += `<div class="flex-1">`;
+            html += `<div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60">
+                <div>
+                    <div class="font-extrabold text-stone-800 text-lg leading-tight">${prefix==='t1'?'Liquide Prêt':'Base Shortfill'} <span class="text-brand-600">${round1(prefix==='t1'?r.finalVol:r.prepVol)} ml</span></div>
+                    <div class="mt-1.5"><span class="text-xs font-bold ${tColor} px-2 py-1 bg-white rounded-lg shadow-sm">${formatRatioStr(r.realPgRatio, true)}</span></div>
+                </div>
+                <button onclick="openModalFromCard(this)" class="p-2 text-stone-400 hover:text-brand-600 bg-white hover:bg-brand-50 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50" title="Agrandir la recette">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </button>
+            </div>`;
+
+            html += `<div class="space-y-2 mb-4">`;
+            html += `<div class="flex justify-between items-center bg-white p-2.5 rounded-xl shadow-sm"><span class="text-sm font-bold text-brand-600">Arôme Concentré</span><span class="font-black text-stone-800">${round1(r.aroma)} ml</span></div>`;
+            
+            r.bases.forEach(b => {
+                if(b.vol > 0.1) {
+                    html += `<div class="flex justify-between items-center bg-white p-2.5 rounded-xl shadow-sm"><span class="text-sm font-bold text-stone-600 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">${formatRatioStr(b.pgRatio)}</span></span><span class="font-black text-stone-800">${round1(b.vol)} ml</span></div>`;
+                }
+            });
+
+            if(prefix === 't1' && r.nic > 0) {
+                html += `<div class="flex justify-between items-center bg-white p-2.5 rounded-xl shadow-sm"><span class="text-sm font-bold text-emerald-600 flex items-center gap-2">Booster <span class="text-xs font-bold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">${formatRatioStr(r.nicRatio)}</span></span><span class="font-black text-stone-800">${round1(r.nic)} ml</span></div>`;
+            }
+            html += `</div></div>`; 
+
+            if(prefix === 't1') {
+                let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
+                let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
+                let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
+                html += `
+                <div class="mt-auto pt-4 border-t border-stone-200/50 flex justify-between items-center">
+                    <span class="text-xs font-bold text-stone-500 uppercase tracking-widest">Taux finaux</span>
+                    <div class="text-right">
+                        <span class="text-lg font-black text-brand-600">${round1(finalAroma)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span>
+                        <span class="mx-1 text-stone-300">|</span>
+                        <span class="text-lg font-black ${tColor}">${round1(finalNic)} mg/ml</span>
+                    </div>
+                </div>`;
+            }
+
+            if(prefix === 't2') {
+                html += `
+                <div class="mt-3 p-3 bg-stone-800 rounded-xl text-stone-200 text-xs">
+                    <div class="flex items-center justify-center gap-2 mb-2 text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-700 pb-1.5">
+                        <span>🧪 Simulation d'ajout de boosters</span>
+                    </div>
+                    
+                    <div class="flex flex-col items-center gap-0.5 mb-3">
+                        <span class="text-[10px] font-bold text-stone-400">Je prélève</span>
+                        <select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-700 text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-600 text-center shadow-inner">`;
+                        
+                [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(v => {
+                    html += `<option value="${v}" ${v===50 ? 'selected' : ''}>${v} ml</option>`;
+                });
+
+                html += `
+                            <option value="${round1(r.prepVol)}">Total (${round1(r.prepVol)}ml)</option>
+                            <option value="custom">Manuel...</option>
+                        </select>
+                        <input type="number" class="sim-custom-vol hidden hide-arrows w-full max-w-[180px] mt-0.5 bg-stone-600 text-white text-center rounded p-1 text-xs font-bold focus:outline-none border border-stone-500 shadow-inner" placeholder="Volume en ml" oninput="updateSim(this)">
+                    </div>
+
+                    <div class="flex flex-col items-center mb-3 bg-stone-900/40 p-2 rounded-lg border border-stone-700/50 w-full max-w-[200px] mx-auto shadow-inner">
+                        <span class="text-[10px] font-bold text-stone-400 mb-1">J'ajoute</span>
+                        
+                        <div class="flex items-center bg-stone-700 rounded overflow-hidden border border-stone-600 shadow-md">
+                            <button onclick="adjustSimBoosters(this, -1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
+                            <input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
+                            <button onclick="adjustSimBoosters(this, 1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
+                        </div>
+                        <span class="text-[10px] font-bold text-stone-300 mt-0.5">boosters</span>
+                        
+                        <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest my-1">ou</span>
+                        
+                        <div class="flex items-center bg-stone-700 rounded overflow-hidden border border-stone-600 shadow-md">
+                            <button onclick="adjustSimMl(this, -1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
+                            <input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
+                            <button onclick="adjustSimMl(this, 1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
+                        </div>
+                        <span class="text-[10px] font-bold text-stone-400 mt-0.5">ml</span>
+                    </div>
+
+                    <div class="flex flex-col items-center gap-0.5 mb-2">
+                        <span class="text-[10px] font-bold text-stone-400">Profil des boosters</span>
+                        
+                        <select onchange="updateSim(this)" class="sim-boost-pg w-full max-w-[180px] bg-stone-700 text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-600 text-center shadow-inner">`;
+                        
+                RATIOS.forEach(pg => {
+                    html += `<option value="${pg}" ${pg===50 ? 'selected' : ''}>${formatRatioStr(pg, true)}</option>`;
+                });
+
+                html += `
+                        </select>
+                        
+                        <span class="text-[10px] font-bold text-stone-500 my-1">dosés à</span>
+                        
+                        <div class="flex items-center bg-stone-700 rounded overflow-hidden border border-stone-600 shadow-md">
+                            <button onclick="adjustSimVal(this, -1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
+                            <input type="number" value="20" step="1" min="0" onchange="updateSim(this)" class="sim-boost-str hide-arrows w-12 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
+                            <button onclick="adjustSimVal(this, 1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
+                        </div>
+                        <span class="text-[10px] font-bold text-stone-400 mt-0.5">mg/ml</span>
+                    </div>
+
+                    <div class="pt-2 mt-2 border-t border-stone-700 flex flex-col items-center text-center">
+                        <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest mb-1.5">Résultat Final</span>
+                        <div class="sim-res w-full flex flex-col gap-0.5">...</div>
+                    </div>
+                    <div class="sim-warning mt-2 pt-1.5 border-t border-red-500/30 text-[9px] text-red-400 font-bold text-center hidden"></div>
+                    <input type="hidden" class="sim-data" data-aroma="${r.aroma/r.prepVol}" data-pgratio="${r.realPgRatio}">
+                </div>`;
+            }
+
+            html += `</div>`;
+            return html;
+        }
+
+        function handlePreleveChange(el) {
+            let container = el.closest('.bg-stone-800');
+            let customInput = container.querySelector('.sim-custom-vol');
+            if (el.value === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+            } else {
+                customInput.classList.add('hidden');
+            }
+            updateSim(el);
+        }
+
+        function adjustSimMl(btn, step) {
+            let container = btn.closest('.bg-stone-800');
+            if (!container) return;
+            let input = container.querySelector('.sim-ml-count');
+            if (!input) return;
+            let val = parseFloat(input.value) || 0;
+            let newVal = val + step;
+            if(newVal < 0) newVal = 0;
+            input.value = newVal;
+            syncSimInputs(input, 'ml');
+        }
+
+        function adjustSimBoosters(btn, step) {
+            let container = btn.closest('.bg-stone-800');
+            if (!container) return;
+            let bInput = container.querySelector('.sim-b-count');
+            if (!bInput) return;
+
+            let val = parseFloat(bInput.value) || 0;
+            let newVal;
+            if (step > 0) {
+                newVal = Math.floor(val) + 1;
+            } else {
+                newVal = Math.ceil(val) - 1;
+            }
+            if (newVal < 0) newVal = 0;
+            bInput.value = newVal;
+            syncSimInputs(bInput, 'boosters');
+        }
+
+        function syncSimInputs(el, source) {
+            let container = el.closest('.bg-stone-800');
+            if (!container) return;
+            let mlInput = container.querySelector('.sim-ml-count');
+            let bInput = container.querySelector('.sim-b-count');
+            
+            if (source === 'ml') {
+                let ml = parseFloat(mlInput.value) || 0;
+                bInput.value = round2(ml / 10);
+            } else {
+                let b = parseFloat(bInput.value) || 0;
+                mlInput.value = round1(b * 10);
+            }
+            updateSim(el);
+        }
+
+        function updateSim(el) {
+            let container = el.closest('.bg-stone-800');
+            if (!container) return;
+            
+            let selVolEl = container.querySelector('.sim-sel-vol');
+            let selVol = 0;
+            if (selVolEl.value === 'custom') {
+                selVol = parseFloat(container.querySelector('.sim-custom-vol').value) || 0;
+            } else {
+                selVol = parseFloat(selVolEl.value) || 0;
+            }
+            
+            let bCount = parseFloat(container.querySelector('.sim-b-count').value) || 0;
+            let boostPg = parseFloat(container.querySelector('.sim-boost-pg').value) || 50;
+            let bStr = parseFloat(container.querySelector('.sim-boost-str').value) || 20;
+            
+            let data = container.querySelector('.sim-data');
+            let aromaRatio = parseFloat(data.dataset.aroma) || 0;
+            let prepPgRatio = parseFloat(data.dataset.pgratio) || 0;
+
+            let finalVol = selVol + (bCount * 10);
+            let nic = (bCount * 10 * bStr) / finalVol;
+            let aFinal = (selVol * aromaRatio / finalVol) * 100;
+            
+            let totalPgMl = (selVol * (prepPgRatio / 100)) + ((bCount * 10) * (boostPg / 100));
+            let finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 0;
+
+            container.querySelector('.sim-res').innerHTML = `
+                <div class="text-xs font-bold text-stone-300 bg-stone-700/50 rounded py-0.5 px-2 inline-block mx-auto">${formatRatioStr(finalPgRatio, true)}</div>
+                <div class="text-base font-black text-brand-400 mt-1">${round1(aFinal)}% <span class="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">arôme</span></div>
+                <div class="text-xl font-black text-emerald-400">${round1(nic)} <span class="text-xs font-bold text-emerald-600/70">mg/ml</span></div>
+            `;
+            
+            // Gestion de l'alerte sur-dilution
+            let warnDiv = container.querySelector('.sim-warning');
+            let targetAroma = parseFloat(document.getElementById('t2_aroma_perc').value) || 0;
+            
+            if (aFinal < targetAroma - 0.1) { // -0.1 pour éviter les soucis d'arrondis JS
+                warnDiv.classList.remove('hidden');
+                warnDiv.innerHTML = `⚠️ Attention : la concentration descend sous les ${targetAroma}% idéaux.`;
+            } else {
+                warnDiv.classList.add('hidden');
+            }
+        }
+
+        // --- GESTION DES MODALES ET IMPRESSION ---
+        
+        function openHelpModal() {
+            document.getElementById('help_modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help_modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        function openModalFromCard(btn) {
+            let card = btn.closest('.recipe-card-wrapper');
+            let contentDest = document.getElementById('recipe_modal_content');
+            
+            // Clonage pour éviter de casser la grille d'origine
+            let clone = card.cloneNode(true);
+            
+            // On vire le bouton d'agrandissement sur le clone
+            let expandBtn = clone.querySelector('button[title="Agrandir la recette"]');
+            if(expandBtn) expandBtn.remove();
+            
+            // Ajustement des classes pour le plein écran et ajout du SCROLL !
+            clone.classList.remove('h-full');
+            clone.classList.add('shadow-2xl', 'max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
+            
+            contentDest.innerHTML = '';
+            contentDest.appendChild(clone);
+            
+            // Affichage de la modale et blocage du scroll arrière
+            document.getElementById('recipe_modal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeRecipeModal() {
+            document.getElementById('recipe_modal').classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        
+        function showPrintPrompt() {
+            document.getElementById('print_prompt_modal').classList.remove('hidden');
+            let input = document.getElementById('recipe_name_input');
+            input.value = ''; // Reset
+            input.focus();
+        }
+
+        function cancelPrint() {
+            document.getElementById('print_prompt_modal').classList.add('hidden');
+        }
+
+        function confirmPrint() {
+            let name = document.getElementById('recipe_name_input').value.trim() || 'Recette Custom';
+            let card = document.querySelector('#recipe_modal_content .recipe-card-wrapper');
+            
+            if(card) {
+                let titleEl = card.querySelector('.print-recipe-title');
+                if (!titleEl) {
+                    titleEl = document.createElement('h2');
+                    titleEl.className = 'print-recipe-title text-2xl font-black text-brand-600 mb-4 pb-2 border-b border-stone-200/60';
+                    card.insertBefore(titleEl, card.firstChild);
+                }
+                titleEl.innerText = name;
+            }
+            
+            cancelPrint();
+            
+            // Petit délai pour laisser le temps au DOM de se mettre à jour avant l'impression
+            setTimeout(() => {
+                window.print();
+            }, 100);
+        }
+
+        // Fermeture via la touche Échap
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "Escape") {
+                let printModal = document.getElementById('print_prompt_modal');
+                if (!printModal.classList.contains('hidden')) {
+                    cancelPrint();
+                    return;
+                }
+                let recipeModal = document.getElementById('recipe_modal');
+                if (!recipeModal.classList.contains('hidden')) {
+                    closeRecipeModal();
+                    return;
+                }
+                let helpModal = document.getElementById('help_modal');
+                if (!helpModal.classList.contains('hidden')) {
+                    closeHelpModal();
+                }
+            }
+        });
+
+        window.onload = () => {
+            init();
+        };
+    </script>
+</body>
+</html>
