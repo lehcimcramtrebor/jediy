@@ -1157,25 +1157,29 @@
                             <option value="${round1(r.prepVol)}">Total (${round1(r.prepVol)}ml)</option>
                             <option value="custom">Manuel...</option>
                         </select>
-                        <input type="number" class="sim-custom-vol hidden hide-arrows w-full max-w-[180px] mt-0.5 bg-stone-600 text-white text-center rounded p-1 text-xs font-bold focus:outline-none border border-stone-500 shadow-inner" placeholder="Volume en ml" oninput="updateSim(this)">
+                        <div class="sim-custom-wrapper hidden items-center bg-stone-600 rounded overflow-hidden border border-stone-500 shadow-inner mt-1 w-full max-w-[180px]">
+                            <button onclick="adjustCustomPreleve(this, -1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 hover:bg-stone-400 text-white font-bold transition-colors">-</button>
+                            <input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-600 text-white text-center text-xs font-bold focus:outline-none" placeholder="ml" value="50" oninput="updateSim(this)">
+                            <button onclick="adjustCustomPreleve(this, 1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 hover:bg-stone-400 text-white font-bold transition-colors">+</button>
+                        </div>
                     </div>
 
                     <div class="flex flex-col items-center mb-3 bg-stone-900/40 p-2 rounded-lg border border-stone-700/50 w-full max-w-[200px] mx-auto shadow-inner">
                         <span class="text-[10px] font-bold text-stone-400 mb-1">J'ajoute</span>
                         
                         <div class="flex items-center bg-stone-700 rounded overflow-hidden border border-stone-600 shadow-md">
-                            <button onclick="adjustSimBoosters(this, -1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
-                            <input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
-                            <button onclick="adjustSimBoosters(this, 1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
+                            <button onclick="adjustSimBoosters(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
+                            <input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
+                            <button onclick="adjustSimBoosters(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
                         </div>
                         <span class="text-[10px] font-bold text-stone-300 mt-0.5">boosters</span>
                         
                         <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest my-1">ou</span>
                         
                         <div class="flex items-center bg-stone-700 rounded overflow-hidden border border-stone-600 shadow-md">
-                            <button onclick="adjustSimMl(this, -1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
-                            <input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
-                            <button onclick="adjustSimMl(this, 1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
+                            <button onclick="adjustSimMl(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
+                            <input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
+                            <button onclick="adjustSimMl(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
                         </div>
                         <span class="text-[10px] font-bold text-stone-400 mt-0.5">ml</span>
                     </div>
@@ -1195,9 +1199,9 @@
                         <span class="text-[10px] font-bold text-stone-500 my-1">dosés à</span>
                         
                         <div class="flex items-center bg-stone-700 rounded overflow-hidden border border-stone-600 shadow-md">
-                            <button onclick="adjustSimVal(this, -1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
-                            <input type="number" value="20" step="1" min="0" onchange="updateSim(this)" class="sim-boost-str hide-arrows w-12 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
-                            <button onclick="adjustSimVal(this, 1)" class="w-8 h-6 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
+                            <button onclick="adjustSimVal(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">-</button>
+                            <input type="number" value="20" step="1" min="0" onchange="updateSim(this)" class="sim-boost-str hide-arrows w-12 min-w-0 h-6 bg-stone-700 text-white text-center text-xs font-bold focus:outline-none">
+                            <button onclick="adjustSimVal(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 hover:bg-stone-500 text-white font-bold transition-colors">+</button>
                         </div>
                         <span class="text-[10px] font-bold text-stone-400 mt-0.5">mg/ml</span>
                     </div>
@@ -1217,14 +1221,29 @@
 
         function handlePreleveChange(el) {
             let container = el.closest('.bg-stone-800');
+            let customWrapper = container.querySelector('.sim-custom-wrapper');
             let customInput = container.querySelector('.sim-custom-vol');
             if (el.value === 'custom') {
-                customInput.classList.remove('hidden');
+                customWrapper.classList.remove('hidden');
+                customWrapper.classList.add('flex');
                 customInput.focus();
             } else {
-                customInput.classList.add('hidden');
+                customWrapper.classList.add('hidden');
+                customWrapper.classList.remove('flex');
             }
             updateSim(el);
+        }
+
+        function adjustCustomPreleve(btn, step) {
+            let wrapper = btn.closest('.sim-custom-wrapper');
+            if (!wrapper) return;
+            let input = wrapper.querySelector('.sim-custom-vol');
+            if (!input) return;
+            let val = parseFloat(input.value) || 0;
+            let newVal = val + step;
+            if(newVal < 0) newVal = 0;
+            input.value = newVal;
+            updateSim(input);
         }
 
         function adjustSimMl(btn, step) {
@@ -1301,6 +1320,7 @@
             let finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 0;
 
             container.querySelector('.sim-res').innerHTML = `
+                <div class="text-base font-black text-white mb-1">${round1(finalVol)} <span class="text-[10px] text-stone-400 font-bold uppercase tracking-widest">ml au total</span></div>
                 <div class="text-xs font-bold text-stone-300 bg-stone-700/50 rounded py-0.5 px-2 inline-block mx-auto">${formatRatioStr(finalPgRatio, true)}</div>
                 <div class="text-base font-black text-brand-400 mt-1">${round1(aFinal)}% <span class="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">arôme</span></div>
                 <div class="text-xl font-black text-emerald-400">${round1(nic)} <span class="text-xs font-bold text-emerald-600/70">mg/ml</span></div>
