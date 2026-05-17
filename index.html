@@ -54,26 +54,21 @@
         /* Style pour l'impression de la recette */
         @media print {
             @page { margin: 1cm; }
-            html, body { background-color: white !important; color: black !important; }
+            html, body { background-color: white !important; height: auto !important; overflow: visible !important; }
             #main_app_container { display: none !important; }
-            #recipe_modal { position: static !important; display: flex !important; padding: 0 !important; background: white !important; }
+            #recipe_modal { position: static !important; display: block !important; padding: 0 !important; background: white !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
             .modal-backdrop, .modal-buttons { display: none !important; }
             #print_prompt_modal, #help_modal { display: none !important; }
             .recipe-card-wrapper { 
-                border: 1px solid #e7e5e4 !important; 
                 box-shadow: none !important; 
-                padding: 1rem !important; 
+                padding: 1.5rem !important; 
                 margin: 0 auto !important; 
                 width: 100% !important; 
                 max-width: 600px !important; 
                 max-height: none !important; 
                 overflow: visible !important; 
                 background-color: white !important;
-                color: black !important;
-            }
-            .recipe-card-wrapper * {
-                color: black !important;
-                border-color: #e7e5e4 !important;
+                border: 2px solid #f5f5f4 !important;
             }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
@@ -1274,14 +1269,14 @@
 
             if(prefix === 't2') {
                 html += `
-                <div class="mt-3 p-3 bg-stone-800 dark:bg-stone-900/80 rounded-xl text-stone-200 text-xs border border-transparent dark:border-stone-700 transition-colors">
-                    <div class="flex items-center justify-center gap-2 mb-2 text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-700 pb-1.5">
+                <div class="mt-3 p-3 bg-stone-800 dark:bg-stone-900/80 rounded-xl text-stone-200 text-xs border border-transparent dark:border-stone-700 transition-colors print:bg-stone-100 print:text-stone-800 print:border-stone-200">
+                    <div class="flex items-center justify-center gap-2 mb-2 text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-700 print:border-stone-300 print:text-stone-600 pb-1.5">
                         <span>🧪 Simulation d'ajout de boosters</span>
                     </div>
                     
                     <div class="flex flex-col items-center gap-0.5 mb-3">
-                        <span class="text-[10px] font-bold text-stone-400">Je prélève</span>
-                        <select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-700 dark:bg-stone-800 text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-600 dark:border-stone-700 text-center shadow-inner transition-colors">`;
+                        <span class="text-[10px] font-bold text-stone-400 print:text-stone-600">Je prélève</span>
+                        <select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-700 dark:bg-stone-800 text-white print:bg-white print:text-stone-800 print:border print:border-stone-300 rounded p-1 text-xs font-bold focus:outline-none border border-stone-600 dark:border-stone-700 text-center shadow-inner transition-colors">`;
                         
                 [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(v => {
                     html += `<option value="${v}" ${v===50 ? 'selected' : ''}>${v} ml</option>`;
@@ -1291,37 +1286,37 @@
                             <option value="${round1(r.prepVol)}">Total (${round1(r.prepVol)}ml)</option>
                             <option value="custom">Manuel...</option>
                         </select>
-                        <div class="sim-custom-wrapper hidden items-center bg-stone-600 dark:bg-stone-800 rounded overflow-hidden border border-stone-50 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors">
-                            <button onclick="adjustCustomPreleve(this, -1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 text-white font-bold transition-colors">-</button>
-                            <input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-600 dark:bg-stone-800 text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)">
-                            <button onclick="adjustCustomPreleve(this, 1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 text-white font-bold transition-colors">+</button>
+                        <div class="sim-custom-wrapper hidden items-center bg-stone-600 dark:bg-stone-800 rounded overflow-hidden border border-stone-500 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors print:border-stone-300">
+                            <button onclick="adjustCustomPreleve(this, -1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">-</button>
+                            <input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-600 dark:bg-stone-800 text-white print:bg-white print:text-stone-800 text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)">
+                            <button onclick="adjustCustomPreleve(this, 1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">+</button>
                         </div>
                     </div>
 
-                    <div class="flex flex-col items-center mb-3 bg-stone-900/40 dark:bg-black/20 p-2 rounded-lg border border-stone-700/50 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
-                        <span class="text-[10px] font-bold text-stone-400 mb-1">J'ajoute</span>
+                    <div class="flex flex-col items-center mb-3 bg-stone-900/40 dark:bg-black/20 print:bg-white p-2 rounded-lg border border-stone-700/50 print:border-stone-300 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
+                        <span class="text-[10px] font-bold text-stone-400 print:text-stone-600 mb-1">J'ajoute</span>
                         
-                        <div class="flex items-center bg-stone-700 dark:bg-stone-800 rounded overflow-hidden border border-stone-600 dark:border-stone-700 shadow-md transition-colors">
-                            <button onclick="adjustSimBoosters(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors">-</button>
-                            <input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-6 bg-stone-700 dark:bg-stone-800 text-white text-center text-xs font-bold focus:outline-none transition-colors">
-                            <button onclick="adjustSimBoosters(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors">+</button>
+                        <div class="flex items-center bg-stone-700 dark:bg-stone-800 print:bg-transparent rounded overflow-hidden border border-stone-600 dark:border-stone-700 print:border-0 shadow-md print:shadow-none transition-colors">
+                            <button onclick="adjustSimBoosters(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">-</button>
+                            <input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-6 bg-stone-700 dark:bg-stone-800 text-white print:bg-white print:text-stone-800 print:border print:border-stone-300 print:rounded text-center text-xs font-bold focus:outline-none transition-colors">
+                            <button onclick="adjustSimBoosters(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">+</button>
                         </div>
-                        <span class="text-[10px] font-bold text-stone-300 mt-0.5">boosters</span>
+                        <span class="text-[10px] font-bold text-stone-300 print:text-stone-600 mt-0.5">boosters</span>
                         
-                        <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest my-1">ou</span>
+                        <span class="text-[9px] font-black text-stone-500 print:text-stone-400 uppercase tracking-widest my-1">ou</span>
                         
-                        <div class="flex items-center bg-stone-700 dark:bg-stone-800 rounded overflow-hidden border border-stone-600 dark:border-stone-700 shadow-md transition-colors">
-                            <button onclick="adjustSimMl(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors">-</button>
-                            <input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-6 bg-stone-700 dark:bg-stone-800 text-white text-center text-xs font-bold focus:outline-none transition-colors">
-                            <button onclick="adjustSimMl(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors">+</button>
+                        <div class="flex items-center bg-stone-700 dark:bg-stone-800 print:bg-transparent rounded overflow-hidden border border-stone-600 dark:border-stone-700 print:border-0 shadow-md print:shadow-none transition-colors">
+                            <button onclick="adjustSimMl(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">-</button>
+                            <input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-6 bg-stone-700 dark:bg-stone-800 text-white print:bg-white print:text-stone-800 print:border print:border-stone-300 print:rounded text-center text-xs font-bold focus:outline-none transition-colors">
+                            <button onclick="adjustSimMl(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">+</button>
                         </div>
-                        <span class="text-[10px] font-bold text-stone-400 mt-0.5">ml</span>
+                        <span class="text-[10px] font-bold text-stone-400 print:text-stone-600 mt-0.5">ml</span>
                     </div>
 
                     <div class="flex flex-col items-center gap-0.5 mb-2">
-                        <span class="text-[10px] font-bold text-stone-400">Profil des boosters</span>
+                        <span class="text-[10px] font-bold text-stone-400 print:text-stone-600">Profil des boosters</span>
                         
-                        <select onchange="updateSim(this)" class="sim-boost-pg w-full max-w-[180px] bg-stone-700 dark:bg-stone-800 text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-600 dark:border-stone-700 text-center shadow-inner transition-colors">`;
+                        <select onchange="updateSim(this)" class="sim-boost-pg w-full max-w-[180px] bg-stone-700 dark:bg-stone-800 text-white print:bg-white print:text-stone-800 print:border print:border-stone-300 rounded p-1 text-xs font-bold focus:outline-none border border-stone-600 dark:border-stone-700 text-center shadow-inner transition-colors">`;
                         
                 RATIOS.forEach(pg => {
                     html += `<option value="${pg}" ${pg===50 ? 'selected' : ''}>${formatRatioStr(pg, true)}</option>`;
@@ -1330,21 +1325,21 @@
                 html += `
                         </select>
                         
-                        <span class="text-[10px] font-bold text-stone-500 my-1">dosés à</span>
+                        <span class="text-[10px] font-bold text-stone-500 print:text-stone-400 my-1">dosés à</span>
                         
-                        <div class="flex items-center bg-stone-700 dark:bg-stone-800 rounded overflow-hidden border border-stone-600 dark:border-stone-700 shadow-md transition-colors">
-                            <button onclick="adjustSimVal(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors">-</button>
-                            <input type="number" value="20" step="1" min="0" onchange="updateSim(this)" class="sim-boost-str hide-arrows w-12 min-w-0 h-6 bg-stone-700 dark:bg-stone-800 text-white text-center text-xs font-bold focus:outline-none transition-colors">
-                            <button onclick="adjustSimVal(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors">+</button>
+                        <div class="flex items-center bg-stone-700 dark:bg-stone-800 print:bg-transparent rounded overflow-hidden border border-stone-600 dark:border-stone-700 print:border-0 shadow-md print:shadow-none transition-colors">
+                            <button onclick="adjustSimVal(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">-</button>
+                            <input type="number" value="20" step="1" min="0" onchange="updateSim(this)" class="sim-boost-str hide-arrows w-12 min-w-0 h-6 bg-stone-700 dark:bg-stone-800 text-white print:bg-white print:text-stone-800 print:border print:border-stone-300 print:rounded text-center text-xs font-bold focus:outline-none transition-colors">
+                            <button onclick="adjustSimVal(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-600 dark:bg-stone-700 hover:bg-stone-500 dark:hover:bg-stone-600 text-white font-bold transition-colors print:hidden">+</button>
                         </div>
-                        <span class="text-[10px] font-bold text-stone-400 mt-0.5">mg/ml</span>
+                        <span class="text-[10px] font-bold text-stone-400 print:text-stone-600 mt-0.5">mg/ml</span>
                     </div>
 
-                    <div class="pt-2 mt-2 border-t border-stone-700 dark:border-stone-600 flex flex-col items-center text-center transition-colors">
-                        <span class="text-[9px] font-black text-stone-500 uppercase tracking-widest mb-1.5">Résultat Final</span>
+                    <div class="pt-2 mt-2 border-t border-stone-700 print:border-stone-300 flex flex-col items-center text-center transition-colors">
+                        <span class="text-[9px] font-black text-stone-500 print:text-stone-500 uppercase tracking-widest mb-1.5">Résultat Final</span>
                         <div class="sim-res w-full flex flex-col gap-0.5">...</div>
                     </div>
-                    <div class="sim-warning mt-2 pt-1.5 border-t border-red-500/30 text-[9px] text-red-400 font-bold text-center hidden"></div>
+                    <div class="sim-warning mt-2 pt-1.5 border-t border-red-500/30 text-[9px] text-red-400 print:text-red-600 font-bold text-center hidden"></div>
                     <input type="hidden" class="sim-data" data-aroma="${r.aroma/r.prepVol}" data-pgratio="${r.realPgRatio}">
                 </div>`;
             }
@@ -1354,7 +1349,7 @@
         }
 
         function handlePreleveChange(el) {
-            let container = el.closest('.bg-stone-800') || el.closest('.bg-stone-900\\/80');
+            let container = el.closest('.bg-stone-800') || el.closest('.bg-stone-900\\/80') || el.closest('.print\\:bg-stone-100');
             let customWrapper = container.querySelector('.sim-custom-wrapper');
             let customInput = container.querySelector('.sim-custom-vol');
             if (el.value === 'custom') {
@@ -1381,7 +1376,7 @@
         }
 
         function adjustSimMl(btn, step) {
-            let container = btn.closest('.bg-stone-800') || btn.closest('.bg-stone-900\\/80');
+            let container = btn.closest('.bg-stone-800') || btn.closest('.bg-stone-900\\/80') || btn.closest('.print\\:bg-stone-100');
             if (!container) return;
             let input = container.querySelector('.sim-ml-count');
             if (!input) return;
@@ -1393,7 +1388,7 @@
         }
 
         function adjustSimBoosters(btn, step) {
-            let container = btn.closest('.bg-stone-800') || btn.closest('.bg-stone-900\\/80');
+            let container = btn.closest('.bg-stone-800') || btn.closest('.bg-stone-900\\/80') || btn.closest('.print\\:bg-stone-100');
             if (!container) return;
             let bInput = container.querySelector('.sim-b-count');
             if (!bInput) return;
@@ -1411,7 +1406,7 @@
         }
 
         function syncSimInputs(el, source) {
-            let container = el.closest('.bg-stone-800') || el.closest('.bg-stone-900\\/80');
+            let container = el.closest('.bg-stone-800') || el.closest('.bg-stone-900\\/80') || el.closest('.print\\:bg-stone-100');
             if (!container) return;
             let mlInput = container.querySelector('.sim-ml-count');
             let bInput = container.querySelector('.sim-b-count');
@@ -1427,7 +1422,7 @@
         }
 
         function updateSim(el) {
-            let container = el.closest('.bg-stone-800') || el.closest('.bg-stone-900\\/80');
+            let container = el.closest('.bg-stone-800') || el.closest('.bg-stone-900\\/80') || el.closest('.print\\:bg-stone-100');
             if (!container) return;
             
             let selVolEl = container.querySelector('.sim-sel-vol');
@@ -1454,10 +1449,10 @@
             let finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 0;
 
             container.querySelector('.sim-res').innerHTML = `
-                <div class="text-base font-black text-white mb-1">${round1(finalVol)} <span class="text-[10px] text-stone-400 font-bold uppercase tracking-widest">ml au total</span></div>
-                <div class="text-xs font-bold text-stone-300 bg-stone-700/50 dark:bg-stone-800/50 rounded py-0.5 px-2 inline-block mx-auto">${formatRatioStr(finalPgRatio, true)}</div>
-                <div class="text-base font-black text-brand-400 mt-1">${round1(aFinal)}% <span class="text-[10px] font-bold text-stone-400 uppercase tracking-widest ml-1">arôme</span></div>
-                <div class="text-xl font-black text-emerald-400">${round1(nic)} <span class="text-xs font-bold text-emerald-600/70">mg/ml</span></div>
+                <div class="text-base font-black text-white print:text-stone-800 mb-1">${round1(finalVol)} <span class="text-[10px] text-stone-400 print:text-stone-500 font-bold uppercase tracking-widest">ml au total</span></div>
+                <div class="text-xs font-bold text-stone-300 print:text-stone-800 bg-stone-700/50 print:bg-white dark:bg-stone-800/50 rounded py-0.5 px-2 inline-block mx-auto print:border print:border-stone-300">${formatRatioStr(finalPgRatio, true)}</div>
+                <div class="text-base font-black text-brand-400 print:text-brand-600 mt-1">${round1(aFinal)}% <span class="text-[10px] font-bold text-stone-400 print:text-stone-500 uppercase tracking-widest ml-1">arôme</span></div>
+                <div class="text-xl font-black text-emerald-400 print:text-emerald-600">${round1(nic)} <span class="text-xs font-bold text-emerald-600/70 print:text-emerald-600">mg/ml</span></div>
             `;
             
             // Gestion de l'alerte sur-dilution
