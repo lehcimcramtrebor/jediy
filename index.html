@@ -78,8 +78,11 @@
 
     <div class="max-w-5xl mx-auto relative" id="main_app_container">
         
-        <!-- Bouton d'installation PWA (Caché par défaut) -->
-        <div class="absolute top-0 left-0 sm:left-2 md:left-4 z-10">
+        <!-- Boutons Top Left (Partage + PWA) -->
+        <div class="absolute top-0 left-0 sm:left-2 md:left-4 flex gap-2 z-10">
+            <button onclick="shareApp()" id="share_app_btn" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Partager l'application">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </button>
             <button onclick="installApp()" id="install_app_btn" class="hidden w-12 h-12 items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg border border-emerald-600 transition-all" title="Installer l'application">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </button>
@@ -683,6 +686,37 @@
             }
         }
         setupPWA();
+
+        // --- FONCTION DE PARTAGE ---
+        function shareApp() {
+            const shareData = {
+                title: 'Je-DIY - Calculateur Expert',
+                text: 'Découvre Je-DIY, le calculateur expert de e-liquide super pratique pour la vape !',
+                url: 'https://lehcimcramtrebor.github.io/jediy/'
+            };
+
+            // Utilise l'API de partage native si dispo (smartphones)
+            if (navigator.share) {
+                navigator.share(shareData).catch((err) => console.log('Partage annulé ou erreur', err));
+            } else {
+                // Sur PC, copie le lien dans le presse-papier
+                const textArea = document.createElement("textarea");
+                textArea.value = shareData.url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const btn = document.getElementById('share_app_btn');
+                    const originalHTML = btn.innerHTML;
+                    // Change l'icône en check vert pour confirmer
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                    setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+                } catch (err) {
+                    console.error('Copie échouée', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
 
         function init() {
             generateCheckboxes('t1');
