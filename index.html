@@ -54,7 +54,7 @@
         /* Style pour l'impression de la recette */
         @media print {
             @page { margin: 1cm; }
-            html, body { background-color: white !important; }
+            html, body { background-color: white !important; color: black !important; }
             #main_app_container { display: none !important; }
             #recipe_modal { position: static !important; display: flex !important; padding: 0 !important; background: white !important; }
             .modal-backdrop, .modal-buttons { display: none !important; }
@@ -69,6 +69,11 @@
                 max-height: none !important; 
                 overflow: visible !important; 
                 background-color: white !important;
+                color: black !important;
+            }
+            .recipe-card-wrapper * {
+                color: black !important;
+                border-color: #e7e5e4 !important;
             }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
@@ -78,6 +83,13 @@
 
     <div class="max-w-5xl mx-auto relative" id="main_app_container">
         
+        <!-- Bouton d'installation PWA (Caché par défaut) -->
+        <div class="absolute top-0 left-0 sm:left-2 md:left-4 z-10">
+            <button onclick="installApp()" id="install_app_btn" class="hidden w-12 h-12 items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg border border-emerald-600 transition-all" title="Installer l'application">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+        </div>
+
         <!-- Boutons Top Right -->
         <div class="absolute top-0 right-0 sm:right-2 md:right-4 flex gap-2 z-10">
             <button onclick="toggleTheme()" id="theme_toggle_btn" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Mode Sombre/Clair">
@@ -88,7 +100,7 @@
             </button>
         </div>
 
-        <header class="mb-8 text-center pt-2 sm:pt-0">
+        <header class="mb-8 text-center pt-14 sm:pt-0">
             <h1 class="text-4xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-2">Je-<span class="text-brand-600 dark:text-brand-500">DIY</span></h1>
             <p class="text-stone-500 dark:text-stone-400 font-medium">Calculateur de e-liquide avancé & intelligent by Helmicretro</p>
         </header>
@@ -118,9 +130,9 @@
                     <div id="t1_vol_panel" class="mb-8">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité finale souhaitée (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t1_vol', -10)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="t1_vol" value="200" class="hide-arrows flex-1 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t1'); triggerCalc()">
-                            <button onclick="adjustVal('t1_vol', 10)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t1_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t1_vol" value="200" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t1'); triggerCalc()">
+                            <button onclick="adjustVal('t1_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
                     </div>
 
@@ -128,9 +140,9 @@
                     <div id="t1_aroma_avail_panel" class="mb-8 hidden">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité d'arôme possédée (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t1_aroma_avail', -1)" class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="t1_aroma_avail" value="30" class="hide-arrows flex-1 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t1')" onchange="triggerCalc()">
-                            <button onclick="adjustVal('t1_aroma_avail', 1)" class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t1_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t1_aroma_avail" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t1')" onchange="triggerCalc()">
+                            <button onclick="adjustVal('t1_aroma_avail', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
                     </div>
 
@@ -194,18 +206,18 @@
 
                         <div id="t1_nic_mg_panel" class="flex flex-col mb-4">
                             <div class="flex items-center gap-3">
-                                <button onclick="adjustVal('t1_nic_mg', -0.5)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
-                                <input type="number" id="t1_nic_mg" value="6" step="0.5" class="hide-arrows flex-1 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
-                                <button onclick="adjustVal('t1_nic_mg', 0.5)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
+                                <button onclick="adjustVal('t1_nic_mg', -0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
+                                <input type="number" id="t1_nic_mg" value="6" step="0.5" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
+                                <button onclick="adjustVal('t1_nic_mg', 0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
                             </div>
                             <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_mg_preview">Quantité : <span class="text-emerald-600 dark:text-emerald-400">0 ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit 0 booster)</span></div>
                         </div>
 
                         <div id="t1_nic_boost_panel" class="hidden flex-col mb-4">
                             <div class="flex items-center gap-3">
-                                <button onclick="adjustVal('t1_nic_boost', -1)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
-                                <input type="number" id="t1_nic_boost" value="8" step="1" class="hide-arrows flex-1 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
-                                <button onclick="adjustVal('t1_nic_boost', 1)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
+                                <button onclick="adjustVal('t1_nic_boost', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
+                                <input type="number" id="t1_nic_boost" value="8" step="1" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
+                                <button onclick="adjustVal('t1_nic_boost', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
                             </div>
                             <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_boost_preview">Taux final : <span class="text-emerald-600 dark:text-emerald-400">0 mg/ml</span></div>
                         </div>
@@ -266,9 +278,9 @@
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-1">Volume à préparer (Avant boost)</label>
                         <p class="text-[10px] text-stone-400 dark:text-stone-500 mb-2">C'est la quantité de liquide sur-concentré à créer.</p>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t2_vol', -10)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
-                            <input type="number" id="t2_vol" value="100" class="hide-arrows flex-1 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateAromaPreview('t2'); triggerCalc()">
-                            <button onclick="adjustVal('t2_vol', 10)" class="w-12 h-12 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
+                            <button onclick="adjustVal('t2_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
+                            <input type="number" id="t2_vol" value="100" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateAromaPreview('t2'); triggerCalc()">
+                            <button onclick="adjustVal('t2_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
                         </div>
                     </div>
 
@@ -276,9 +288,9 @@
                     <div id="t2_aroma_avail_panel" class="mb-8 hidden">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité d'arôme possédée (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t2_aroma_avail', -1)" class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="t2_aroma_avail" value="30" class="hide-arrows flex-1 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t2')" onchange="triggerCalc()">
-                            <button onclick="adjustVal('t2_aroma_avail', 1)" class="w-12 h-12 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t2_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t2_aroma_avail" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t2')" onchange="triggerCalc()">
+                            <button onclick="adjustVal('t2_aroma_avail', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
                     </div>
 
@@ -363,9 +375,9 @@
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Arôme (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_aroma_vol', -5)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_aroma_vol', 5)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_aroma_vol', -5)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_aroma_vol', 5)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
                         <div class="flex items-center gap-3 mt-1">
                             <span class="w-24 text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
@@ -378,9 +390,9 @@
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Base Neutre (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_base_vol', -10)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="t3_base_vol" value="120" class="hide-arrows flex-1 h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_base_vol', 10)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_base_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_base_vol" value="120" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_base_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
                         <div class="flex items-center gap-3 mt-1">
                             <span class="w-24 text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
@@ -393,9 +405,9 @@
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Boosters (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_boost_vol', -10)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="t3_boost_vol" value="50" class="hide-arrows flex-1 h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_boost_vol', 10)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_boost_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_boost_vol" value="50" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_boost_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
                         <div class="flex items-center gap-3 mt-1">
                             <span class="w-24 text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
@@ -408,9 +420,9 @@
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Taux des Boosters (mg/ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_boost_str', -1)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="t3_boost_str" value="20" class="hide-arrows flex-1 h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_boost_str', 1)" class="w-12 h-12 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_boost_str', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="t3_boost_str" value="20" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_boost_str', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
                     </div>
                 </div>
@@ -529,15 +541,6 @@
         <div class="modal-backdrop absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-md cursor-pointer" onclick="closeRecipeModal()"></div>
         <!-- Conteneur central -->
         <div class="relative w-full max-w-lg z-10 flex flex-col items-center">
-            <!-- Boutons extérieurs (Cachés à l'impression) -->
-            <div class="modal-buttons absolute -top-14 right-0 flex gap-2">
-                <button onclick="showPrintPrompt()" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-xl border border-stone-200 dark:border-stone-700 transition-colors" title="Imprimer la recette">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                </button>
-                <button onclick="closeRecipeModal()" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-stone-600 dark:text-stone-300 shadow-xl border border-stone-200 dark:border-stone-700 transition-colors" title="Fermer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
-            </div>
             <div id="recipe_modal_content" class="w-full">
                 <!-- La carte clonée arrive ici -->
             </div>
@@ -610,6 +613,45 @@
         applyTheme();
 
         // --- PWA SETUP (Installation Smartphone) ---
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Empêcher l'invite automatique de s'afficher tout de suite
+            e.preventDefault();
+            // Sauvegarder l'événement pour plus tard
+            deferredPrompt = e;
+            // Afficher le bouton d'installation
+            const installBtn = document.getElementById('install_app_btn');
+            if (installBtn) {
+                installBtn.classList.remove('hidden');
+                installBtn.classList.add('flex');
+            }
+        });
+
+        function installApp() {
+            const installBtn = document.getElementById('install_app_btn');
+            installBtn.classList.add('hidden');
+            installBtn.classList.remove('flex');
+            
+            if (deferredPrompt) {
+                // Afficher l'invite d'installation
+                deferredPrompt.prompt();
+                // Attendre la réponse de l'utilisateur
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        window.addEventListener('appinstalled', () => {
+            // Cacher le bouton une fois installé
+            const installBtn = document.getElementById('install_app_btn');
+            if (installBtn) {
+                installBtn.classList.add('hidden');
+                installBtn.classList.remove('flex');
+            }
+        });
+
         // On génère le manifest et le service worker à la volée pour garder un seul fichier !
         function setupPWA() {
             // Icône générée en SVG Base64 (Une petite goutte d'arôme stylisée)
@@ -1249,7 +1291,7 @@
                             <option value="${round1(r.prepVol)}">Total (${round1(r.prepVol)}ml)</option>
                             <option value="custom">Manuel...</option>
                         </select>
-                        <div class="sim-custom-wrapper hidden items-center bg-stone-600 dark:bg-stone-800 rounded overflow-hidden border border-stone-500 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors">
+                        <div class="sim-custom-wrapper hidden items-center bg-stone-600 dark:bg-stone-800 rounded overflow-hidden border border-stone-50 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors">
                             <button onclick="adjustCustomPreleve(this, -1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 text-white font-bold transition-colors">-</button>
                             <input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-600 dark:bg-stone-800 text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)">
                             <button onclick="adjustCustomPreleve(this, 1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-500 dark:bg-stone-700 hover:bg-stone-400 dark:hover:bg-stone-600 text-white font-bold transition-colors">+</button>
@@ -1449,12 +1491,32 @@
             // Clonage pour éviter de casser la grille d'origine
             let clone = card.cloneNode(true);
             
-            // On vire le bouton d'agrandissement sur le clone
+            // On remplace le bouton d'agrandissement par les boutons d'action (Imprimer / Fermer)
             let expandBtn = clone.querySelector('button[title="Agrandir la recette"]');
-            if(expandBtn) expandBtn.remove();
+            let actionBtns = document.createElement('div');
+            actionBtns.className = 'modal-buttons flex gap-2 print:hidden';
+            actionBtns.innerHTML = `
+                <button onclick="showPrintPrompt()" class="p-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-stone-800 hover:bg-brand-50 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Imprimer la recette">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                </button>
+                <button onclick="closeRecipeModal()" class="p-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Fermer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+            `;
+            
+            if (expandBtn) {
+                expandBtn.replaceWith(actionBtns);
+            }
             
             // Ajustement des classes pour le plein écran et ajout du SCROLL !
             clone.classList.remove('h-full');
+            // On force un fond opaque sur la modale pour éviter que le texte ne se superpose lors du scroll
+            clone.classList.remove('bg-emerald-50/30', 'bg-amber-50/30', 'dark:bg-emerald-900/10', 'dark:bg-amber-900/10');
+            if (card.classList.contains('border-emerald-200')) {
+                clone.classList.add('bg-emerald-50', 'dark:bg-stone-900');
+            } else {
+                clone.classList.add('bg-amber-50', 'dark:bg-stone-900');
+            }
             clone.classList.add('shadow-2xl', 'max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
             
             contentDest.innerHTML = '';
