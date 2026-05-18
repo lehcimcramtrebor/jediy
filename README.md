@@ -1,4 +1,4 @@
 # jediy
-HTML 5 E-LIQUID DIY CALCULATOR
-<img width="2048" height="2048" alt="J-DIY-SPACE" src="https://github.com/user-attachments/assets/ef42a574-b1fe-4e05-9418-d5516df26d63" />
+HTML 5 E-LIQUID DIY CALCULATOR WITH EXPORT AND PRINT OPTIONS
+<img width="1536" height="1536" alt="Flyer" src="https://github.com/user-attachments/assets/266de302-4a47-4f99-9f73-5cff77e8b28b" />
 
