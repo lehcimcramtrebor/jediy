@@ -5,6 +5,14 @@ Web App installable sur pc, mac et mobile.
 Calcul du liquide complet nicotiné ou calcul d'une reserve surconcentrée pour shortfills avec simulation de boosters.
 Recette imprimables ou PDF.
 
+APP EN TAILLE REELLE SUR PC:
+
+<img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_50_08" src="https://github.com/user-attachments/assets/0402fa27-1358-4417-9d8e-d930cd784ab3" />
+
+
+
+VUES ZOMM OUT DE L'APP SUR PC:
+
 <img width="1536" height="1536" alt="Flyer" src="https://github.com/user-attachments/assets/266de302-4a47-4f99-9f73-5cff77e8b28b" />
 
 <img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_46_12" src="https://github.com/user-attachments/assets/7e4b3dc2-0ce4-4e1f-b365-971615261821" />
