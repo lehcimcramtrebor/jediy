@@ -19,7 +19,16 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: { brand: tailwind.colors.amber, base: tailwind.colors.stone }
+                    colors: { brand: tailwind.colors.amber, base: tailwind.colors.stone },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
                 }
             }
         }
@@ -45,8 +54,10 @@
         }
         .hide-arrows::-webkit-outer-spin-button, .hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .hide-arrows { -moz-appearance: textfield; }
+        
+        /* Fade in des onglets */
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-out forwards; }
         
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -56,7 +67,7 @@
             @page { margin: 1cm; }
             html, body { background-color: white !important; height: auto !important; overflow: visible !important; }
             #main_app_container { display: none !important; }
-            #recipe_modal { position: static !important; display: block !important; padding: 0 !important; background: white !important; height: auto !important; overflow: visible !important; z-index: auto !important; }
+            #recipe_modal { position: static !important; display: block !important; padding: 0 !important; background: white !important; height: auto !important; overflow: visible !important; z-index: auto !important; animation: none !important; }
             .modal-backdrop, .modal-buttons { display: none !important; }
             #print_prompt_modal, #help_modal { display: none !important; }
             .recipe-card-wrapper { 
@@ -83,7 +94,7 @@
             <button onclick="shareApp()" id="share_app_btn" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Partager l'application">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
             </button>
-            <button onclick="installApp()" id="install_app_btn" class="hidden w-12 h-12 items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg border border-emerald-600 transition-all" title="Installer l'application">
+            <button onclick="installApp()" id="install_app_btn" class="hidden w-12 h-12 items-center justify-center bg-emerald-500 hover:bg-emerald-600 text-white rounded-full shadow-lg border border-emerald-600 transition-all animate-fade-in" title="Installer l'application">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </button>
         </div>
@@ -125,7 +136,7 @@
                     </div>
 
                     <!-- Volume -->
-                    <div id="t1_vol_panel" class="mb-8">
+                    <div id="t1_vol_panel" class="mb-8 animate-fade-in">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité finale souhaitée (ml)</label>
                         <div class="flex items-center gap-3">
                             <button onclick="adjustVal('t1_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
@@ -135,7 +146,7 @@
                     </div>
 
                     <!-- Aroma Possédé (Mode Max Aroma) -->
-                    <div id="t1_aroma_avail_panel" class="mb-8 hidden">
+                    <div id="t1_aroma_avail_panel" class="mb-8 hidden animate-fade-in">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité d'arôme possédée (ml)</label>
                         <div class="flex items-center gap-3">
                             <button onclick="adjustVal('t1_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
@@ -154,13 +165,13 @@
                             </div>
                         </div>
                         
-                        <div id="t1_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 transition-colors">
+                        <div id="t1_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 transition-colors animate-fade-in">
                             <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">Ratio PG de l'arôme (%)</label>
                             <input type="range" id="t1_aroma_pg" min="0" max="100" step="10" value="100" oninput="document.getElementById('t1_aroma_pg_val').innerText = this.value + '%'; triggerCalc()">
                             <div class="text-right text-sm font-bold text-brand-600 dark:text-brand-400 mt-1" id="t1_aroma_pg_val">100%</div>
                         </div>
 
-                        <div id="t1_aroma_perc_panel">
+                        <div id="t1_aroma_perc_panel" class="animate-fade-in">
                             <div class="flex justify-between mb-2">
                                 <span class="text-xs text-stone-500 dark:text-stone-400">Dosage</span>
                                 <span class="text-lg font-bold text-brand-600 dark:text-brand-400" id="t1_aroma_perc_disp">15%</span>
@@ -177,7 +188,7 @@
                             </div>
 
                             <!-- Preview Temps Réel (Mode Tout l'arôme) -->
-                            <div id="t1_vol_preview_container" class="hidden mt-4 p-4 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-700/50 text-center shadow-inner transition-all">
+                            <div id="t1_vol_preview_container" class="hidden mt-4 p-4 bg-brand-50 dark:bg-brand-900/20 rounded-xl border border-brand-200 dark:border-brand-700/50 text-center shadow-inner transition-all animate-fade-in">
                                 <div class="text-[10px] font-black text-brand-600 dark:text-brand-500 uppercase tracking-widest mb-1">Volume final estimé</div>
                                 <div class="text-2xl font-black text-stone-800 dark:text-stone-100" id="t1_vol_preview">0 ml</div>
                             </div>
@@ -202,7 +213,7 @@
                             <button id="t1_nic_mode_boost_btn" onclick="setNicMode('t1', 'boost')" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">Boosters entiers</button>
                         </div>
 
-                        <div id="t1_nic_mg_panel" class="flex flex-col mb-4">
+                        <div id="t1_nic_mg_panel" class="flex flex-col mb-4 animate-fade-in">
                             <div class="flex items-center gap-3">
                                 <button onclick="adjustVal('t1_nic_mg', -0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
                                 <input type="number" id="t1_nic_mg" value="6" step="0.5" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
@@ -211,7 +222,7 @@
                             <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_mg_preview">Quantité : <span class="text-emerald-600 dark:text-emerald-400">0 ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit 0 booster)</span></div>
                         </div>
 
-                        <div id="t1_nic_boost_panel" class="hidden flex-col mb-4">
+                        <div id="t1_nic_boost_panel" class="hidden flex-col mb-4 animate-fade-in">
                             <div class="flex items-center gap-3">
                                 <button onclick="adjustVal('t1_nic_boost', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
                                 <input type="number" id="t1_nic_boost" value="8" step="1" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
@@ -272,7 +283,7 @@
                     </div>
 
                     <!-- Volume -->
-                    <div id="t2_vol_panel" class="mb-8">
+                    <div id="t2_vol_panel" class="mb-8 animate-fade-in">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-1">Volume à préparer (Avant boost)</label>
                         <p class="text-[10px] text-stone-400 dark:text-stone-500 mb-2">C'est la quantité de liquide sur-concentré à créer.</p>
                         <div class="flex items-center gap-3">
@@ -283,7 +294,7 @@
                     </div>
 
                     <!-- Aroma Possédé (Mode Max Aroma) -->
-                    <div id="t2_aroma_avail_panel" class="mb-8 hidden">
+                    <div id="t2_aroma_avail_panel" class="mb-8 hidden animate-fade-in">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité d'arôme possédée (ml)</label>
                         <div class="flex items-center gap-3">
                             <button onclick="adjustVal('t2_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
@@ -329,7 +340,7 @@
                     </div>
 
                     <!-- Preview Temps Réel (Mode Tout l'arôme T2) -->
-                    <div id="t2_vol_preview_container" class="hidden mb-8 p-4 bg-stone-100 dark:bg-stone-900/50 rounded-2xl border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors">
+                    <div id="t2_vol_preview_container" class="hidden mb-8 p-4 bg-stone-100 dark:bg-stone-900/50 rounded-2xl border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors animate-fade-in">
                         <div class="text-xs font-black text-stone-500 dark:text-stone-400 uppercase tracking-widest mb-1">Résultat estimé</div>
                         <div class="text-2xl font-black text-stone-800 dark:text-stone-100" id="t2_vol_preview">0 ml total</div>
                         <div class="text-sm font-bold text-brand-600 dark:text-brand-400 mt-1" id="t2_vol_preview_sub">soit 0 ml à préparer (avant boost)</div>
@@ -435,7 +446,7 @@
     </div>
     
     <!-- Modal d'Aide (Plein écran) -->
-    <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6">
+    <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <!-- Fond assombri et flouté -->
         <div class="modal-backdrop absolute inset-0 bg-stone-900/80 backdrop-blur-md cursor-pointer" onclick="closeHelpModal()"></div>
         <!-- Conteneur central -->
@@ -536,7 +547,7 @@
     </div>
     
     <!-- Modal Recette (Plein écran) -->
-    <div id="recipe_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6">
+    <div id="recipe_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <!-- Fond assombri et flouté -->
         <div class="modal-backdrop absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-md cursor-pointer" onclick="closeRecipeModal()"></div>
         <!-- Conteneur central -->
@@ -548,7 +559,7 @@
     </div>
 
     <!-- Modal Nom de la recette (Impression) -->
-    <div id="print_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6">
+    <div id="print_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="cancelPrint()"></div>
         <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700">
             <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2">Nom de la recette</h3>
@@ -1201,7 +1212,7 @@
             let str = parseFloat(document.getElementById('t3_boost_str').value)||20;
 
             let tVol = aVol + bVol + nVol;
-            if(tVol === 0) { document.getElementById('t3_results').innerHTML = "Aucun volume."; return; }
+            if(tVol === 0) { document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in">Aucun volume.</div>`; return; }
 
             let totalPg = (aVol*(aPg/100)) + (bVol*(bPg/100)) + (nVol*(nPg/100));
             let pgRatio = (totalPg / tVol) * 100;
@@ -1209,11 +1220,13 @@
             let finalNic = (nVol * str) / tVol;
 
             document.getElementById('t3_results').innerHTML = `
-                <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml</span></div>
-                <div class="grid grid-cols-3 gap-2 mt-4 text-left">
-                    <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio)}</span></div>
-                    <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600 dark:text-brand-400">${round1(aRatio)} %</span></div>
-                    <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Nicotine</span><span class="font-bold text-stone-800 dark:text-stone-200">${round1(finalNic)} mg</span></div>
+                <div class="animate-fade-in">
+                    <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml</span></div>
+                    <div class="grid grid-cols-3 gap-2 mt-4 text-left">
+                        <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio)}</span></div>
+                        <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600 dark:text-brand-400">${round1(aRatio)} %</span></div>
+                        <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Nicotine</span><span class="font-bold text-stone-800 dark:text-stone-200">${round1(finalNic)} mg</span></div>
+                    </div>
                 </div>
             `;
         }
@@ -1224,7 +1237,7 @@
 
             let hasErr = alt.length > 0 && alt[0].err;
             if(hasErr) {
-                container.innerHTML = `<div class="col-span-full p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-2xl font-bold text-sm text-center shadow-inner">${alt[0].err}</div>`;
+                container.innerHTML = `<div class="animate-fade-in col-span-full p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-2xl font-bold text-sm text-center shadow-inner">${alt[0].err}</div>`;
                 return;
             }
 
@@ -1232,24 +1245,24 @@
             
             if (exact.length > 0 || alt.length > 0) {
                 allHtml += `
-                <div class="col-span-full mb-2 p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors">
+                <div class="animate-fade-in col-span-full mb-2 p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors">
                     <span class="text-xl">💡</span>
                     <p><strong>Astuce :</strong> Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg> pour agrandir la recette, puis sur <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> pour lui donner un nom avant de l'imprimer au propre.</p>
                 </div>`;
             }
 
             if(exact.length > 0) {
-                allHtml += `<div class="col-span-full text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${exact.length} Recette(s) Parfaite(s)</div>`;
+                allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${exact.length} Recette(s) Parfaite(s)</div>`;
                 exact.forEach(r => allHtml += buildCard(r, prefix, false));
             }
 
             if(exact.length === 0 && alt.length > 0) {
-                allHtml += `<div class="col-span-full text-xs font-black text-amber-500 dark:text-amber-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Alternatives Proches</div>`;
+                allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-amber-500 dark:text-amber-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Alternatives Proches</div>`;
                 alt.slice(0,3).forEach(r => allHtml += buildCard(r, prefix, true));
             }
 
             if(exact.length === 0 && alt.length === 0) {
-                allHtml = `<div class="col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucune recette possible. Ajustez vos paramètres.</div>`;
+                allHtml = `<div class="animate-fade-in col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucune recette possible. Ajustez vos paramètres.</div>`;
             }
 
             container.innerHTML = allHtml;
@@ -1263,7 +1276,7 @@
             let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400';
 
             // Ajout de la classe recipe-card-wrapper pour faciliter la modale
-            let html = `<div class="p-5 border ${bColor} rounded-3xl shadow-sm flex flex-col h-full recipe-card-wrapper transition-colors">`;
+            let html = `<div class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-sm flex flex-col h-full recipe-card-wrapper transition-colors">`;
             
             html += `<div class="flex-1">`;
             html += `<div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700">
