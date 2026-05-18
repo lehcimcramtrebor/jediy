@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="fr" class="transition-colors duration-300">
 <head>
@@ -336,7 +337,7 @@
                     <!-- Ratio -->
                     <div class="mb-4">
                         <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG final cible</label>
+                            <label class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG du Shortfill (avant boost)</label>
                             <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="t2_ratio_disp">50/50</span>
                         </div>
                         <input type="range" id="t2_ratio_pg" min="0" max="100" step="5" value="50" oninput="updateRatioDisp('t2'); triggerCalc()">
@@ -1140,15 +1141,16 @@
             }
 
             let baseVol = prepVol - aromaVol;
-            let targetPgRatio = 100 - parseInt(document.getElementById('t2_ratio_pg').value);
-            let aromaPg = 100;
-
-            let avgBoosterPg = 50; 
-            let targetPgMl = finalVolAfterBoost * (targetPgRatio / 100);
-            let aromaPgMl = aromaVol * (aromaPg / 100);
-            let futureBoosterPgMl = (finalVolAfterBoost - prepVol) * (avgBoosterPg / 100);
             
-            let remainingPgNeededInBase = targetPgMl - aromaPgMl - futureBoosterPgMl;
+            // Le curseur définit désormais le ratio du shortfill (avant boost)
+            let shortfillTargetPgRatio = 100 - parseInt(document.getElementById('t2_ratio_pg').value);
+            let aromaPg = 100; // L'arôme est considéré full PG par défaut dans ce mode
+
+            let shortfillTargetPgMl = prepVol * (shortfillTargetPgRatio / 100);
+            let aromaPgMl = aromaVol * (aromaPg / 100);
+            
+            // On calcule combien de PG la base doit apporter pour le shortfill
+            let remainingPgNeededInBase = shortfillTargetPgMl - aromaPgMl;
 
             let basesAvail = getChecked('t2_base_chk');
             if(basesAvail.length === 0) { renderRecipes('t2', [], [{err: "Cochez au moins une base."}]); return; }
@@ -1162,18 +1164,19 @@
                 for(let mix of mixes) {
                     exactRecipes.push({
                         aroma: aromaVol, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost,
-                        realPgRatio: targetPgRatio, nicMax: maxNic
+                        realPgRatio: shortfillTargetPgRatio, nicMax: maxNic
                     });
                 }
             } else {
                 let bestBase = basesAvail[0];
                 let minDiff = 9999;
                 for(let bp of basesAvail) {
-                    let testPg = aromaPgMl + futureBoosterPgMl + (baseVol * (bp/100));
-                    let diff = Math.abs(testPg - targetPgMl);
+                    let testPg = aromaPgMl + (baseVol * (bp/100)); // PG à l'intérieur du shortfill seul
+                    let diff = Math.abs(testPg - shortfillTargetPgMl);
                     if(diff < minDiff) { minDiff = diff; bestBase = bp; }
                 }
-                let realPg = ((aromaPgMl + futureBoosterPgMl + (baseVol * (bestBase/100))) / finalVolAfterBoost) * 100;
+                // Calcul du ratio PG réel du shortfill obtenu
+                let realPg = ((aromaPgMl + (baseVol * (bestBase/100))) / prepVol) * 100;
                 altRecipes.push({
                     aroma: aromaVol, bases: [{pgRatio: bestBase, vol: baseVol}],
                     prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic
@@ -1182,7 +1185,7 @@
 
             exactRecipes = deduplicateRecipes(exactRecipes);
             altRecipes = deduplicateRecipes(altRecipes);
-            altRecipes.sort((a,b) => Math.abs(a.realPgRatio - targetPgRatio) - Math.abs(b.realPgRatio - targetPgRatio));
+            altRecipes.sort((a,b) => Math.abs(a.realPgRatio - shortfillTargetPgRatio) - Math.abs(b.realPgRatio - shortfillTargetPgRatio));
 
             renderRecipes('t2', exactRecipes, altRecipes);
         }
@@ -1635,3 +1638,5 @@
     </script>
 </body>
 </html>
+
+```
