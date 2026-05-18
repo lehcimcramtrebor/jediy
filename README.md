@@ -13,7 +13,7 @@ APP EN TAILLE REELLE SUR PC:
 <img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_50_08" src="https://github.com/user-attachments/assets/9c6f8457-5d2a-4d0b-ab7c-d9d3d6270d19" />
 
 
-VUES ZOMM OUT DE L'APP SUR PC:
+VUES ZOOM OUT DE L'APP SUR PC:
 
 
 <img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_46_12" src="https://github.com/user-attachments/assets/7e4b3dc2-0ce4-4e1f-b365-971615261821" />
