@@ -2,7 +2,7 @@
 <html lang="fr" class="transition-colors duration-300">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Je-DIY - Calculateur Expert</title>
     
     <!-- Meta tags pour App Mobile (PWA) -->
@@ -36,9 +36,9 @@
         }
     </script>
     <style type="text/tailwindcss">
-        /* Bloque le "pull-to-refresh" natif sur mobile Chrome/Safari */
-        body {
-            overscroll-behavior-y: contain;
+        /* Bloque le "pull-to-refresh" natif sur mobile Chrome/Safari de façon agressive */
+        html, body {
+            overscroll-behavior-y: none;
         }
 
         @layer utilities {
@@ -637,6 +637,19 @@
     </div>
 
     <script>
+        // Anti pull-to-refresh agressif pour mobile
+        let startY = 0;
+        document.addEventListener('touchstart', e => { 
+            startY = e.touches[0].pageY; 
+        }, {passive: true});
+        
+        document.addEventListener('touchmove', e => {
+            // Si on est en haut de la page et qu'on tire vers le bas, on bloque l'action
+            if (window.scrollY === 0 && e.touches[0].pageY > startY) {
+                e.preventDefault();
+            }
+        }, {passive: false});
+
         const RATIOS = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
         
         function formatRatioStr(pg, labels = false) {
