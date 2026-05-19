@@ -24,11 +24,16 @@
                     colors: { brand: tailwind.colors.amber, base: tailwind.colors.stone },
                     animation: {
                         'fade-in': 'fadeIn 0.3s ease-out forwards',
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
                     },
                     keyframes: {
                         fadeIn: {
                             '0%': { opacity: '0' },
                             '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(10px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
                         }
                     }
                 }
@@ -163,21 +168,229 @@
 
         <header class="mb-8 text-center pt-14 sm:pt-0">
             <h1 class="text-4xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-2">Je-<span class="text-brand-600 dark:text-brand-500">DIY</span></h1>
-            <p class="text-stone-500 dark:text-stone-400 font-medium">Calculateur de e-liquide avancé & intelligent by Helmicretro</p>
+            <p class="text-stone-500 dark:text-stone-400 font-medium">Calculateur de e-liquide avancé & intelligent</p>
         </header>
 
         <!-- Tabs Navigation -->
-        <div class="bg-stone-200/70 dark:bg-stone-800/70 p-1.5 rounded-2xl flex flex-col md:flex-row gap-1.5 mb-6 shadow-inner transition-colors">
-            <button onclick="switchTab('tab_complet')" id="btn_tab_complet" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow ring-1 ring-black/5 dark:ring-white/10">Liquide Complet</button>
-            <button onclick="switchTab('tab_booster')" id="btn_tab_booster" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700">Prêt à Booster</button>
-            <button onclick="switchTab('tab_manuel')" id="btn_tab_manuel" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700">Mode Manuel</button>
+        <div class="bg-stone-200/70 dark:bg-stone-800/70 p-1.5 rounded-2xl grid grid-cols-2 lg:grid-cols-4 gap-1.5 mb-6 shadow-inner transition-colors">
+            <button onclick="switchTab('tab_assistant')" id="btn_tab_assistant" class="py-3 px-4 rounded-xl font-bold text-sm transition-all bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10 flex items-center justify-center gap-2">🪄 Assistant</button>
+            <button onclick="switchTab('tab_complet')" id="btn_tab_complet" class="py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700">Liquide Complet</button>
+            <button onclick="switchTab('tab_booster')" id="btn_tab_booster" class="py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700">Prêt à Booster</button>
+            <button onclick="switchTab('tab_manuel')" id="btn_tab_manuel" class="py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700">Mode Manuel</button>
+        </div>
+
+        <!-- ONGLET ASSISTANT (WIZARD) -->
+        <div id="tab_assistant" class="tab-content active">
+            <div class="bg-white dark:bg-stone-800 p-6 md:p-10 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-2xl mx-auto w-full transition-colors relative min-h-[450px] flex flex-col">
+                
+                <!-- Progress Bar -->
+                <div id="wiz_progress_container" class="w-full bg-stone-100 dark:bg-stone-700 rounded-full h-2 mb-8 hidden overflow-hidden">
+                    <div id="wiz_progress_bar" class="bg-brand-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+
+                <!-- Step 0: Accueil -->
+                <div id="wiz_s0" class="wiz-step block animate-slide-up text-center m-auto max-w-md">
+                    <div class="text-6xl mb-4">👋</div>
+                    <h2 class="text-3xl font-black text-stone-800 dark:text-stone-100 mb-4">Prêt à concocter ton jus ?</h2>
+                    <p class="text-stone-500 dark:text-stone-400 mb-8 font-medium">Je vais te guider étape par étape pour trouver la recette parfaite avec ce que tu as sous la main. Zéro prise de tête.</p>
+                    <button onclick="wizNext()" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-lg shadow-md transition-all active:scale-95">Démarrer</button>
+                </div>
+
+                <!-- Step 1: Choix Type -->
+                <div id="wiz_s1" class="wiz-step hidden animate-slide-up h-full flex flex-col">
+                    <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">Qu'est-ce qu'on fabrique ?</h2>
+                    <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Choisis le type de recette que tu souhaites créer.</p>
+                    <div class="grid gap-4 mt-auto mb-auto">
+                        <button onclick="wizSetType('t1')" class="p-5 text-left bg-stone-50 hover:bg-brand-50 dark:bg-stone-900/50 dark:hover:bg-brand-900/20 border-2 border-stone-200 hover:border-brand-400 dark:border-stone-700 dark:hover:border-brand-600 rounded-2xl transition-all group">
+                            <div class="flex items-center gap-4">
+                                <span class="text-3xl group-hover:scale-110 transition-transform">🎯</span>
+                                <div>
+                                    <div class="font-black text-lg text-stone-800 dark:text-stone-100 group-hover:text-brand-600 dark:group-hover:text-brand-400">Liquide Complet</div>
+                                    <div class="text-sm text-stone-500 dark:text-stone-400 mt-1">Prêt à vaper. Arôme, base et nicotine calculés d'un coup.</div>
+                                </div>
+                            </div>
+                        </button>
+                        <button onclick="wizSetType('t2')" class="p-5 text-left bg-stone-50 hover:bg-emerald-50 dark:bg-stone-900/50 dark:hover:bg-emerald-900/20 border-2 border-stone-200 hover:border-emerald-400 dark:border-stone-700 dark:hover:border-emerald-600 rounded-2xl transition-all group">
+                            <div class="flex items-center gap-4">
+                                <span class="text-3xl group-hover:scale-110 transition-transform">🧪</span>
+                                <div>
+                                    <div class="font-black text-lg text-stone-800 dark:text-stone-100 group-hover:text-emerald-600 dark:group-hover:text-emerald-400">Base Shortfill</div>
+                                    <div class="text-sm text-stone-500 dark:text-stone-400 mt-1">Sur-concentré pour préparer un gros bidon à booster plus tard.</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Mode Volume -->
+                <div id="wiz_s2" class="wiz-step hidden animate-slide-up h-full flex flex-col">
+                    <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">Comment on s'y prend ?</h2>
+                    <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Tu veux viser une quantité précise ou vider ta bouteille d'arôme ?</p>
+                    <div class="grid gap-4 mt-auto mb-auto">
+                        <button onclick="wizSetVolMode('defined')" class="p-5 text-left bg-stone-50 hover:bg-brand-50 dark:bg-stone-900/50 dark:hover:bg-brand-900/20 border-2 border-stone-200 hover:border-brand-400 dark:border-stone-700 dark:hover:border-brand-600 rounded-2xl transition-all group">
+                            <div class="flex items-center gap-4">
+                                <span class="text-3xl group-hover:scale-110 transition-transform">📏</span>
+                                <div>
+                                    <div class="font-black text-lg text-stone-800 dark:text-stone-100 group-hover:text-brand-600 dark:group-hover:text-brand-400">Volume précis</div>
+                                    <div class="text-sm text-stone-500 dark:text-stone-400 mt-1">Ex: Je veux exactement 200ml de liquide final.</div>
+                                </div>
+                            </div>
+                        </button>
+                        <button onclick="wizSetVolMode('max_aroma')" class="p-5 text-left bg-stone-50 hover:bg-brand-50 dark:bg-stone-900/50 dark:hover:bg-brand-900/20 border-2 border-stone-200 hover:border-brand-400 dark:border-stone-700 dark:hover:border-brand-600 rounded-2xl transition-all group">
+                            <div class="flex items-center gap-4">
+                                <span class="text-3xl group-hover:scale-110 transition-transform">💧</span>
+                                <div>
+                                    <div class="font-black text-lg text-stone-800 dark:text-stone-100 group-hover:text-brand-600 dark:group-hover:text-brand-400">Vider mon arôme</div>
+                                    <div class="text-sm text-stone-500 dark:text-stone-400 mt-1">J'ai X ml d'arôme et je veux tout utiliser.</div>
+                                </div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Quantités -->
+                <div id="wiz_s3" class="wiz-step hidden animate-slide-up h-full flex flex-col">
+                    <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">Parlons quantités !</h2>
+                    <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Dis-m'en plus sur ce que tu cherches à faire.</p>
+                    
+                    <div class="space-y-6 mt-auto mb-auto">
+                        <!-- Volume Cible -->
+                        <div id="wiz_vol_defined_block">
+                            <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Volume final souhaité <span id="wiz_vol_help" class="text-xs font-normal text-stone-400"></span></label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustVal('wiz_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="wiz_vol" value="200" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors">
+                                <button onclick="adjustVal('wiz_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                                <span class="font-bold text-stone-500 dark:text-stone-400">ml</span>
+                            </div>
+                        </div>
+
+                        <!-- Arôme possédé -->
+                        <div id="wiz_vol_max_block" class="hidden">
+                            <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Quantité d'arôme que tu possèdes</label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="adjustVal('wiz_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="wiz_aroma_avail" value="30" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors">
+                                <button onclick="adjustVal('wiz_aroma_avail', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
+                                <span class="font-bold text-stone-500 dark:text-stone-400">ml</span>
+                            </div>
+                        </div>
+
+                        <!-- Dosage Arôme -->
+                        <div class="bg-stone-50 dark:bg-stone-900/50 p-5 rounded-2xl border border-stone-100 dark:border-stone-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <label id="wiz_aroma_perc_label" class="text-sm font-bold text-stone-700 dark:text-stone-300">À quel pourcentage tu doses ?</label>
+                                <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="wiz_aroma_perc_disp">15%</span>
+                            </div>
+                            <input type="range" id="wiz_aroma_perc" min="1" max="30" step="0.5" value="15" oninput="document.getElementById('wiz_aroma_perc_disp').innerText = this.value + '%'">
+                            <p id="wiz_aroma_perc_help" class="text-[10px] text-brand-600/80 dark:text-brand-400/80 mt-3 leading-tight hidden">Le pourcentage idéal que tu vises (une fois que les boosters seront ajoutés).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Ratio -->
+                <div id="wiz_s4" class="wiz-step hidden animate-slide-up h-full flex flex-col">
+                    <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">C'est quoi ton ratio cible ?</h2>
+                    <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Plutôt fluide (plus de PG) ou de gros nuages (plus de VG) ?</p>
+                    
+                    <div class="mt-auto mb-auto bg-stone-50 dark:bg-stone-900/50 p-6 rounded-3xl border border-stone-200 dark:border-stone-700 text-center">
+                        <div class="text-4xl font-black text-brand-600 dark:text-brand-400 mb-6" id="wiz_ratio_disp">50PG / 50VG</div>
+                        <input type="range" id="wiz_ratio_pg" min="0" max="100" step="5" value="50" class="mb-4" oninput="document.getElementById('wiz_ratio_disp').innerText = formatRatioStr(100 - this.value, true)">
+                        <div class="flex justify-between text-xs font-bold text-stone-400 dark:text-stone-500">
+                            <span>100% PG</span>
+                            <span>100% VG</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Nicotine -->
+                <div id="wiz_s5" class="wiz-step hidden animate-slide-up h-full flex flex-col">
+                    <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">Et la nicotine ?</h2>
+                    <p class="text-sm text-stone-500 dark:text-stone-400 mb-6" id="wiz_nic_desc">Règle ton taux. Tu pourras toujours l'ajuster plus tard.</p>
+                    
+                    <div class="space-y-6 mt-auto mb-auto">
+                        <!-- Mode Complet -->
+                        <div id="wiz_nic_t1_block">
+                            <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Taux souhaité au final</label>
+                            <div class="flex items-center gap-3 mb-4">
+                                <button onclick="adjustVal('wiz_nic_mg', -0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="wiz_nic_mg" value="3" step="0.5" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
+                                <button onclick="adjustVal('wiz_nic_mg', 0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                                <span class="font-bold text-stone-500">mg/ml</span>
+                            </div>
+                        </div>
+
+                        <!-- Mode Shortfill -->
+                        <div id="wiz_nic_t2_block" class="hidden">
+                            <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Taux maximum que tu ajouteras plus tard</label>
+                            <p class="text-xs text-stone-400 mb-3">On a besoin de le savoir pour laisser assez de place dans le bidon.</p>
+                            <div class="flex items-center gap-3 mb-4">
+                                <button onclick="adjustVal('wiz_max_nic', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                                <input type="number" id="wiz_max_nic" value="6" step="1" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
+                                <button onclick="adjustVal('wiz_max_nic', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                                <span class="font-bold text-stone-500">mg/ml</span>
+                            </div>
+                        </div>
+
+                        <!-- Booster Strength -->
+                        <div class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-stone-100 dark:border-stone-700">
+                            <span class="text-sm font-bold text-stone-600 dark:text-stone-300">Tes boosters font du :</span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" id="wiz_booster_str" value="20" class="w-16 h-10 text-center bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-lg font-bold text-stone-800 dark:text-stone-100">
+                                <span class="text-sm text-stone-400">mg/ml</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Inventaire -->
+                <div id="wiz_s6" class="wiz-step hidden animate-slide-up h-full flex flex-col">
+                    <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">T'as quoi dans tes placards ?</h2>
+                    <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">Coche le matériel que tu possèdes pour que je te donne les bonnes recettes.</p>
+                    
+                    <div class="mt-auto mb-auto overflow-y-auto pr-2 hide-scrollbar">
+                        <div class="mb-5">
+                            <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Bases Neutres</h3>
+                            <div class="grid grid-cols-2 gap-2" id="wiz_bases_list"></div>
+                        </div>
+                        <div id="wiz_boosters_container">
+                            <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Boosters</h3>
+                            <div class="grid grid-cols-2 gap-2" id="wiz_boosters_list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 7: Résultats -->
+                <div id="wiz_s7" class="wiz-step hidden animate-slide-up h-full flex flex-col w-full">
+                    <h2 class="text-2xl font-black text-brand-600 dark:text-brand-400 mb-2 text-center">Et voilà le travail ! 🎉</h2>
+                    <p class="text-sm text-stone-500 dark:text-stone-400 mb-6 text-center">J'ai calculé les meilleures combinaisons avec ton matériel.</p>
+                    
+                    <!-- Le conteneur injecté -->
+                    <div id="wiz_results_container" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full pb-4">
+                        <!-- Injecté par JS -->
+                    </div>
+
+                    <div class="mt-4 p-4 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-stone-200 dark:border-stone-700 text-center text-sm text-stone-600 dark:text-stone-400">
+                        <span class="text-xl inline-block mb-1">⚙️</span><br>
+                        Ces données ont été injectées dans l'onglet principal <strong><span id="wiz_res_tab_name"></span></strong>. Tu peux y retourner pour ajuster les valeurs en direct !
+                    </div>
+                    
+                    <button onclick="wizRestart()" class="mt-6 w-full py-3 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 rounded-xl font-bold transition-all">Refaire un calcul</button>
+                </div>
+
+                <!-- Navigation -->
+                <div id="wiz_nav" class="mt-auto pt-8 flex justify-between hidden w-full">
+                    <button onclick="wizPrev()" class="px-6 py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-bold rounded-xl transition-all">Retour</button>
+                    <button id="wiz_btn_next" onclick="wizNext()" class="px-8 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-all">Suivant</button>
+                </div>
+            </div>
         </div>
 
         <!-- ONGLET LIQUIDE COMPLET -->
-        <div id="tab_complet" class="tab-content active">
+        <div id="tab_complet" class="tab-content">
             <div class="space-y-6">
                 <!-- Valeurs souhaitées -->
-                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
+                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                         <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🎯</span> Objectifs
                     </h2>
@@ -269,7 +482,7 @@
                         <div id="t1_nic_mg_panel" class="flex flex-col mb-4 animate-fade-in">
                             <div class="flex items-center gap-3">
                                 <button onclick="adjustVal('t1_nic_mg', -0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
-                                <input type="number" id="t1_nic_mg" value="6" step="0.5" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
+                                <input type="number" id="t1_nic_mg" value="3" step="0.5" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
                                 <button onclick="adjustVal('t1_nic_mg', 0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
                             </div>
                             <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_mg_preview">Quantité : <span class="text-emerald-600 dark:text-emerald-400">0 ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit 0 booster)</span></div>
@@ -295,7 +508,7 @@
                 </div>
 
                 <!-- Matériel dispo -->
-                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
+                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                         <span class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
                     </h2>
@@ -325,7 +538,7 @@
         <div id="tab_booster" class="tab-content">
             <div class="space-y-6">
                 <!-- Valeurs souhaitées -->
-                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
+                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                         <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🧪</span> Création Shortfill
                     </h2>
@@ -412,7 +625,7 @@
                 </div>
 
                 <!-- Matériel dispo -->
-                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
+                <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                         <span class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
                     </h2>
@@ -430,7 +643,7 @@
 
         <!-- ONGLET MODE MANUEL -->
         <div id="tab_manuel" class="tab-content">
-            <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 max-w-2xl mx-auto transition-colors">
+            <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-2xl mx-auto transition-colors">
                 <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                     <span class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 flex items-center justify-center text-lg">🧮</span> Mélange Manuel
                 </h2>
@@ -508,11 +721,8 @@
     
     <!-- Modal d'Aide (Plein écran) -->
     <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
-        <!-- Fond assombri et flouté -->
         <div class="modal-backdrop absolute inset-0 bg-stone-900/80 backdrop-blur-md cursor-pointer" onclick="closeHelpModal()"></div>
-        <!-- Conteneur central -->
         <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-stone-800 rounded-3xl shadow-2xl z-10 p-6 sm:p-10 hide-scrollbar border border-stone-200 dark:border-stone-700">
-            <!-- Bouton fermer sticky -->
             <div class="sticky top-0 float-right -mt-2 -mr-2 bg-white dark:bg-stone-800 rounded-full z-20 shadow-sm border border-stone-100 dark:border-stone-700">
                 <button onclick="closeHelpModal()" class="w-10 h-10 flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-stone-600 dark:text-stone-300 transition-colors" title="Fermer l'aide">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -525,68 +735,58 @@
             
             <p class="text-stone-600 dark:text-stone-300 mb-8 font-medium">C'est parti pour faire du jus ! Ce calculateur bosse pour toi en cherchant les meilleures combinaisons mathématiques. Voici le mode d'emploi pour l'exploiter à 100%.</p>
 
-            <div class="space-y-8">
-                <!-- Section Matériel -->
+            <div class="space-y-6">
+                <!-- Section Assistant -->
                 <div class="bg-brand-50 dark:bg-brand-900/20 p-5 rounded-2xl border border-brand-200 dark:border-brand-800/50">
-                    <h3 class="text-lg font-extrabold text-brand-700 dark:text-brand-400 mb-2">1. Le Secret du Matériel Dispo</h3>
-                    <p class="text-sm text-stone-700 dark:text-stone-300 leading-relaxed mb-3">
-                        Si tu dois privilégier deux bases, <strong>procure-toi du 100% PG et du 100% VG.</strong>
-                    </p>
+                    <h3 class="text-lg font-extrabold text-brand-700 dark:text-brand-400 mb-2 flex items-center gap-2">
+                        <span>🪄</span> Le Mode Assistant
+                    </h3>
                     <p class="text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-                        Pourquoi ? Parce que mélanger ces deux extrêmes donne le plus de flexibilité pour tomber <em>pile poil</em> sur ton ratio cible. Si tu ne possède que des bases intermédiaires (genre 50/50), l'outil fera de son mieux mais te sortira souvent des "Alternatives proches" au lieu de "Recettes parfaites". Coche ce que tu as vraiment dans tes placards pour qu'il te donne les bons volumes !
+                        Tu ne sais pas par où commencer ? <strong>Laisse-toi guider !</strong> L'assistant te pose une série de questions simples, prend note de ce que tu as dans tes placards, et configure tout le calculateur à ta place. C'est tellement facile que même ta belle-mère pourrait se faire du liquide sans faire sauter la cuisine !
                     </p>
                 </div>
 
                 <!-- Section Liquide Complet -->
                 <div>
-                    <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-4 pb-2 border-b border-stone-200 dark:border-stone-700 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded bg-stone-800 dark:bg-stone-600 text-white flex items-center justify-center text-xs">1</span> 
-                        L'onglet Liquide Complet
+                    <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+                        <span class="text-brand-600 dark:text-brand-400">🎯</span> Liquide Complet
                     </h3>
-                    <p class="text-sm text-stone-600 dark:text-stone-300 mb-4 leading-relaxed">Il sert à fabriquer un e-liquide fini, directement prêt à vaper (arôme + base + nicotine).</p>
-                    
-                    <ul class="space-y-3 text-sm text-stone-600 dark:text-stone-300">
-                        <li class="flex gap-3"><strong class="text-stone-800 dark:text-stone-200 w-24 shrink-0">1. L'objectif :</strong> <span>Choisis si tu veux fabriquer un volume précis (ex: 200ml) ou si tu veux vider une fiole d'arôme (Volume d'arôme fixe).</span></li>
-                        <li class="flex gap-3"><strong class="text-stone-800 dark:text-stone-200 w-24 shrink-0">2. L'arôme :</strong> <span>Règle ton pourcentage de dosage. Tu verras instantanément en dessous la quantité en ml que ça représente !</span></li>
-                        <li class="flex gap-3"><strong class="text-stone-800 dark:text-stone-200 w-24 shrink-0">3. Le Ratio :</strong> <span>Sélectionne le ratio PG/VG que tu veux obtenir à la fin.</span></li>
-                        <li class="flex gap-3"><strong class="text-stone-800 dark:text-stone-200 w-24 shrink-0">4. Nicotine :</strong> <span>Définis ton taux. Magie : en bougeant la valeur, ça t'indique en direct combien de boosters ça va te demander (ou inversement le taux final si tu raisonnes en "nombre de boosters").</span></li>
-                    </ul>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
+                        Pour faire ton jus prêt à vaper de A à Z. Tu rentres la quantité voulue, ton ratio cible et ton taux de nicotine. Le calculateur mouline et te sort la combinaison exacte avec tes bases et boosters.
+                    </p>
                 </div>
 
                 <!-- Section Shortfill -->
                 <div>
-                    <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-4 pb-2 border-b border-stone-200 dark:border-stone-700 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded bg-stone-800 dark:bg-stone-600 text-white flex items-center justify-center text-xs">2</span> 
-                        L'onglet Prêt à Booster (Shortfill)
-                    </h3>
-                    <p class="text-sm text-stone-600 dark:text-stone-300 mb-4 leading-relaxed">Ici, on prépare une base sur-concentrée en arôme. L'idée c'est de créer une grosse bouteille dans laquelle tu (ou tes potes) ajouteras la nicotine plus tard.</p>
-                    
-                    <ul class="space-y-3 text-sm text-stone-600 dark:text-stone-300 mb-5">
-                        <li class="flex gap-3"><strong class="text-stone-800 dark:text-stone-200 w-24 shrink-0">1. Le Volume :</strong> <span>C'est la taille du mix SANS les boosters.</span></li>
-                        <li class="flex gap-3"><strong class="text-stone-800 dark:text-stone-200 w-24 shrink-0">2. Nico Max :</strong> <span>Le calculateur doit savoir quelle place garder pour les futurs boosters. Si tu vises 6mg max avec des boosters de 20mg, il va calculer une sur-concentration prévue pour ça.</span></li>
-                        <li class="flex gap-3"><strong class="text-stone-800 dark:text-stone-200 w-24 shrink-0">3. % IDÉAL :</strong> <span>C'est le dosage que ton liquide aura <strong>APRÈS</strong> l'ajout des boosters (quand le jus sera fini).</span></li>
-                    </ul>
-
-                    <div class="bg-stone-100 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-200 dark:border-stone-700">
-                        <h4 class="font-bold text-stone-800 dark:text-stone-200 text-sm mb-2">🧪 Les simulations en bas des recettes :</h4>
-                        <p class="text-sm text-stone-600 dark:text-stone-400 leading-relaxed">
-                            Dans les recettes Shortfill, un encart gris te permet de tester ton mélange. <em>"Si je prélève 50ml de ce gros bidon, et que je lui colle 2 boosters de 50/50 à 20mg... ça donne quoi ?"</em> Le script te donne ton taux exact. <br><br>
-                            <strong>L'Alerte :</strong> Si tu ajoutes trop de boosters et que ta concentration d'arôme passe sous ton "Dosage idéal" de départ, un message rouge te prévient que ton jus risque d'être fadasse !
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Section Recettes (Exactes vs Alternatives) -->
-                <div>
-                    <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-4 pb-2 border-b border-stone-200 dark:border-stone-700 flex items-center gap-2">
-                        <span class="w-6 h-6 rounded bg-stone-800 dark:bg-stone-600 text-white flex items-center justify-center text-xs">3</span> 
-                        Parfaites vs Alternatives
+                    <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+                        <span class="text-brand-600 dark:text-brand-400">🧪</span> Prêt à Booster (Shortfill)
                     </h3>
                     <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                        Le script cherche toujours à te proposer des <strong>Recettes Parfaites</strong> en utilisant 1 ou 2 bases que tu as cochées pour tomber au dixième de ml près sur ton ratio.
+                        Le mode des gros consommateurs. L'idée est de préparer une grosse fiole surdosée en arôme (le shortfill). Tu auras ainsi une base prête dans laquelle tu viendras juste ajouter tes boosters de nicotine plus tard au fur et à mesure.
+                    </p>
+                </div>
+
+                <!-- Section Mode Manuel -->
+                <div>
+                    <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+                        <span class="text-brand-600 dark:text-brand-400">🧮</span> Mode Manuel
+                    </h3>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
+                        Tu as joué au savant fou en mélangeant tes restes ? Rentre les volumes que tu as mis dans ta fiole, et l'outil te dira exactement sur quel ratio et quel taux de nicotine tu es retombé.
+                    </p>
+                </div>
+
+                <!-- Section Matériel -->
+                <div class="pt-4 border-t border-stone-200 dark:border-stone-700">
+                    <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-3 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded bg-stone-800 dark:bg-stone-600 text-white flex items-center justify-center text-xs">1</span> 
+                        Le Secret du Matériel Dispo
+                    </h3>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-2">
+                        Si tu dois privilégier deux bases, <strong>procure-toi du 100% PG et du 100% VG.</strong>
                     </p>
                     <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-                        S'il n'y arrive pas (par exemple si tu veux faire du 20/80 mais que tu n'as que du 50/50 en stock), il te proposera des <strong>Alternatives Proches</strong>. C'est le meilleur compromis possible avec ton matériel, et il t'affiche en jaune le ratio réel que tu obtiendras.
+                        Pourquoi ? Parce que mélanger ces deux extrêmes donne le plus de flexibilité pour tomber <em>pile poil</em> sur ton ratio cible. Si tu ne possèdes que des bases intermédiaires (genre 50/50), l'outil fera de son mieux mais te sortira souvent des "Alternatives proches" au lieu de "Recettes parfaites".
                     </p>
                 </div>
             </div>
@@ -609,9 +809,7 @@
     
     <!-- Modal Recette (Plein écran) -->
     <div id="recipe_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
-        <!-- Fond assombri et flouté -->
         <div class="modal-backdrop absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-md cursor-pointer" onclick="closeRecipeModal()"></div>
-        <!-- Conteneur central -->
         <div class="relative w-full max-w-lg z-10 flex flex-col items-center">
             <div id="recipe_modal_content" class="w-full">
                 <!-- La carte générée arrive ici -->
@@ -644,7 +842,6 @@
         }, {passive: true});
         
         document.addEventListener('touchmove', e => {
-            // Si on est en haut de la page et qu'on tire vers le bas, on bloque l'action
             if (window.scrollY === 0 && e.touches[0].pageY > startY) {
                 e.preventDefault();
             }
@@ -664,6 +861,189 @@
             t1: { vol_mode: 'defined', nic_mode: 'mg' },
             t2: { vol_mode: 'defined' }
         };
+
+        // --- GESTION ASSISTANT (WIZARD) ---
+        let wizState = {
+            step: 0,
+            type: 't1', 
+            volMode: 'defined'
+        };
+        const WIZ_STEPS = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7'];
+
+        function wizUpdateView() {
+            // Cacher tous les steps
+            WIZ_STEPS.forEach(id => {
+                let el = document.getElementById('wiz_' + id);
+                if(el) {
+                    el.classList.add('hidden');
+                    el.classList.remove('block');
+                }
+            });
+            // Afficher le step courant
+            let curEl = document.getElementById('wiz_' + WIZ_STEPS[wizState.step]);
+            if(curEl) {
+                curEl.classList.remove('hidden');
+                curEl.classList.add('block');
+            }
+
+            // Gestion de la progress bar
+            let progCont = document.getElementById('wiz_progress_container');
+            let progBar = document.getElementById('wiz_progress_bar');
+            let navBar = document.getElementById('wiz_nav');
+
+            if(wizState.step === 0 || wizState.step === WIZ_STEPS.length - 1) {
+                progCont.classList.add('hidden');
+                navBar.classList.add('hidden');
+            } else {
+                progCont.classList.remove('hidden');
+                navBar.classList.remove('hidden');
+                let percent = (wizState.step / (WIZ_STEPS.length - 2)) * 100;
+                progBar.style.width = percent + '%';
+            }
+
+            // Changement texte bouton Suivant
+            let btnNext = document.getElementById('wiz_btn_next');
+            if (wizState.step === WIZ_STEPS.length - 2) {
+                btnNext.innerText = "Calculer 🚀";
+            } else {
+                btnNext.innerText = "Suivant";
+            }
+        }
+
+        function wizNext() {
+            if(wizState.step < WIZ_STEPS.length - 1) {
+                // Check if moving to calc step
+                if(wizState.step === WIZ_STEPS.length - 2) {
+                    runWizCalculation();
+                }
+                wizState.step++;
+                wizUpdateView();
+            }
+        }
+
+        function wizPrev() {
+            if(wizState.step > 1) {
+                wizState.step--;
+                wizUpdateView();
+            } else if (wizState.step === 1) {
+                wizState.step = 0;
+                wizUpdateView();
+            }
+        }
+
+        function wizRestart() {
+            wizState.step = 0;
+            document.getElementById('wiz_results_container').innerHTML = '';
+            wizUpdateView();
+        }
+
+        function wizSetType(type) {
+            wizState.type = type;
+            
+            let percLabel = document.getElementById('wiz_aroma_perc_label');
+            let percHelp = document.getElementById('wiz_aroma_perc_help');
+            
+            // Adaptation de l'UI selon Complet vs Shortfill
+            if(type === 't1') {
+                document.getElementById('wiz_nic_t1_block').classList.remove('hidden');
+                document.getElementById('wiz_nic_t2_block').classList.add('hidden');
+                document.getElementById('wiz_boosters_container').classList.remove('hidden');
+                document.getElementById('wiz_nic_desc').innerText = "Règle ton taux pour ce jus.";
+                
+                if (percLabel) percLabel.innerText = "À quel pourcentage tu doses ?";
+                if (percHelp) percHelp.classList.add('hidden');
+            } else {
+                document.getElementById('wiz_nic_t1_block').classList.add('hidden');
+                document.getElementById('wiz_nic_t2_block').classList.remove('hidden');
+                document.getElementById('wiz_boosters_container').classList.add('hidden');
+                document.getElementById('wiz_nic_desc').innerText = "Combien de mg/ml penses-tu ajouter max plus tard ?";
+                
+                if (percLabel) percLabel.innerText = "Dosage idéal recommandé de l'arôme ?";
+                if (percHelp) percHelp.classList.remove('hidden');
+            }
+            wizNext();
+        }
+
+        function wizSetVolMode(mode) {
+            wizState.volMode = mode;
+            
+            if(mode === 'defined') {
+                document.getElementById('wiz_vol_defined_block').classList.remove('hidden');
+                document.getElementById('wiz_vol_max_block').classList.add('hidden');
+                document.getElementById('wiz_vol_help').innerText = wizState.type === 't1' ? "" : "(avant ajout des boosters)";
+            } else {
+                document.getElementById('wiz_vol_defined_block').classList.add('hidden');
+                document.getElementById('wiz_vol_max_block').classList.remove('hidden');
+            }
+            wizNext();
+        }
+
+        function runWizCalculation() {
+            let prefix = wizState.type; // 't1' ou 't2'
+
+            // 1. Sync Vol Mode
+            toggleVolMode(prefix, wizState.volMode);
+
+            // 2. Sync Volumes & Aroma
+            if (wizState.volMode === 'defined') {
+                document.getElementById(prefix + '_vol').value = document.getElementById('wiz_vol').value;
+            } else {
+                document.getElementById(prefix + '_aroma_avail').value = document.getElementById('wiz_aroma_avail').value;
+            }
+            document.getElementById(prefix + '_aroma_perc').value = document.getElementById('wiz_aroma_perc').value;
+
+            // 3. Sync Ratio
+            document.getElementById(prefix + '_ratio_pg').value = document.getElementById('wiz_ratio_pg').value;
+            updateRatioDisp(prefix);
+
+            // 4. Sync Nicotine
+            document.getElementById(prefix + '_booster_str').value = document.getElementById('wiz_booster_str').value;
+            if (prefix === 't1') {
+                setNicMode('t1', 'mg'); // Force MG
+                document.getElementById('t1_nic_mg').value = document.getElementById('wiz_nic_mg').value;
+            } else {
+                document.getElementById('t2_max_nic').value = document.getElementById('wiz_max_nic').value;
+            }
+
+            // 5. Sync Checkboxes (Matériel)
+            // Reset des checkbox cibles
+            document.querySelectorAll('.' + prefix + '_base_chk').forEach(el => {
+                el.checked = false;
+                el.parentElement.classList.remove('checked-base');
+            });
+            if (prefix === 't1') {
+                document.querySelectorAll('.t1_boost_chk').forEach(el => {
+                    el.checked = false;
+                    el.parentElement.classList.remove('checked-boost');
+                });
+            }
+
+            // Appliquer ceux du wizard
+            let wBases = getChecked('wiz_base_chk');
+            wBases.forEach(val => {
+                let el = document.querySelector(`.${prefix}_base_chk[value="${val}"]`);
+                if(el) { el.checked = true; el.parentElement.classList.add('checked-base'); }
+            });
+
+            if (prefix === 't1') {
+                let wBoost = getChecked('wiz_boost_chk');
+                wBoost.forEach(val => {
+                    let el = document.querySelector(`.t1_boost_chk[value="${val}"]`);
+                    if(el) { el.checked = true; el.parentElement.classList.add('checked-boost'); }
+                });
+            }
+
+            // 6. Déclenche le calcul natif
+            if (prefix === 't1') calcTab1(); else calcTab2();
+
+            // 7. Récupère le HTML généré
+            let resultHtml = document.getElementById(prefix + '_results_container').innerHTML;
+            document.getElementById('wiz_results_container').innerHTML = resultHtml;
+
+            // Met à jour le texte du message informatif
+            document.getElementById('wiz_res_tab_name').innerText = prefix === 't1' ? "Liquide Complet" : "Prêt à Booster";
+        }
+
 
         // --- GESTION MODE SOMBRE ---
         const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
@@ -788,22 +1168,34 @@
         function init() {
             generateCheckboxes('t1');
             generateCheckboxes('t2');
+            generateCheckboxes('wiz'); // Wizard
+            
             document.getElementById('t1_aroma_pg_val').innerText = document.getElementById('t1_aroma_pg').value + '%';
             updateRatioDisp('t1');
             updateRatioDisp('t2');
             updateAromaPreview('t1');
             updateAromaPreview('t2');
             triggerCalc();
+            wizUpdateView();
         }
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('button[id^="btn_tab_"]').forEach(el => {
-                el.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700";
+                let isAssistant = el.id === 'btn_tab_assistant';
+                if(isAssistant) {
+                    el.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 hover:text-stone-700 bg-transparent flex items-center justify-center gap-2";
+                } else {
+                    el.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700";
+                }
             });
             document.getElementById(tabId).classList.add('active');
             let btn = document.getElementById('btn_' + tabId);
-            btn.className = "flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow ring-1 ring-black/5 dark:ring-white/10";
+            if (tabId === 'tab_assistant') {
+                btn.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10 flex items-center justify-center gap-2";
+            } else {
+                btn.className = "py-3 px-4 rounded-xl font-bold text-sm transition-all bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10";
+            }
             triggerCalc();
         }
 
@@ -880,8 +1272,12 @@
             let prefix = id.substring(0, 2);
             if (prefix === 't1' || prefix === 't2') {
                 updateAromaPreview(prefix);
+                triggerCalc();
+            } else if (prefix === 'wi') {
+                // Wizard just adjust UI silently
+            } else {
+                triggerCalc();
             }
-            triggerCalc();
         }
 
         function adjustSimVal(btn, step) {
@@ -923,7 +1319,7 @@
         function updateRatioDisp(prefix) {
             let sliderVal = document.getElementById(`${prefix}_ratio_pg`).value;
             let pg = 100 - sliderVal;
-            document.getElementById(`${prefix}_ratio_disp`).innerText = formatRatioStr(pg);
+            document.getElementById(`${prefix}_ratio_disp`).innerText = formatRatioStr(pg, true);
         }
 
         function updateAromaPreview(prefix) {
@@ -1009,7 +1405,7 @@
             let baseHtml = '', boostHtml = '';
 
             let defaultsBase = [100, 0];
-            let defaultsBoost = prefix === 't1' ? [50] : [];
+            let defaultsBoost = ['t1', 'wiz'].includes(prefix) ? [50] : [];
 
             RATIOS.forEach(pg => {
                 let isBaseChecked = defaultsBase.includes(pg) ? 'checked' : '';
@@ -1017,7 +1413,7 @@
                 
                 baseHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isBaseChecked?'checked-base':''}"><input type="checkbox" class="${prefix}_base_chk text-brand-600 focus:ring-brand-500 rounded dark:bg-stone-800 dark:border-stone-600" value="${pg}" ${isBaseChecked} onchange="this.parentElement.classList.toggle('checked-base', this.checked); triggerCalc()"><span class="text-xs font-bold text-stone-700 dark:text-stone-300">${formatRatioStr(pg, true)}</span></label>`;
                 
-                boostHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isBoostChecked?'checked-boost':''}"><input type="checkbox" class="${prefix}_boost_chk text-emerald-600 focus:ring-emerald-500 rounded dark:bg-stone-800 dark:border-stone-600" value="${pg}" ${isBoostChecked} onchange="this.parentElement.classList.toggle('bg-emerald-50'); this.parentElement.classList.toggle('border-emerald-200'); triggerCalc()"><span class="text-xs font-bold text-stone-700 dark:text-stone-300">${formatRatioStr(pg, true)}</span></label>`;
+                boostHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isBoostChecked?'checked-boost':''}"><input type="checkbox" class="${prefix}_boost_chk text-emerald-600 focus:ring-emerald-500 rounded dark:bg-stone-800 dark:border-stone-600" value="${pg}" ${isBoostChecked} onchange="this.parentElement.classList.toggle('checked-boost', this.checked); triggerCalc()"><span class="text-xs font-bold text-stone-700 dark:text-stone-300">${formatRatioStr(pg, true)}</span></label>`;
             });
 
             if(baseContainer) baseContainer.innerHTML = baseHtml;
@@ -1080,6 +1476,7 @@
             if(activeTab === 'tab_complet') calcTab1();
             else if(activeTab === 'tab_booster') calcTab2();
             else if(activeTab === 'tab_manuel') calcTab3();
+            // L'assistant ne déclenche pas le calcul automatique à chaque clic
         }
 
         function calcTab1() {
@@ -1300,7 +1697,7 @@
             }
 
             if(exact.length === 0 && alt.length === 0) {
-                allHtml = `<div class="animate-fade-in col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucune recette possible. Ajustez vos paramètres.</div>`;
+                allHtml = `<div class="animate-fade-in col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucune recette possible. Ajustez les paramètres.</div>`;
             }
 
             container.innerHTML = allHtml;
@@ -1312,7 +1709,7 @@
             let bColor = isAlt ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20' : 'border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20';
             let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400';
 
-            let html = `<div class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-sm flex flex-col h-full recipe-card-wrapper transition-colors">`;
+            let html = `<div class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">`;
             
             html += `<div class="flex-1">`;
             html += `<div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700">
@@ -1529,8 +1926,8 @@
             let prepPgRatio = parseFloat(data.dataset.pgratio) || 0;
 
             let finalVol = selVol + (bCount * 10);
-            let nic = (bCount * 10 * bStr) / finalVol;
-            let aFinal = (selVol * aromaRatio / finalVol) * 100;
+            let nic = finalVol > 0 ? (bCount * 10 * bStr) / finalVol : 0;
+            let aFinal = finalVol > 0 ? (selVol * aromaRatio / finalVol) * 100 : 0;
             
             let totalPgMl = (selVol * (prepPgRatio / 100)) + ((bCount * 10) * (boostPg / 100));
             let finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 0;
@@ -1569,7 +1966,6 @@
             
             let clone = card.cloneNode(true);
             
-            // Copier les vraies valeurs des inputs vers le clone pour que la simulation marche
             let originalInputs = card.querySelectorAll('input, select');
             let cloneInputs = clone.querySelectorAll('input, select');
             for (let i = 0; i < originalInputs.length; i++) {
@@ -1623,23 +2019,18 @@
 
             cancelExport();
 
-            // 1. Mémoriser et désactiver dark mode pour l'export
             let wasDark = document.documentElement.classList.contains('dark');
             if (wasDark) document.documentElement.classList.remove('dark');
 
-            // 2. STOPPER TOUTES LES ANIMATIONS
             document.body.classList.add('exporting');
             
-            // On vire toutes les classes d'animation et de scroll de la carte active
             let originalClasses = card.className;
             card.classList.remove('animate-fade-in', 'max-h-[85vh]', 'overflow-y-auto', 'shadow-2xl');
             card.classList.add('export-card');
             
-            // 3. Cacher les boutons
             let buttons = card.querySelector('.modal-buttons');
             if (buttons) buttons.style.display = 'none';
 
-            // 4. Ajouter le Titre
             let titleEl = card.querySelector('.print-recipe-title');
             if (!titleEl) {
                 titleEl = document.createElement('h2');
@@ -1649,7 +2040,6 @@
             titleEl.innerText = name;
             titleEl.style.display = 'block';
 
-            // 5. Mettre à jour l'affichage des inputs pour html2canvas
             card.querySelectorAll('input').forEach(i => i.setAttribute('value', i.value));
             card.querySelectorAll('select').forEach(s => {
                 Array.from(s.options).forEach(o => {
@@ -1658,11 +2048,10 @@
                 });
             });
 
-            // 6. On scroll tout en haut
             window.scrollTo(0, 0);
 
             function restore() {
-                if (!document.body.classList.contains('exporting')) return; // Sécurité
+                if (!document.body.classList.contains('exporting')) return; 
                 titleEl.style.display = 'none'; 
                 card.className = originalClasses;
                 if (buttons) buttons.style.display = '';
@@ -1670,7 +2059,6 @@
                 if (wasDark) document.documentElement.classList.add('dark');
             }
 
-            // 7. On génère le PDF après que le DOM statique blanc soit bien affiché
             setTimeout(() => {
                 let opt = {
                     margin:       [10, 10], 
