@@ -36,6 +36,11 @@
         }
     </script>
     <style type="text/tailwindcss">
+        /* Bloque le "pull-to-refresh" natif sur mobile Chrome/Safari */
+        body {
+            overscroll-behavior-y: contain;
+        }
+
         @layer utilities {
             .checked-base { @apply bg-brand-50 border-brand-200 dark:bg-brand-900/30 dark:border-brand-700/50; }
             .checked-boost { @apply bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-700/50; }
@@ -65,8 +70,6 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         /* === FIX STYLES D'EXPORTATION & IMPRESSION === */
-        
-        /* 1. Reset total du flux pour html2pdf */
         body.exporting {
             background-color: #ffffff !important;
             height: auto !important;
@@ -77,13 +80,11 @@
             animation: none !important;
         }
         
-        /* On cache tout sauf la modale de recette */
         body.exporting #main_app_container,
         body.exporting #help_modal {
             display: none !important;
         }
         
-        /* 2. On transforme la modale "fixe" en un bloc "statique" standard sur la page */
         body.exporting #recipe_modal {
             position: static !important;
             display: block !important;
@@ -98,7 +99,6 @@
             display: none !important;
         }
         
-        /* 3. La carte parfaite pour la capture et le papier */
         .export-card {
             margin: 0 auto !important;
             max-width: 600px !important;
@@ -109,7 +109,6 @@
             page-break-inside: avoid;
         }
 
-        /* 4. Forcer les couleurs de fond avec des Hex pour contrer les bugs Tailwind/html2canvas */
         body.exporting .bg-emerald-50 { background-color: #ecfdf5 !important; }
         body.exporting .bg-amber-50 { background-color: #fffbeb !important; }
         body.exporting .bg-stone-50 { background-color: #fafaf9 !important; }
@@ -117,15 +116,11 @@
         body.exporting .border-emerald-200 { border-color: #a7f3d0 !important; }
         body.exporting .border-amber-200 { border-color: #fde68a !important; }
         
-        /* 5. Règles d'impression physiques */
         @media print {
             @page { margin: 10mm; size: A4 portrait; }
             body, html { background-color: #ffffff !important; height: auto !important; }
-            
             body:not(.exporting) #main_app_container { display: none !important; }
             .print\:hidden { display: none !important; }
-            
-            /* FORCE LES NAVIGATEURS A IMPRIMER LES COULEURS DE FOND */
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -134,7 +129,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 bg-stone-100 dark:bg-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300 overscroll-y-none">
+<body class="min-h-screen p-4 md:p-8 bg-stone-100 dark:bg-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300">
 
     <div class="max-w-5xl mx-auto relative" id="main_app_container">
         
@@ -170,6 +165,7 @@
             <button onclick="switchTab('tab_manuel')" id="btn_tab_manuel" class="flex-1 py-3 px-4 rounded-xl font-bold text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700">Mode Manuel</button>
         </div>
 
+        <!-- ONGLET LIQUIDE COMPLET -->
         <div id="tab_complet" class="tab-content active">
             <div class="space-y-6">
                 <!-- Valeurs souhaitées -->
@@ -317,6 +313,7 @@
             </div>
         </div>
 
+        <!-- ONGLET PRÊT À BOOSTER -->
         <div id="tab_booster" class="tab-content">
             <div class="space-y-6">
                 <!-- Valeurs souhaitées -->
@@ -423,6 +420,7 @@
             </div>
         </div>
 
+        <!-- ONGLET MODE MANUEL -->
         <div id="tab_manuel" class="tab-content">
             <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-sm border border-stone-100 dark:border-stone-700 max-w-2xl mx-auto transition-colors">
                 <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
@@ -1693,12 +1691,6 @@
                     closeHelpModal();
                 }
             }
-        });
-
-        // Anti-refresh accidentel
-        window.addEventListener('beforeunload', function (e) {
-            e.preventDefault();
-            e.returnValue = ''; // Requis pour que la popup native s'affiche
         });
 
         window.onload = () => {
