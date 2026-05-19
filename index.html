@@ -134,7 +134,7 @@
         }
     </style>
 </head>
-<body class="min-h-screen p-4 md:p-8 bg-stone-100 dark:bg-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300">
+<body class="min-h-screen p-4 md:p-8 bg-stone-100 dark:bg-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300 overscroll-y-none">
 
     <div class="max-w-5xl mx-auto relative" id="main_app_container">
         
@@ -1693,6 +1693,12 @@
                     closeHelpModal();
                 }
             }
+        });
+
+        // Anti-refresh accidentel
+        window.addEventListener('beforeunload', function (e) {
+            e.preventDefault();
+            e.returnValue = ''; // Requis pour que la popup native s'affiche
         });
 
         window.onload = () => {
