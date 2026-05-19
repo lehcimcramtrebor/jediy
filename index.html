@@ -118,9 +118,18 @@
         
         @media print {
             @page { margin: 10mm; size: A4 portrait; }
-            body, html { background-color: #ffffff !important; height: auto !important; }
+            body, html { 
+                background-color: #ffffff !important; 
+                background: none !important;
+                height: auto !important; 
+            }
             body:not(.exporting) #main_app_container { display: none !important; }
             .print\:hidden { display: none !important; }
+            /* Force le blanc sur les modals pendant l'impression */
+            #recipe_modal, #recipe_modal_content, .export-card {
+                background-color: #ffffff !important;
+                background: #ffffff !important;
+            }
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
@@ -1632,7 +1641,7 @@
             titleEl.innerText = name;
             titleEl.style.display = 'block';
 
-            // 5. Mettre à jour l'affichage des inputs pour html2canvas
+            // 5. Mettre à jour l'affichage des inputs pour html2canvas / impression
             card.querySelectorAll('input').forEach(i => i.setAttribute('value', i.value));
             card.querySelectorAll('select').forEach(s => {
                 Array.from(s.options).forEach(o => {
@@ -1641,14 +1650,36 @@
                 });
             });
 
-            // 6. On scroll tout en haut (astuce html2pdf)
+            // 6. On scroll tout en haut
             window.scrollTo(0, 0);
 
-            // 7. On laisse le navigateur appliquer le CSS statique et blanc
+            function restore() {
+                if (!document.body.classList.contains('exporting')) return; // Sécurité si déjà appelé
+                titleEl.style.display = 'none'; 
+                card.className = originalClasses;
+                if (buttons) buttons.style.display = '';
+                document.body.classList.remove('exporting');
+                if (wasDark) document.documentElement.classList.add('dark');
+            }
+
+            // 7. On laisse le navigateur appliquer le CSS et on exporte/imprime
             setTimeout(() => {
                 if (type === 'print') {
+                    // Écouteur pour restaurer l'état APRES l'impression (bloque le retour au mode sombre trop tôt)
+                    const handleAfterPrint = () => {
+                        restore();
+                        window.removeEventListener('afterprint', handleAfterPrint);
+                    };
+                    window.addEventListener('afterprint', handleAfterPrint);
+                    
                     window.print();
-                    restore();
+                    
+                    // Fallback au cas où le navigateur ferme l'event (très rare mais on sait jamais)
+                    setTimeout(() => {
+                        window.removeEventListener('afterprint', handleAfterPrint);
+                        restore();
+                    }, 300000); 
+
                 } else if (type === 'pdf') {
                     let opt = {
                         margin:       [10, 10], 
@@ -1664,14 +1695,6 @@
                     });
                 }
             }, 300);
-
-            function restore() {
-                titleEl.style.display = 'none'; 
-                card.className = originalClasses;
-                if (buttons) buttons.style.display = '';
-                document.body.classList.remove('exporting');
-                if (wasDark) document.documentElement.classList.add('dark');
-            }
         }
 
         document.addEventListener('keydown', function(event) {
