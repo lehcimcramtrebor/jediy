@@ -69,7 +69,7 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* === FIX STYLES D'EXPORTATION & IMPRESSION === */
+        /* === FIX STYLES D'EXPORTATION PDF === */
         body.exporting {
             background-color: #ffffff !important;
             height: auto !important;
@@ -125,7 +125,6 @@
             }
             body:not(.exporting) #main_app_container { display: none !important; }
             .print\:hidden { display: none !important; }
-            /* Force le blanc sur les modals pendant l'impression */
             #recipe_modal, #recipe_modal_content, .export-card {
                 background-color: #ffffff !important;
                 background: #ffffff !important;
@@ -620,22 +619,18 @@
         </div>
     </div>
 
-    <!-- Modal Nom de la recette (Impression / Export) -->
-    <div id="print_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
-        <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="cancelPrint()"></div>
+    <!-- Modal Nom de la recette (Export PDF) -->
+    <div id="export_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="cancelExport()"></div>
         <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700">
-            <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2">Export de la recette</h3>
+            <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2">Export PDF</h3>
             <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Donne un nom à ta recette pour l'afficher sur le document.</p>
             <input type="text" id="recipe_name_input" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-xl p-3 mb-6 text-stone-800 dark:text-stone-100 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="Ex: Red Astaire Maison">
             <div class="flex justify-end gap-2 sm:gap-3 flex-wrap">
-                <button onclick="cancelPrint()" class="px-4 py-2.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-stone-300 font-bold text-sm rounded-xl transition-colors">Annuler</button>
-                <button onclick="exportRecipe('print')" class="px-4 py-2.5 bg-stone-800 hover:bg-stone-900 text-white font-bold text-sm rounded-xl transition-colors flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                    Imprimer
-                </button>
-                <button onclick="exportRecipe('pdf')" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors flex items-center gap-2">
+                <button onclick="cancelExport()" class="px-4 py-2.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-stone-300 font-bold text-sm rounded-xl transition-colors">Annuler</button>
+                <button onclick="exportRecipePDF()" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    PDF
+                    Télécharger PDF
                 </button>
             </div>
         </div>
@@ -1572,7 +1567,7 @@
             let actionBtns = document.createElement('div');
             actionBtns.className = 'modal-buttons flex gap-2 print:hidden';
             actionBtns.innerHTML = `
-                <button onclick="showPrintPrompt()" class="p-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-stone-800 hover:bg-brand-50 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Exporter la recette">
+                <button onclick="showExportPrompt()" class="p-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-stone-800 hover:bg-brand-50 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Exporter en PDF">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 </button>
                 <button onclick="closeRecipeModal()" class="p-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Fermer">
@@ -1597,23 +1592,23 @@
             document.body.style.overflow = '';
         }
         
-        function showPrintPrompt() {
-            document.getElementById('print_prompt_modal').classList.remove('hidden');
+        function showExportPrompt() {
+            document.getElementById('export_prompt_modal').classList.remove('hidden');
             let input = document.getElementById('recipe_name_input');
             input.value = ''; 
             input.focus();
         }
 
-        function cancelPrint() {
-            document.getElementById('print_prompt_modal').classList.add('hidden');
+        function cancelExport() {
+            document.getElementById('export_prompt_modal').classList.add('hidden');
         }
 
-        function exportRecipe(type) {
+        function exportRecipePDF() {
             let name = document.getElementById('recipe_name_input').value.trim() || 'Ma Recette';
             let card = document.querySelector('#recipe_modal_content .recipe-card-wrapper');
             if (!card) return;
 
-            cancelPrint();
+            cancelExport();
 
             // 1. Mémoriser et désactiver dark mode pour l'export
             let wasDark = document.documentElement.classList.contains('dark');
@@ -1641,7 +1636,7 @@
             titleEl.innerText = name;
             titleEl.style.display = 'block';
 
-            // 5. Mettre à jour l'affichage des inputs pour html2canvas / impression
+            // 5. Mettre à jour l'affichage des inputs pour html2canvas
             card.querySelectorAll('input').forEach(i => i.setAttribute('value', i.value));
             card.querySelectorAll('select').forEach(s => {
                 Array.from(s.options).forEach(o => {
@@ -1654,7 +1649,7 @@
             window.scrollTo(0, 0);
 
             function restore() {
-                if (!document.body.classList.contains('exporting')) return; // Sécurité si déjà appelé
+                if (!document.body.classList.contains('exporting')) return; // Sécurité
                 titleEl.style.display = 'none'; 
                 card.className = originalClasses;
                 if (buttons) buttons.style.display = '';
@@ -1662,46 +1657,28 @@
                 if (wasDark) document.documentElement.classList.add('dark');
             }
 
-            // 7. On laisse le navigateur appliquer le CSS et on exporte/imprime
+            // 7. On génère le PDF après que le DOM statique blanc soit bien affiché
             setTimeout(() => {
-                if (type === 'print') {
-                    // Écouteur pour restaurer l'état APRES l'impression (bloque le retour au mode sombre trop tôt)
-                    const handleAfterPrint = () => {
-                        restore();
-                        window.removeEventListener('afterprint', handleAfterPrint);
-                    };
-                    window.addEventListener('afterprint', handleAfterPrint);
-                    
-                    window.print();
-                    
-                    // Fallback au cas où le navigateur ferme l'event (très rare mais on sait jamais)
-                    setTimeout(() => {
-                        window.removeEventListener('afterprint', handleAfterPrint);
-                        restore();
-                    }, 300000); 
+                let opt = {
+                    margin:       [10, 10], 
+                    filename:     name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf',
+                    image:        { type: 'jpeg', quality: 1 },
+                    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#ffffff' },
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                };
 
-                } else if (type === 'pdf') {
-                    let opt = {
-                        margin:       [10, 10], 
-                        filename:     name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf',
-                        image:        { type: 'jpeg', quality: 1 },
-                        html2canvas:  { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#ffffff' },
-                        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
-
-                    html2pdf().set(opt).from(card).save().then(restore).catch(err => {
-                        console.error("Erreur PDF:", err);
-                        restore();
-                    });
-                }
+                html2pdf().set(opt).from(card).save().then(restore).catch(err => {
+                    console.error("Erreur PDF:", err);
+                    restore();
+                });
             }, 300);
         }
 
         document.addEventListener('keydown', function(event) {
             if (event.key === "Escape") {
-                let printModal = document.getElementById('print_prompt_modal');
-                if (!printModal.classList.contains('hidden')) {
-                    cancelPrint();
+                let exportModal = document.getElementById('export_prompt_modal');
+                if (!exportModal.classList.contains('hidden')) {
+                    cancelExport();
                     return;
                 }
                 let recipeModal = document.getElementById('recipe_modal');
