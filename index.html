@@ -86,7 +86,8 @@
         }
         
         body.exporting #main_app_container,
-        body.exporting #help_modal {
+        body.exporting #help_modal,
+        body.exporting #calc_modal {
             display: none !important;
         }
         
@@ -158,6 +159,9 @@
 
         <!-- Boutons Top Right -->
         <div class="absolute top-0 right-0 sm:right-2 md:right-4 flex gap-2 z-10">
+            <button onclick="openCalcModal()" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Calculatrice Rapide">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="16" y1="18" x2="16" y2="18.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line></svg>
+            </button>
             <button onclick="toggleTheme()" id="theme_toggle_btn" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Mode Sombre/Clair">
                 <!-- Icône Lune/Soleil injectée via JS -->
             </button>
@@ -741,7 +745,10 @@
                 <div class="space-y-6 mb-8">
                     <!-- Arôme -->
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
-                        <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Arôme (ml)</label>
+                        <div class="flex justify-between items-center">
+                            <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Arôme (ml)</label>
+                            <span id="t3_aroma_w" class="text-xs text-stone-400 font-bold">0 g</span>
+                        </div>
                         <div class="flex items-center gap-3">
                             <button onclick="adjustVal('t3_aroma_vol', -5)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
                             <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
@@ -758,7 +765,10 @@
 
                     <!-- Base Neutre -->
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
-                        <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Base Neutre (ml)</label>
+                        <div class="flex justify-between items-center">
+                            <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Base Neutre (ml)</label>
+                            <span id="t3_base_w" class="text-xs text-stone-400 font-bold">0 g</span>
+                        </div>
                         <div class="flex items-center gap-3">
                             <button onclick="adjustVal('t3_base_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
                             <input type="number" id="t3_base_vol" value="120" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
@@ -775,7 +785,10 @@
 
                     <!-- Boosters -->
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
-                        <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Boosters (ml)</label>
+                        <div class="flex justify-between items-center">
+                            <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Boosters (ml)</label>
+                            <span id="t3_boost_w" class="text-xs text-stone-400 font-bold">0 g</span>
+                        </div>
                         <div class="flex items-center gap-3">
                             <button onclick="adjustVal('t3_boost_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
                             <input type="number" id="t3_boost_vol" value="50" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
@@ -808,6 +821,46 @@
         </div>
     </div>
     
+    <!-- Modal Calculatrice Rapide -->
+    <div id="calc_modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeCalcModal()"></div>
+        <div class="relative bg-stone-100 dark:bg-stone-800 p-5 rounded-3xl shadow-2xl w-full max-w-xs border border-stone-200 dark:border-stone-700 flex flex-col transition-colors">
+            <button onclick="closeCalcModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            <div class="text-sm text-stone-500 dark:text-stone-400 mt-2 mb-4 text-center font-bold pr-6">T' as pas confiance tu veux vérifier par toi-même ? 😂</div>
+            
+            <div class="bg-white dark:bg-stone-900 h-16 rounded-xl border border-stone-200 dark:border-stone-700 mb-4 p-3 flex items-end justify-end shadow-inner overflow-hidden">
+                <div id="calc_display" class="text-2xl font-black text-stone-800 dark:text-stone-100 tracking-wider">0</div>
+            </div>
+
+            <div class="grid grid-cols-4 gap-2">
+                <button onclick="calcClear()" class="col-span-2 p-3 rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-black hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">C</button>
+                <button onclick="calcAppend('%')" class="p-3 rounded-xl bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300 font-black hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors">%</button>
+                <button onclick="calcAppend('/')" class="p-3 rounded-xl bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 font-black hover:bg-brand-200 dark:hover:bg-brand-900/50 transition-colors">÷</button>
+
+                <button onclick="calcAppend('7')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">7</button>
+                <button onclick="calcAppend('8')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">8</button>
+                <button onclick="calcAppend('9')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">9</button>
+                <button onclick="calcAppend('*')" class="p-3 rounded-xl bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 font-black hover:bg-brand-200 dark:hover:bg-brand-900/50 transition-colors">×</button>
+
+                <button onclick="calcAppend('4')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">4</button>
+                <button onclick="calcAppend('5')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">5</button>
+                <button onclick="calcAppend('6')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">6</button>
+                <button onclick="calcAppend('-')" class="p-3 rounded-xl bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 font-black hover:bg-brand-200 dark:hover:bg-brand-900/50 transition-colors">-</button>
+
+                <button onclick="calcAppend('1')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">1</button>
+                <button onclick="calcAppend('2')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">2</button>
+                <button onclick="calcAppend('3')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">3</button>
+                <button onclick="calcAppend('+')" class="p-3 rounded-xl bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 font-black hover:bg-brand-200 dark:hover:bg-brand-900/50 transition-colors">+</button>
+
+                <button onclick="calcAppend('0')" class="col-span-2 p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">0</button>
+                <button onclick="calcAppend('.')" class="p-3 rounded-xl bg-white dark:bg-stone-700/50 text-stone-800 dark:text-stone-200 font-black shadow-sm hover:bg-stone-50 dark:hover:bg-stone-600 transition-colors">.</button>
+                <button onclick="calcResult()" class="p-3 rounded-xl bg-brand-500 text-white font-black hover:bg-brand-600 transition-colors shadow-md">=</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal d'Aide (Plein écran) -->
     <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div class="modal-backdrop absolute inset-0 bg-stone-900/80 backdrop-blur-md cursor-pointer" onclick="closeHelpModal()"></div>
@@ -875,6 +928,18 @@
                     </p>
                 </div>
 
+                <!-- Section Poids/Grammes -->
+                <div class="bg-stone-50 dark:bg-stone-900/50 p-5 rounded-2xl border border-stone-200 dark:border-stone-700 mt-4">
+                    <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+                        <span>⚖️</span> Précision au gramme près
+                    </h3>
+                    <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
+                        Si tu mixes à la balance, les poids indiqués en grammes (g) sont calculés avec les densités réelles des composants :<br>
+                        <strong>1 ml de PG pèse 1.036 g</strong> et <strong>1 ml de VG pèse 1.261 g</strong>.<br>
+                        Le calculateur s'occupe de faire le ratio exact pour chaque base, arôme ou booster. Bref, c'est de la physique, c'est ultra précis, tu peux y aller les yeux fermés !
+                    </p>
+                </div>
+
             </div>
 
             <!-- Section Contact -->
@@ -935,6 +1000,14 @@
 
         const RATIOS = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
         
+        // Densités (g/ml)
+        const DENSITY_PG = 1.036;
+        const DENSITY_VG = 1.261;
+
+        function getWeight(vol, pgRatio) {
+            return vol * ((pgRatio * DENSITY_PG + (100 - pgRatio) * DENSITY_VG) / 100);
+        }
+
         function formatRatioStr(pg, labels = false) {
             let p = Math.round(pg);
             if (p === 100) return "100% PG";
@@ -947,6 +1020,43 @@
             t1: { vol_mode: 'defined', nic_mode: 'mg' },
             t2: { vol_mode: 'defined' }
         };
+
+        // --- GESTION CALCULATRICE ---
+        let calcExpr = "";
+        
+        function openCalcModal() {
+            document.getElementById('calc_modal').classList.remove('hidden');
+        }
+        function closeCalcModal() {
+            document.getElementById('calc_modal').classList.add('hidden');
+        }
+        function updateCalcDisplay() {
+            document.getElementById('calc_display').innerText = calcExpr || "0";
+        }
+        function calcAppend(val) {
+            if (calcExpr === "Erreur") calcExpr = "";
+            calcExpr += val;
+            updateCalcDisplay();
+        }
+        function calcClear() {
+            calcExpr = "";
+            updateCalcDisplay();
+        }
+        function calcResult() {
+            try {
+                // Remplacement des x par * pour le JS
+                let evalExpr = calcExpr.replace(/×/g, '*').replace(/÷/g, '/');
+                let res = new Function('return ' + evalExpr)();
+                if (isNaN(res) || !isFinite(res)) throw new Error("Erreur");
+                res = Math.round(res * 1000) / 1000;
+                calcExpr = res.toString();
+                updateCalcDisplay();
+            } catch(e) {
+                calcExpr = "Erreur";
+                updateCalcDisplay();
+                setTimeout(calcClear, 1000);
+            }
+        }
 
         // --- GESTION ASSISTANT (WIZARD) ---
         const WIZ_PATH_MAIN = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7'];
@@ -1003,7 +1113,6 @@
 
         function wizNext() {
             if(wizState.step < wizState.path.length - 1) {
-                // Check if moving to calc step
                 if(wizState.step === wizState.path.length - 2) {
                     runWizCalculation();
                 }
@@ -1718,7 +1827,7 @@
                 if(mixes) {
                     for(let mix of mixes) {
                         exactRecipes.push({
-                            aroma: aromaVol, nic: nicVol, nicRatio: bPg, bases: mix,
+                            aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: mix,
                             finalVol: finalVol, realPgRatio: targetPgRatio
                         });
                     }
@@ -1732,7 +1841,7 @@
                     }
                     let realPg = ((aromaPgMl + boostPgMl + (baseVol * (bestBase/100))) / finalVol) * 100;
                     altRecipes.push({
-                        aroma: aromaVol, nic: nicVol, nicRatio: bPg,
+                        aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg,
                         bases: [{pgRatio: bestBase, vol: baseVol}],
                         finalVol: finalVol, realPgRatio: realPg, isAlt: true
                     });
@@ -1791,7 +1900,7 @@
             if(mixes) {
                 for(let mix of mixes) {
                     exactRecipes.push({
-                        aroma: aromaVol, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost,
+                        aroma: aromaVol, aromaPg: 100, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost,
                         realPgRatio: shortfillTargetPgRatio, nicMax: maxNic
                     });
                 }
@@ -1805,7 +1914,7 @@
                 }
                 let realPg = ((aromaPgMl + (baseVol * (bestBase/100))) / prepVol) * 100;
                 altRecipes.push({
-                    aroma: aromaVol, bases: [{pgRatio: bestBase, vol: baseVol}],
+                    aroma: aromaVol, aromaPg: 100, bases: [{pgRatio: bestBase, vol: baseVol}],
                     prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic
                 });
             }
@@ -1826,7 +1935,17 @@
             let nPg = parseFloat(document.getElementById('t3_boost_pg').value)||50;
             let str = parseFloat(document.getElementById('t3_boost_str').value)||20;
 
+            let aWeight = getWeight(aVol, aPg);
+            let bWeight = getWeight(bVol, bPg);
+            let nWeight = getWeight(nVol, nPg);
+
+            document.getElementById('t3_aroma_w').innerText = `${round1(aWeight)} g`;
+            document.getElementById('t3_base_w').innerText = `${round1(bWeight)} g`;
+            document.getElementById('t3_boost_w').innerText = `${round1(nWeight)} g`;
+
             let tVol = aVol + bVol + nVol;
+            let tWeight = aWeight + bWeight + nWeight;
+
             if(tVol === 0) { document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in">Aucun volume.</div>`; return; }
 
             let totalPg = (aVol*(aPg/100)) + (bVol*(bPg/100)) + (nVol*(nPg/100));
@@ -1836,7 +1955,7 @@
 
             document.getElementById('t3_results').innerHTML = `
                 <div class="animate-fade-in">
-                    <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml</span></div>
+                    <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml <span class="text-xs text-stone-400 font-normal">(${round1(tWeight)} g)</span></span></div>
                     <div class="grid grid-cols-3 gap-2 mt-4 text-left">
                         <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio)}</span></div>
                         <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600 dark:text-brand-400">${round1(aRatio)} %</span></div>
@@ -1889,6 +2008,9 @@
             let bColor = isAlt ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20' : 'border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20';
             let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400';
 
+            let aromaWeight = getWeight(r.aroma, r.aromaPg || 100);
+            let totalWeight = aromaWeight;
+
             let html = `<div class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">`;
             
             html += `<div class="flex-1">`;
@@ -1903,16 +2025,41 @@
             </div>`;
 
             html += `<div class="space-y-2 mb-4">`;
-            html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors"><span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme Concentré</span><span class="font-black text-stone-800 dark:text-stone-200">${round1(r.aroma)} ml</span></div>`;
+            html += `
+                <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
+                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme Concentré</span>
+                    <div class="text-right leading-tight">
+                        <span class="font-black text-stone-800 dark:text-stone-200">${round1(r.aroma)} ml</span>
+                        <span class="block text-[10px] font-normal text-stone-400 dark:text-stone-500 mt-0.5">${round1(aromaWeight)} g</span>
+                    </div>
+                </div>`;
             
             r.bases.forEach(b => {
                 if(b.vol > 0.1) {
-                    html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors"><span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded">${formatRatioStr(b.pgRatio)}</span></span><span class="font-black text-stone-800 dark:text-stone-200">${round1(b.vol)} ml</span></div>`;
+                    let baseWeight = getWeight(b.vol, b.pgRatio);
+                    totalWeight += baseWeight;
+                    html += `
+                        <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
+                            <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded">${formatRatioStr(b.pgRatio)}</span></span>
+                            <div class="text-right leading-tight">
+                                <span class="font-black text-stone-800 dark:text-stone-200">${round1(b.vol)} ml</span>
+                                <span class="block text-[10px] font-normal text-stone-400 dark:text-stone-500 mt-0.5">${round1(baseWeight)} g</span>
+                            </div>
+                        </div>`;
                 }
             });
 
             if(prefix === 't1' && r.nic > 0) {
-                html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors"><span class="text-sm font-bold text-emerald-600 dark:text-emerald-50 flex items-center gap-2">Booster <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded">${formatRatioStr(r.nicRatio)}</span></span><span class="font-black text-stone-800 dark:text-stone-200">${round1(r.nic)} ml</span></div>`;
+                let nicWeight = getWeight(r.nic, r.nicRatio);
+                totalWeight += nicWeight;
+                html += `
+                    <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
+                        <span class="text-sm font-bold text-emerald-600 dark:text-emerald-50 flex items-center gap-2">Booster <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded">${formatRatioStr(r.nicRatio)}</span></span>
+                        <div class="text-right leading-tight">
+                            <span class="font-black text-stone-800 dark:text-stone-200">${round1(r.nic)} ml</span>
+                            <span class="block text-[10px] font-normal text-stone-400 dark:text-stone-500 mt-0.5">${round1(nicWeight)} g</span>
+                        </div>
+                    </div>`;
             }
             html += `</div></div>`; 
 
@@ -1921,19 +2068,25 @@
                 let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
                 let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
                 html += `
-                <div class="mt-auto pt-4 border-t border-stone-200/50 dark:border-stone-700 flex justify-between items-center">
-                    <span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span>
-                    <div class="text-right">
-                        <span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(finalAroma)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span>
-                        <span class="mx-1 text-stone-300 dark:text-stone-600">|</span>
-                        <span class="text-lg font-black ${tColor}">${round1(finalNic)} mg/ml</span>
+                <div class="mt-auto pt-4 border-t border-stone-200/50 dark:border-stone-700">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span>
+                        <div class="text-right">
+                            <span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(finalAroma)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span>
+                            <span class="mx-1 text-stone-300 dark:text-stone-600">|</span>
+                            <span class="text-lg font-black ${tColor}">${round1(finalNic)} mg/ml</span>
+                        </div>
                     </div>
+                    <div class="text-right text-[10px] text-stone-400 dark:text-stone-500 mt-1">Poids total estimé : ${round1(totalWeight)} g</div>
                 </div>`;
             }
 
             if(prefix === 't2') {
                 html += `
-                <div class="sim-container mt-3 p-3 bg-white dark:bg-stone-900/80 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
+                <div class="mt-auto border-t border-stone-200/50 dark:border-stone-700 pt-2 mb-2 text-right">
+                    <span class="text-[10px] text-stone-400 dark:text-stone-500">Poids total estimé : ${round1(totalWeight)} g</span>
+                </div>
+                <div class="sim-container mt-1 p-3 bg-white dark:bg-stone-900/80 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
                     <div class="flex items-center justify-center gap-2 mb-2 text-stone-500 dark:text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5">
                         <span>🧪 Simulation d'ajout de boosters</span>
                     </div>
@@ -2270,6 +2423,11 @@
                 let helpModal = document.getElementById('help_modal');
                 if (!helpModal.classList.contains('hidden')) {
                     closeHelpModal();
+                    return;
+                }
+                let calcModal = document.getElementById('calc_modal');
+                if (!calcModal.classList.contains('hidden')) {
+                    closeCalcModal();
                 }
             }
         });
