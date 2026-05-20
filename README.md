@@ -3,6 +3,10 @@ HTML 5 CALCULATEUR DIY POUR VAPOTEURS
 
 Web App installable sur pc, mac et mobile:
 
+Teste la directement: https://lehcimcramtrebor.github.io/jediy/
+
+Fonctions:
+
 - Calcul du liquide complet nicotiné, d'une réserve surconcentrée pour shortfills avec simulation de boosters ou simple calcul de boost.
 - Assistant pas, avec ça même ta belle-mère peut faire du DIY.
 - Recettes exportables en PDF afin de garder sous le coude un mélange reproduit régulièrement.
