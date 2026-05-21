@@ -2412,44 +2412,58 @@
         // --- MODAL & EXPORT ---
         let currentRecipeCard = null;
 
-        function openModalFromCard(btn) {
-            let card = btn.closest('.recipe-card-wrapper');
-            currentRecipeCard = card;
-            
-            // Clone la carte pour la modale
-            let clone = card.cloneNode(true);
-            
-            // Supprime le bouton d'options de la carte clonée
-            let optBtn = clone.querySelector('button');
-            if(optBtn) optBtn.remove();
-            
-            // On conserve les classes de couleur d'origine, on adapte juste pour l'affichage modal
-            clone.classList.remove('hover:shadow-xl', 'hover:-translate-y-1', 'h-full', 'dark:bg-brand-900/20', 'dark:bg-amber-900/20');
-            clone.classList.add('export-card', 'relative', 'w-full', 'shadow-2xl', 'dark:bg-stone-800');
-            
-            // Création des boutons de la modale de recette
-            let buttonsHtml = `
-                <div class="modal-buttons flex justify-between gap-3 mt-6 pt-4 border-t border-stone-200 dark:border-stone-700 print:hidden">
-                    <button onclick="closeRecipeModal()" class="px-5 py-2.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-bold text-sm rounded-xl transition-colors">Fermer</button>
-                    <button onclick="openExportPrompt()" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
-                        Exporter
-                    </button>
-                </div>
-            `;
-            
-            clone.innerHTML += buttonsHtml;
-            
-            let modalContent = document.getElementById('recipe_modal_content');
-            modalContent.innerHTML = '';
-            modalContent.appendChild(clone);
-            
-            document.getElementById('recipe_modal').classList.remove('hidden');
-            
-            // Initialiser les select de simulation si présents dans le clone
-            let sel = clone.querySelector('.sim-sel-vol');
-            if(sel) updateSim(sel);
+function openModalFromCard(btn) {
+    let card = btn.closest('.recipe-card-wrapper');
+    currentRecipeCard = card;
+    
+    // Clone la carte
+    let clone = card.cloneNode(true);
+    
+    // Supprime le bouton d'options de la carte clonée
+    let optBtn = clone.querySelector('button');
+    if(optBtn) optBtn.remove();
+    
+    clone.classList.remove('hover:shadow-xl', 'hover:-translate-y-1', 'h-full', 'dark:bg-brand-900/20', 'dark:bg-amber-900/20');
+    clone.classList.add('export-card', 'relative', 'w-full', 'shadow-2xl', 'dark:bg-stone-800');
+    
+    let buttonsHtml = `
+        <div class="modal-buttons flex justify-between gap-3 mt-6 pt-4 border-t border-stone-200 dark:border-stone-700 print:hidden">
+            <button onclick="closeRecipeModal()" class="px-5 py-2.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-bold text-sm rounded-xl transition-colors">Fermer</button>
+            <button onclick="openExportPrompt()" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                Exporter
+            </button>
+        </div>
+    `;
+    clone.innerHTML += buttonsHtml;
+    
+    let modalContent = document.getElementById('recipe_modal_content');
+    modalContent.innerHTML = '';
+    modalContent.appendChild(clone);
+    
+    // --- CORRECTIF ICI : Reporte les valeurs de la carte source vers le clone ---
+    let sourceSimSel = card.querySelector('.sim-sel-vol');
+    let sourceBCount = card.querySelector('.sim-b-count');
+    let sourceMlCount = card.querySelector('.sim-ml-count');
+    
+    if(sourceSimSel) {
+        let cloneSimSel = clone.querySelector('.sim-sel-vol');
+        cloneSimSel.value = sourceSimSel.value;
+        // Déclenche l'affichage du menu custom si nécessaire
+        handlePreleveChange(cloneSimSel);
+        if(sourceSimSel.value === 'custom') {
+            clone.querySelector('.sim-custom-vol').value = card.querySelector('.sim-custom-vol').value;
         }
+    }
+    if(sourceBCount) clone.querySelector('.sim-b-count').value = sourceBCount.value;
+    if(sourceMlCount) clone.querySelector('.sim-ml-count').value = sourceMlCount.value;
+    
+    document.getElementById('recipe_modal').classList.remove('hidden');
+    
+    // Initialiser le calcul de la simulation dans le clone
+    let sel = clone.querySelector('.sim-sel-vol');
+    if(sel) updateSim(sel);
+}
 
         function closeRecipeModal() {
             document.getElementById('recipe_modal').classList.add('hidden');
