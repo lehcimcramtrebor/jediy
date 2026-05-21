@@ -1004,11 +1004,15 @@
     <script>
         // Anti pull-to-refresh agressif pour mobile
         let startY = 0;
+        let isSlider = false;
+        
         document.addEventListener('touchstart', e => { 
             startY = e.touches[0].pageY; 
+            isSlider = e.target && e.target.tagName === 'INPUT' && e.target.type === 'range';
         }, {passive: true});
         
         document.addEventListener('touchmove', e => {
+            if (isSlider) return; // Désactive l'anti-slide si on interagit avec un slider
             if (window.scrollY === 0 && e.touches[0].pageY > startY) {
                 e.preventDefault();
             }
