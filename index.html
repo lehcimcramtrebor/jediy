@@ -2184,7 +2184,20 @@
             let aromaWeight = getWeight(r.aroma, r.aromaPg || 100);
             let totalWeight = aromaWeight;
 
-            let html = `<div class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">`;
+            // Préparation des attributs invisibles pour l'export texte
+            let dataAttrs = `data-type="${prefix}" data-ratio="${formatRatioStr(r.realPgRatio, true)}" `;
+            if (prefix === 't1') {
+                let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
+                let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
+                let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
+                dataAttrs += `data-aroma-perc="${round1(finalAroma)}" data-nic-mg="${round1(finalNic)}" `;
+            } else if (prefix === 't2') {
+                let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
+                let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+                dataAttrs += `data-aroma-perc="${round1(finalAroma)}" data-nic-max="${r.nicMax}" data-prep-vol="${round1(r.prepVol)}" data-booster-str="${bStr}" `;
+            }
+
+            let html = `<div ${dataAttrs} class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">`;
             
             html += `<div class="flex-1">`;
             html += `<div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700 transition-colors">
@@ -2462,9 +2475,18 @@
             
             let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
             
+            // Attributs invisibles intégrés dans la div de la carte générée
+            let type = clone.getAttribute('data-type');
+            let ratio = clone.getAttribute('data-ratio');
+            let aromaPerc = clone.getAttribute('data-aroma-perc');
+            
             // Titre principal (Volume final/Shortfill)
             let titleEl = clone.querySelector('.font-extrabold.text-lg');
             if(titleEl) text += `${titleEl.innerText.replace(/\n/g, ' ')}\n`;
+            
+            if (ratio) text += `⚖️ Ratio : ${ratio}\n`;
+            
+            text += `\n📝 INGRÉDIENTS :\n`;
             
             // Lignes d'ingrédients
             let rows = clone.querySelectorAll('.bg-white.dark\\:bg-stone-800.p-2\\.5');
@@ -2475,6 +2497,64 @@
                 let g = vols.length > 1 ? ` (${vols[1].trim()})` : '';
                 text += `- ${name} : ${ml}${g}\n`;
             });
+            
+            text += `\n🎯 RÉSULTAT FINAL :\n`;
+            text += `- Arôme : ${aromaPerc}%\n`;
+            
+            if (type === 't1') {
+                let nicMg = clone.getAttribute('data-nic-mg');
+                text += `- Nicotine : ${nicMg} mg/ml\n`;
+            } else if (type === 't2') {
+                let nicMax = parseFloat(clone.getAttribute('data-nic-max'));
+                let prepVol = parseFloat(clone.getAttribute('data-prep-vol'));
+                let bStr = parseFloat(clone.getAttribute('data-booster-str'));
+                
+                text += `- Nicotine max conseillée : ${nicMax} mg/ml\n`;
+                
+                function getGuideForVol(baseVol, title) {
+                    let out = `\n💡 GUIDE DE BOOST (${title}) :\n`;
+                    let targets = [3, 6, 9, 12];
+                    let sims = new Map();
+                    
+                    targets.forEach(target => {
+                        if (target < nicMax) {
+                            let exactBVol = (baseVol * target) / (bStr - target);
+                            let bCount = Math.round(exactBVol / 10);
+                            if (bCount > 0) {
+                                let actualVol = bCount * 10;
+                                let actualNic = (actualVol * bStr) / (baseVol + actualVol);
+                                sims.set(bCount, actualNic);
+                            }
+                        }
+                    });
+                    
+                    sims.forEach((actualNic, bCount) => {
+                        out += `+ ${bCount} booster(s) -> ~${round1(actualNic)} mg/ml\n`;
+                    });
+                    
+                    let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
+                    let maxBCount = exactMaxBVol / 10;
+                    let roundedMax = round1(maxBCount);
+                    let floorMax = Math.floor(maxBCount);
+                    
+                    // Proposer le booster entier en dessous du max s'il est pertinent
+                    if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
+                        let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
+                        out += `+ ${floorMax} booster(s) -> ~${round1(actualNicFloor)} mg/ml\n`;
+                    }
+                    
+                    out += `+ MAX : ${roundedMax} booster(s) -> ${nicMax} mg/ml\n`;
+                    return out;
+                }
+
+                text += getGuideForVol(prepVol, "pour le bidon complet de " + round1(prepVol) + " ml");
+
+                [30, 50, 100].forEach(v => {
+                    if (v < prepVol) {
+                        text += getGuideForVol(v, "si tu prélèves " + v + " ml");
+                    }
+                });
+            }
             
             text += `-----------------------\nGénéré avec Je-DIY`;
             return text;
