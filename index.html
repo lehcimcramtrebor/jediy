@@ -1083,6 +1083,27 @@
         </div>
     </div>
 
+    <!-- Modal Partage App (Flyer) -->
+    <div id="share_flyer_modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeShareFlyerModal()"></div>
+        <div class="relative bg-white dark:bg-stone-800 p-5 rounded-3xl shadow-2xl w-full max-w-md border border-stone-100 dark:border-stone-700 flex flex-col items-center transition-colors">
+            <button onclick="closeShareFlyerModal()" class="absolute top-4 right-4 bg-white/50 dark:bg-stone-800/50 rounded-full p-1.5 text-stone-600 dark:text-stone-300 hover:text-stone-800 dark:hover:text-stone-100 transition-colors z-10 backdrop-blur-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+            
+            <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-4 w-full text-center">Partager Je-DIY</h3>
+            
+            <div class="w-full rounded-2xl overflow-hidden mb-5 bg-stone-100 dark:bg-stone-900 shadow-inner flex items-center justify-center border border-stone-200 dark:border-stone-700/50">
+                <img src="flyer.png" alt="Flyer Je-DIY QR Code" class="w-full max-h-[60vh] object-contain" onerror="this.src='https://placehold.co/600x800/e2e8f0/475569?text=Image+Flyer+Introuvable'">
+            </div>
+            
+            <button onclick="executeShare()" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-lg shadow-md transition-all active:scale-95 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Partager le lien
+            </button>
+        </div>
+    </div>
+
     <script>
         // Changement de thème global
         function switchTheme(theme) {
@@ -1455,7 +1476,17 @@
             });
         }
 
+        // --- GESTION PARTAGE ---
         function shareApp() {
+            // Ouvre la modale du flyer
+            document.getElementById('share_flyer_modal').classList.remove('hidden');
+        }
+
+        function closeShareFlyerModal() {
+            document.getElementById('share_flyer_modal').classList.add('hidden');
+        }
+
+        function executeShare() {
             const shareData = {
                 title: 'Je-DIY - Calculateur Expert',
                 text: 'Découvre Je-DIY, le calculateur expert de e-liquide super pratique pour la vape !',
@@ -1471,10 +1502,12 @@
                 textArea.select();
                 try {
                     document.execCommand('copy');
+                    // Notification visuelle
                     const btn = document.getElementById('share_app_btn');
                     const originalHTML = btn.innerHTML;
                     btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
                     setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
+                    closeShareFlyerModal();
                 } catch (err) {
                     console.error('Copie échouée', err);
                 }
@@ -2555,6 +2588,12 @@
                 let calcModal = document.getElementById('calc_modal');
                 if (!calcModal.classList.contains('hidden')) {
                     closeCalcModal();
+                    return;
+                }
+                // Ajout fermeture modal de partage sur escape
+                let shareFlyerModal = document.getElementById('share_flyer_modal');
+                if (!shareFlyerModal.classList.contains('hidden')) {
+                    closeShareFlyerModal();
                 }
             }
         });
