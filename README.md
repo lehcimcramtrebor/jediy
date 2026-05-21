@@ -9,7 +9,7 @@ Fonctions:
 
 - Calcul du liquide complet nicotiné, d'une réserve surconcentrée pour shortfills avec simulation de boosters ou simple calcul de boost.
 - Assistant pas, avec ça même ta belle-mère peut faire du DIY.
-- Recettes exportables en PDF afin de garder sous le coude un mélange reproduit régulièrement.
+- Partage tes recettes, téléchargeèles en pdf ou png.
 
 <img width="1536" height="1536" alt="Flyer" src="https://github.com/user-attachments/assets/266de302-4a47-4f99-9f73-5cff77e8b28b" />
 
