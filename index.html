@@ -2469,48 +2469,48 @@
             }
         }
 
-        function prepareCardForExport() {
-            let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
-            if (!clone) return null;
-            
-            let name = document.getElementById('recipe_name_input').value.trim();
-            if (name) {
-                let titleDiv = document.createElement('div');
-                titleDiv.className = 'export-title text-2xl font-black text-center mb-4 pb-4 border-b-2 border-stone-200 text-stone-800';
-                titleDiv.innerText = name;
-                clone.insertBefore(titleDiv, clone.firstChild);
-            }
-            
-            // Masquer les boutons pour le PDF
-            let buttons = clone.querySelector('.modal-buttons');
-            if (buttons) buttons.style.display = 'none';
+		function prepareCardForExport() {
+			let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
+			if (!clone) return null;
+			
+			// Ajout du fallback "Recette Je-DIY" si le champ est vide
+			let name = document.getElementById('recipe_name_input').value.trim() || "Recette Je-DIY";
+			
+			let titleDiv = document.createElement('div');
+			titleDiv.className = 'export-title text-2xl font-black text-center mb-4 pb-4 border-b-2 border-stone-200 text-stone-800';
+			titleDiv.innerText = name;
+			clone.insertBefore(titleDiv, clone.firstChild);
+			
+			// Masquer les boutons pour le PDF
+			let buttons = clone.querySelector('.modal-buttons');
+			if (buttons) buttons.style.display = 'none';
 
-            // Ajouter le footer avec le QR code
-            let footerDiv = document.createElement('div');
-            footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-8 pt-6 border-t-2 border-stone-100';
-            footerDiv.innerHTML = `
-                <img src="jediy.png" alt="QR Code Je-DIY" class="w-32 h-32 rounded-xl shadow-sm border border-stone-200">
-                <div class="text-stone-500 font-bold text-sm text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-lg">Je-DIY</span></div>
-            `;
-            clone.appendChild(footerDiv);
-            
-            // Force light mode on clone and fix colors
-            document.body.classList.add('exporting');
-            document.documentElement.classList.remove('dark');
-            
-            return {
-                card: clone,
-                restore: () => {
-                    document.body.classList.remove('exporting');
-                    applyTheme(); // Restore dark/light theme
-                    let addedTitle = clone.querySelector('.export-title');
-                    if (addedTitle) addedTitle.remove();
-                    let addedFooter = clone.querySelector('.export-footer');
-                    if (addedFooter) addedFooter.remove();
-                    if (buttons) buttons.style.display = ''; // Réaffiche les boutons
-                }
-            };
-        }
+			// Ajouter le footer avec le QR code
+			let footerDiv = document.createElement('div');
+			footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-8 pt-6 border-t-2 border-stone-100';
+			footerDiv.innerHTML = `
+				<img src="jediy.png" alt="QR Code Je-DIY" class="w-32 h-32 rounded-xl shadow-sm border border-stone-200">
+				<div class="text-stone-500 font-bold text-sm text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-lg">Je-DIY</span></div>
+			`;
+			clone.appendChild(footerDiv);
+			
+			// Force light mode on clone and fix colors
+			document.body.classList.add('exporting');
+			document.documentElement.classList.remove('dark');
+			
+			return {
+				card: clone,
+				restore: () => {
+					document.body.classList.remove('exporting');
+					applyTheme(); // Restore dark/light theme
+					let addedTitle = clone.querySelector('.export-title');
+					if (addedTitle) addedTitle.remove();
+					let addedFooter = clone.querySelector('.export-footer');
+					if (addedFooter) addedFooter.remove();
+					if (buttons) buttons.style.display = ''; // Réaffiche les boutons
+				}
+			};
+		}
 
         function exportRecipePDF() {
             let ctx = prepareCardForExport();
