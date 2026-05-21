@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr" class="transition-colors duration-300">
+<html lang="fr" class="transition-colors duration-300" data-theme="complet">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -25,7 +25,21 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['Inter', 'sans-serif'] },
-                    colors: { brand: tailwind.colors.amber, base: tailwind.colors.stone },
+                    colors: { 
+                        brand: {
+                            50: 'rgb(var(--brand-50) / <alpha-value>)',
+                            100: 'rgb(var(--brand-100) / <alpha-value>)',
+                            200: 'rgb(var(--brand-200) / <alpha-value>)',
+                            300: 'rgb(var(--brand-300) / <alpha-value>)',
+                            400: 'rgb(var(--brand-400) / <alpha-value>)',
+                            500: 'rgb(var(--brand-500) / <alpha-value>)',
+                            600: 'rgb(var(--brand-600) / <alpha-value>)',
+                            700: 'rgb(var(--brand-700) / <alpha-value>)',
+                            800: 'rgb(var(--brand-800) / <alpha-value>)',
+                            900: 'rgb(var(--brand-900) / <alpha-value>)',
+                        }, 
+                        base: tailwind.colors.stone 
+                    },
                     animation: {
                         'fade-in': 'fadeIn 0.3s ease-out forwards',
                         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
@@ -45,6 +59,57 @@
         }
     </script>
     <style type="text/tailwindcss">
+        @layer base {
+            :root, [data-theme="complet"] {
+                --brand-50: 255 251 235;
+                --brand-100: 254 243 199;
+                --brand-200: 253 230 138;
+                --brand-300: 252 211 77;
+                --brand-400: 251 191 36;
+                --brand-500: 245 158 11;
+                --brand-600: 217 119 6;
+                --brand-700: 180 83 9;
+                --brand-800: 146 64 14;
+                --brand-900: 120 53 15;
+            }
+            [data-theme="boost"] {
+                --brand-50: 236 253 245;
+                --brand-100: 209 250 229;
+                --brand-200: 167 243 208;
+                --brand-300: 110 231 183;
+                --brand-400: 52 211 153;
+                --brand-500: 16 185 129;
+                --brand-600: 5 150 105;
+                --brand-700: 4 120 87;
+                --brand-800: 6 95 70;
+                --brand-900: 6 78 59;
+            }
+            [data-theme="shortfill"] {
+                --brand-50: 238 242 255;
+                --brand-100: 224 231 255;
+                --brand-200: 199 210 254;
+                --brand-300: 165 180 252;
+                --brand-400: 129 140 248;
+                --brand-500: 99 102 241;
+                --brand-600: 79 70 229;
+                --brand-700: 67 56 202;
+                --brand-800: 55 48 163;
+                --brand-900: 49 46 129;
+            }
+            [data-theme="manuel"] {
+                --brand-50: 254 242 242;
+                --brand-100: 254 226 226;
+                --brand-200: 254 202 202;
+                --brand-300: 252 165 165;
+                --brand-400: 248 113 113;
+                --brand-500: 239 68 68;
+                --brand-600: 220 38 38;
+                --brand-700: 185 28 28;
+                --brand-800: 153 27 27;
+                --brand-900: 127 29 29;
+            }
+        }
+
         /* Bloque le "pull-to-refresh" natif sur mobile Chrome/Safari de façon agressive */
         html, body {
             overscroll-behavior-y: none;
@@ -52,17 +117,18 @@
 
         @layer utilities {
             .checked-base { @apply bg-brand-50 border-brand-200 dark:bg-brand-900/30 dark:border-brand-700/50; }
-            .checked-boost { @apply bg-emerald-50 border-emerald-200 dark:bg-emerald-900/30 dark:border-emerald-700/50; }
+            .checked-boost { @apply bg-brand-50 border-brand-200 dark:bg-brand-900/30 dark:border-brand-700/50; }
         }
 
-        /* Style des sliders pour un rendu plus qualitatif */
+        /* Style des sliders dynamique */
         input[type=range] {
             -webkit-appearance: none; width: 100%; background: transparent;
         }
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none; height: 24px; width: 24px;
-            border-radius: 50%; background: #d97706; cursor: pointer;
-            margin-top: -8px; box-shadow: 0 2px 6px rgba(217, 119, 6, 0.4);
+            border-radius: 50%; background: rgb(var(--brand-600)); cursor: pointer;
+            margin-top: -8px; box-shadow: 0 2px 6px rgb(var(--brand-600) / 0.4);
+            transition: background 0.3s, box-shadow 0.3s;
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%; height: 8px; cursor: pointer;
@@ -114,17 +180,23 @@
             max-width: 600px !important;
             width: 100% !important;
             box-shadow: none !important;
-            border: 2px solid #e5e7eb !important;
-            background-color: #ffffff !important;
             page-break-inside: avoid;
         }
 
-        body.exporting .bg-emerald-50 { background-color: #ecfdf5 !important; }
+        /* Variables "en dur" pour que l'export PDF (html2canvas) comprenne bien les couleurs sans l'alpha de Tailwind */
+        body.exporting .bg-brand-50 { background-color: rgb(var(--brand-50)) !important; }
+        body.exporting .bg-brand-100 { background-color: rgb(var(--brand-100)) !important; }
+        body.exporting .border-brand-200 { border-color: rgb(var(--brand-200)) !important; }
+        body.exporting .text-brand-600 { color: rgb(var(--brand-600)) !important; }
+        body.exporting .text-brand-700 { color: rgb(var(--brand-700)) !important; }
+        
         body.exporting .bg-amber-50 { background-color: #fffbeb !important; }
+        body.exporting .border-amber-200 { border-color: #fde68a !important; }
+        body.exporting .text-amber-500 { color: #f59e0b !important; }
+        body.exporting .text-amber-700 { color: #b45309 !important; }
+        
         body.exporting .bg-stone-50 { background-color: #fafaf9 !important; }
         body.exporting .bg-stone-100 { background-color: #f5f5f4 !important; }
-        body.exporting .border-emerald-200 { border-color: #a7f3d0 !important; }
-        body.exporting .border-amber-200 { border-color: #fde68a !important; }
         
         @media print {
             @page { margin: 10mm; size: A4 portrait; }
@@ -135,7 +207,7 @@
             }
             body:not(.exporting) #main_app_container { display: none !important; }
             .print\:hidden { display: none !important; }
-            #recipe_modal, #recipe_modal_content, .export-card {
+            #recipe_modal, #recipe_modal_content {
                 background-color: #ffffff !important;
                 background: #ffffff !important;
             }
@@ -175,7 +247,7 @@
         </div>
 
         <header class="mb-6 text-center pt-14 sm:pt-0">
-            <h1 class="text-4xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-2">Je-<span class="text-brand-600 dark:text-brand-500">DIY</span></h1>
+            <h1 class="text-4xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-2">Je-<span class="text-brand-600 dark:text-brand-500 transition-colors">DIY</span></h1>
             <p class="text-stone-500 dark:text-stone-400 font-medium text-sm">Calculateur de e-liquide</p>
         </header>
 
@@ -215,7 +287,7 @@
                     <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Choisis le type de recette que tu souhaites créer.</p>
                     <div class="grid gap-3 mt-auto mb-auto">
                         
-                        <button onclick="switchTab('tab_boost_simple')" class="p-4 text-left bg-stone-50 hover:bg-emerald-50 dark:bg-stone-900/50 dark:hover:bg-emerald-900/20 border-2 border-stone-200 hover:border-emerald-400 dark:border-stone-700 dark:hover:border-emerald-600 rounded-2xl transition-all group">
+                        <button onclick="switchTheme('boost'); switchTab('tab_boost_simple')" class="p-4 text-left bg-stone-50 hover:bg-emerald-50 dark:bg-stone-900/50 dark:hover:bg-emerald-900/20 border-2 border-stone-200 hover:border-emerald-400 dark:border-stone-700 dark:hover:border-emerald-600 rounded-2xl transition-all group">
                             <div class="flex items-center gap-4">
                                 <span class="text-3xl group-hover:scale-110 transition-transform">🚀</span>
                                 <div>
@@ -225,11 +297,11 @@
                             </div>
                         </button>
                         
-                        <button onclick="wizSetType('t1')" class="p-4 text-left bg-stone-50 hover:bg-brand-50 dark:bg-stone-900/50 dark:hover:bg-brand-900/20 border-2 border-stone-200 hover:border-brand-400 dark:border-stone-700 dark:hover:border-brand-600 rounded-2xl transition-all group">
+                        <button onclick="wizSetType('t1')" class="p-4 text-left bg-stone-50 hover:bg-amber-50 dark:bg-stone-900/50 dark:hover:bg-amber-900/20 border-2 border-stone-200 hover:border-amber-400 dark:border-stone-700 dark:hover:border-amber-600 rounded-2xl transition-all group">
                             <div class="flex items-center gap-4">
                                 <span class="text-3xl group-hover:scale-110 transition-transform">🎯</span>
                                 <div>
-                                    <div class="font-black text-lg text-stone-800 dark:text-stone-100 group-hover:text-brand-600 dark:group-hover:text-brand-400">Liquide Complet</div>
+                                    <div class="font-black text-lg text-stone-800 dark:text-stone-100 group-hover:text-amber-600 dark:group-hover:text-amber-400">Liquide Complet</div>
                                     <div class="text-sm text-stone-500 dark:text-stone-400 mt-0.5">Fait maison de A à Z. Arôme, base et nicotine calculés d'un coup.</div>
                                 </div>
                             </div>
@@ -301,7 +373,7 @@
                         </div>
 
                         <!-- Dosage Arôme -->
-                        <div class="bg-stone-50 dark:bg-stone-900/50 p-5 rounded-2xl border border-stone-100 dark:border-stone-700">
+                        <div class="bg-stone-50 dark:bg-stone-900/50 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
                             <div class="flex justify-between items-center mb-2">
                                 <label id="wiz_aroma_perc_label" class="text-sm font-bold text-stone-700 dark:text-stone-300">À quel pourcentage tu doses ?</label>
                                 <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="wiz_aroma_perc_disp">15%</span>
@@ -317,7 +389,7 @@
                     <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">C'est quoi ton ratio cible ?</h2>
                     <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Plutôt fluide (plus de PG) ou de gros nuages (plus de VG) ?</p>
                     
-                    <div class="mt-auto mb-auto bg-stone-50 dark:bg-stone-900/50 p-6 rounded-3xl border border-stone-200 dark:border-stone-700 text-center">
+                    <div class="mt-auto mb-auto bg-stone-50 dark:bg-stone-900/50 p-6 rounded-3xl border border-stone-200 dark:border-stone-700 text-center transition-colors">
                         <div class="text-4xl font-black text-brand-600 dark:text-brand-400 mb-6" id="wiz_ratio_disp">50PG / 50VG</div>
                         
                         <input type="hidden" id="wiz_ratio_pg" value="50">
@@ -367,10 +439,10 @@
                         </div>
 
                         <!-- Booster Strength -->
-                        <div class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-stone-100 dark:border-stone-700">
+                        <div class="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
                             <span class="text-sm font-bold text-stone-600 dark:text-stone-300">Tes boosters font du :</span>
                             <div class="flex items-center gap-2">
-                                <input type="number" id="wiz_booster_str" value="20" class="w-16 h-10 text-center bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-lg font-bold text-stone-800 dark:text-stone-100">
+                                <input type="number" id="wiz_booster_str" value="20" class="w-16 h-10 text-center bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-lg font-bold text-stone-800 dark:text-stone-100 transition-colors">
                                 <span class="text-sm text-stone-400">mg/ml</span>
                             </div>
                         </div>
@@ -404,9 +476,9 @@
                         <!-- Injecté par JS -->
                     </div>
 
-                    <div id="wiz_s7_info_block" class="mt-4 p-4 bg-stone-50 dark:bg-stone-900/50 rounded-2xl border border-stone-200 dark:border-stone-700 text-center text-sm text-stone-600 dark:text-stone-400 transition-colors">
+                    <div id="wiz_s7_info_block" class="mt-4 p-4 bg-brand-50/50 dark:bg-brand-900/10 rounded-2xl border border-brand-200 dark:border-brand-700/50 text-center text-sm text-stone-600 dark:text-stone-400 transition-colors">
                         <span class="text-xl inline-block mb-1">⚙️</span><br>
-                        Ces données ont été injectées dans l'onglet principal <strong><span id="wiz_res_tab_name"></span></strong>. Tu peux y retourner pour ajuster les valeurs en direct !
+                        Ces données ont été injectées dans l'onglet principal <strong><span id="wiz_res_tab_name" class="text-brand-600 dark:text-brand-400"></span></strong>. Tu peux y retourner pour ajuster les valeurs en direct !
                     </div>
                     
                     <button onclick="wizRestart()" class="mt-6 w-full py-3 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 rounded-xl font-bold transition-all">Refaire un calcul</button>
@@ -424,7 +496,7 @@
         <div id="tab_boost_simple" class="tab-content">
             <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-2xl mx-auto transition-colors">
                 <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">🚀</span> Booster un liquide
+                    <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🚀</span> Booster un liquide
                 </h2>
                 <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Idéal pour les liquides "Shortfill" (50ml, 100ml du commerce). Indique ce que tu as, je te donne le résultat en direct.</p>
 
@@ -446,16 +518,16 @@
                     </div>
 
                     <!-- Boosters ajoutés -->
-                    <div class="flex flex-col gap-3 bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-xl border border-emerald-200 dark:border-emerald-800/50 transition-colors">
-                        <label class="block text-sm font-bold text-emerald-800 dark:text-emerald-400">Nombre de boosters ajoutés (fioles 10ml)</label>
+                    <div class="flex flex-col gap-3 bg-brand-50 dark:bg-brand-900/20 p-4 rounded-xl border border-brand-200 dark:border-brand-800/50 transition-colors">
+                        <label class="block text-sm font-bold text-brand-800 dark:text-brand-400">Nombre de boosters ajoutés (fioles 10ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('tab_boost_count', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-800/50 font-bold text-emerald-600 dark:text-emerald-400 text-xl flex items-center justify-center transition-colors">-</button>
-                            <input type="number" id="tab_boost_count" value="1" step="1" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-emerald-200 dark:border-emerald-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('tab_boost_count', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-800/50 font-bold text-emerald-600 dark:text-emerald-400 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('tab_boost_count', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-brand-200 dark:border-brand-700 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                            <input type="number" id="tab_boost_count" value="1" step="1" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-brand-200 dark:border-brand-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <button onclick="adjustVal('tab_boost_count', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-brand-200 dark:border-brand-700 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
                         </div>
-                        <div class="flex items-center justify-between pt-2 mt-2 border-t border-emerald-200/50 dark:border-emerald-700/50">
-                            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-500">Taux du booster (mg/ml)</span>
-                            <input type="number" id="tab_boost_str" value="20" class="w-16 text-center bg-white dark:bg-stone-800 border border-emerald-200 dark:border-emerald-600 rounded text-sm font-bold text-stone-800 dark:text-stone-200 transition-colors" oninput="triggerCalc()">
+                        <div class="flex items-center justify-between pt-2 mt-2 border-t border-brand-200/50 dark:border-brand-700/50">
+                            <span class="text-xs font-bold text-brand-700 dark:text-brand-500">Taux du booster (mg/ml)</span>
+                            <input type="number" id="tab_boost_str" value="20" class="w-16 text-center bg-white dark:bg-stone-800 border border-brand-200 dark:border-brand-600 rounded text-sm font-bold text-stone-800 dark:text-stone-200 transition-colors" oninput="triggerCalc()">
                         </div>
                     </div>
 
@@ -591,7 +663,7 @@
                                 <input type="number" id="t1_nic_mg" value="3" step="0.5" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
                                 <button onclick="adjustVal('t1_nic_mg', 0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
                             </div>
-                            <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_mg_preview">Quantité : <span class="text-emerald-600 dark:text-emerald-400">0 ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit 0 booster)</span></div>
+                            <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_mg_preview">Quantité : <span class="text-brand-600 dark:text-brand-400">0 ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit 0 booster)</span></div>
                         </div>
 
                         <div id="t1_nic_boost_panel" class="hidden flex-col mb-4 animate-fade-in">
@@ -600,7 +672,7 @@
                                 <input type="number" id="t1_nic_boost" value="8" step="1" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
                                 <button onclick="adjustVal('t1_nic_boost', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
                             </div>
-                            <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_boost_preview">Taux final : <span class="text-emerald-600 dark:text-emerald-400">0 mg/ml</span></div>
+                            <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_boost_preview">Taux final : <span class="text-brand-600 dark:text-brand-400">0 mg/ml</span></div>
                         </div>
 
                         <div class="flex items-center justify-between p-3 bg-stone-50 dark:bg-stone-900/50 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
@@ -616,7 +688,7 @@
                 <!-- Matériel dispo -->
                 <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
+                        <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
                     </h2>
                     
                     <div class="mb-6">
@@ -734,7 +806,7 @@
                 <!-- Matériel dispo -->
                 <div class="bg-white dark:bg-stone-800 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-700 max-w-3xl mx-auto w-full transition-colors">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
+                        <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
                     </h2>
                     
                     <div>
@@ -925,7 +997,7 @@
                 <!-- Section Shortfill -->
                 <div>
                     <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
-                        <span class="text-brand-600 dark:text-brand-400">🧪</span> Créer Shortfill
+                        <span class="text-indigo-600 dark:text-indigo-400">🧪</span> Créer Shortfill
                     </h3>
                     <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
                         Le mode des gros consommateurs. L'idée est de préparer une grosse fiole surdosée en arôme (le shortfill). Tu auras ainsi une base prête dans laquelle tu viendras juste ajouter tes boosters de nicotine plus tard au fur et à mesure.
@@ -935,7 +1007,7 @@
                 <!-- Section Mode Manuel -->
                 <div>
                     <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
-                        <span class="text-brand-600 dark:text-brand-400">🧮</span> Mode Manuel
+                        <span class="text-stone-600 dark:text-stone-400">🧮</span> Mode Manuel
                     </h3>
                     <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
                         Tu as joué au savant fou en mélangeant tes restes ? Rentre les volumes que tu as mis dans ta fiole, et l'outil te dira exactement sur quel ratio et quel taux de nicotine tu es retombé.
@@ -1012,7 +1084,12 @@
     </div>
 
     <script>
-        // Anti pull-to-refresh agressif pour mobile
+        // Changement de thème global
+        function switchTheme(theme) {
+            document.documentElement.dataset.theme = theme;
+        }
+
+        // Anti pull-to-refresh ajusté pour mobile (permet le scroll des modales)
         let startY = 0;
         let isSlider = false;
         
@@ -1022,7 +1099,19 @@
         }, {passive: true});
         
         document.addEventListener('touchmove', e => {
-            if (isSlider) return; // Désactive l'anti-slide si on interagit avec un slider
+            if (isSlider) return; 
+            
+            // Cherche si on scrolle à l'intérieur d'un élément autorisant le scroll-y
+            let scrollableTarget = e.target.closest('.overflow-y-auto');
+            if (scrollableTarget) {
+                // On bloque le pull-to-refresh uniquement si on est tout en haut du container et qu'on tire vers le bas
+                if (scrollableTarget.scrollTop <= 0 && e.touches[0].pageY > startY) {
+                    e.preventDefault();
+                }
+                return; // Sinon on laisse le navigateur gérer le scroll normalement
+            }
+
+            // Si on est sur le body principal au tout début
             if (window.scrollY === 0 && e.touches[0].pageY > startY) {
                 e.preventDefault();
             }
@@ -1164,6 +1253,7 @@
         function wizRestart() {
             wizState.step = 0;
             document.getElementById('wiz_results_container').innerHTML = '';
+            switchTheme('complet');
             wizUpdateView();
         }
 
@@ -1173,6 +1263,10 @@
             
             let percLabel = document.getElementById('wiz_aroma_perc_label');
             let percHelp = document.getElementById('wiz_aroma_perc_help');
+            
+            // Changement du thème pour matcher le wizard
+            if (type === 't1') switchTheme('complet');
+            else if (type === 't2') switchTheme('shortfill');
             
             // Adaptation de l'UI selon Complet vs Shortfill
             if(type === 't1') {
@@ -1341,7 +1435,6 @@
             }
         });
 
-        // Nouvel enregistrement propre du Service Worker physique
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
@@ -1372,7 +1465,7 @@
                     document.execCommand('copy');
                     const btn = document.getElementById('share_app_btn');
                     const originalHTML = btn.innerHTML;
-                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-brand-500"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
                     setTimeout(() => { btn.innerHTML = originalHTML; }, 2000);
                 } catch (err) {
                     console.error('Copie échouée', err);
@@ -1382,9 +1475,11 @@
         }
 
         function init() {
+            switchTheme('complet'); // Couleur par defaut au chargement
+            
             generateCheckboxes('t1');
             generateCheckboxes('t2');
-            generateCheckboxes('wiz'); // Wizard
+            generateCheckboxes('wiz'); 
             
             document.getElementById('t1_aroma_pg_val').innerText = document.getElementById('t1_aroma_pg').value + '%';
             updateRatioDisp('t1');
@@ -1396,6 +1491,20 @@
         }
 
         function switchTab(tabId) {
+            // Changement dynamique du thème CSS selon l'onglet
+            if (tabId === 'tab_boost_simple') document.documentElement.dataset.theme = 'boost';
+            else if (tabId === 'tab_complet') document.documentElement.dataset.theme = 'complet';
+            else if (tabId === 'tab_booster') document.documentElement.dataset.theme = 'shortfill';
+            else if (tabId === 'tab_manuel') document.documentElement.dataset.theme = 'manuel';
+            else if (tabId === 'tab_assistant') {
+                if (wizState.step > 0) {
+                     if (wizState.type === 't1') document.documentElement.dataset.theme = 'complet';
+                     else if (wizState.type === 't2') document.documentElement.dataset.theme = 'shortfill';
+                } else {
+                     document.documentElement.dataset.theme = 'complet';
+                }
+            }
+
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('button[id^="btn_tab_"]').forEach(el => {
                 let baseClasses = "py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1 sm:gap-2 ";
@@ -1523,12 +1632,12 @@
                 let targetMg = parseFloat(document.getElementById('t1_nic_mg').value) || 0;
                 let nicVol = (finalVol * targetMg) / bStr;
                 let boostersCount = nicVol / 10;
-                document.getElementById('t1_nic_mg_preview').innerHTML = `Quantité : <span class="text-emerald-600 dark:text-emerald-400">${round1(nicVol)} ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit ${round1(boostersCount)} booster${boostersCount > 1 ? 's' : ''})</span>`;
+                document.getElementById('t1_nic_mg_preview').innerHTML = `Quantité : <span class="text-brand-600 dark:text-brand-400">${round1(nicVol)} ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit ${round1(boostersCount)} booster${boostersCount > 1 ? 's' : ''})</span>`;
             } else {
                 let bCount = parseFloat(document.getElementById('t1_nic_boost').value) || 0;
                 let nicVol = bCount * 10;
                 let finalMg = finalVol > 0 ? (nicVol * bStr) / finalVol : 0;
-                document.getElementById('t1_nic_boost_preview').innerHTML = `Taux final : <span class="text-emerald-600 dark:text-emerald-400">${round1(finalMg)} mg/ml</span>`;
+                document.getElementById('t1_nic_boost_preview').innerHTML = `Taux final : <span class="text-brand-600 dark:text-brand-400">${round1(finalMg)} mg/ml</span>`;
             }
         }
 
@@ -1627,9 +1736,9 @@
                 let isBaseChecked = defaultsBase.includes(pg) ? 'checked' : '';
                 let isBoostChecked = defaultsBoost.includes(pg) ? 'checked' : '';
                 
-                baseHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isBaseChecked?'checked-base':''}"><input type="checkbox" class="${prefix}_base_chk text-brand-600 focus:ring-brand-50 rounded dark:bg-stone-800 dark:border-stone-600" value="${pg}" ${isBaseChecked} onchange="this.parentElement.classList.toggle('checked-base', this.checked); triggerCalc()"><span class="text-xs font-bold text-stone-700 dark:text-stone-300">${formatRatioStr(pg, true)}</span></label>`;
+                baseHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isBaseChecked?'checked-base':''}"><input type="checkbox" class="${prefix}_base_chk text-brand-600 focus:ring-brand-500 rounded dark:bg-stone-800 dark:border-stone-600" value="${pg}" ${isBaseChecked} onchange="this.parentElement.classList.toggle('checked-base', this.checked); triggerCalc()"><span class="text-xs font-bold text-stone-700 dark:text-stone-300">${formatRatioStr(pg, true)}</span></label>`;
                 
-                boostHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isBoostChecked?'checked-boost':''}"><input type="checkbox" class="${prefix}_boost_chk text-emerald-600 focus:ring-emerald-500 rounded dark:bg-stone-800 dark:border-stone-600" value="${pg}" ${isBoostChecked} onchange="this.parentElement.classList.toggle('checked-boost', this.checked); triggerCalc()"><span class="text-xs font-bold text-stone-700 dark:text-stone-300">${formatRatioStr(pg, true)}</span></label>`;
+                boostHtml += `<label class="flex items-center gap-2 p-2 rounded-lg border border-stone-200 dark:border-stone-700 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors ${isBoostChecked?'checked-boost':''}"><input type="checkbox" class="${prefix}_boost_chk text-brand-600 focus:ring-brand-500 rounded dark:bg-stone-800 dark:border-stone-600" value="${pg}" ${isBoostChecked} onchange="this.parentElement.classList.toggle('checked-boost', this.checked); triggerCalc()"><span class="text-xs font-bold text-stone-700 dark:text-stone-300">${formatRatioStr(pg, true)}</span></label>`;
             });
 
             if(baseContainer) baseContainer.innerHTML = baseHtml;
@@ -1693,7 +1802,6 @@
             else if(activeTab === 'tab_booster') calcTab2();
             else if(activeTab === 'tab_manuel') calcTab3();
             else if(activeTab === 'tab_boost_simple') calcBoostSimple('tab_boost', 'tab_boost_results');
-            // L'assistant déclenche de son côté au clic sur le bouton final
         }
 
         function calcBoostSimple(prefix, containerId) {
@@ -1728,14 +1836,13 @@
                 ratioStr = formatRatioStr(finalPgRatio, true);
             }
 
-            // Calcul visuel pour la fiole
-            let visualCap = finalVol * 1.1; // 10% de vide pour faire joli
+            let visualCap = finalVol * 1.1; 
             let hJuice = (vol / visualCap) * 100;
             let hBoost = (bVol / visualCap) * 100;
             let hAir = 100 - hJuice - hBoost;
 
             let html = `
-                <div class="animate-fade-in flex flex-col md:flex-row gap-6 items-center md:items-stretch bg-brand-50/50 dark:bg-brand-900/10 p-4 rounded-3xl border border-brand-200 dark:border-brand-800/50">
+                <div class="animate-fade-in flex flex-col md:flex-row gap-6 items-center md:items-stretch bg-brand-50/50 dark:bg-brand-900/10 p-4 rounded-3xl border border-brand-200 dark:border-brand-800/50 transition-colors">
                     
                     <!-- Colonne Visuel Fiole -->
                     <div class="flex-shrink-0 w-32 h-56 relative flex items-end justify-center py-4">
@@ -1751,12 +1858,12 @@
                             <div style="height: ${hAir}%" class="w-full bg-transparent transition-all duration-700"></div>
                             
                             <!-- Couche Boosters -->
-                            <div style="height: ${hBoost}%" class="w-full bg-emerald-400/90 dark:bg-emerald-500/90 relative flex justify-center items-center overflow-hidden transition-all duration-700 shadow-[inset_0_2px_4px_rgba(255,255,255,0.4)]">
+                            <div style="height: ${hBoost}%" class="w-full bg-brand-400/90 dark:bg-brand-500/90 relative flex justify-center items-center overflow-hidden transition-all duration-700 shadow-[inset_0_2px_4px_rgba(255,255,255,0.4)]">
                                 ${bVol > 0 && hBoost > 10 ? `<span class="text-[9px] text-white font-black drop-shadow-md tracking-wider">BOOST</span>` : ''}
                             </div>
                             
                             <!-- Couche Jus -->
-                            <div style="height: ${hJuice}%" class="w-full bg-brand-500/90 dark:bg-brand-600/90 relative flex justify-center items-center overflow-hidden transition-all duration-700 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]">
+                            <div style="height: ${hJuice}%" class="w-full bg-stone-500/90 dark:bg-stone-600/90 relative flex justify-center items-center overflow-hidden transition-all duration-700 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2)]">
                                 ${vol > 0 && hJuice > 10 ? `<span class="text-[10px] text-white font-black drop-shadow-md tracking-wider">JUS</span>` : ''}
                             </div>
                         </div>
@@ -1764,17 +1871,17 @@
 
                     <!-- Colonne Données -->
                     <div class="flex-1 w-full grid grid-cols-2 gap-3 py-2 content-center">
-                        <div class="col-span-2 bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center">
+                        <div class="col-span-2 bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center transition-colors">
                             <span class="text-xs text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider mb-1">Volume Final</span>
                             <span class="text-3xl font-black text-stone-800 dark:text-stone-100">${round1(finalVol)} ml</span>
                         </div>
                         
-                        <div class="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-2xl border border-emerald-100 dark:border-emerald-800/50 flex flex-col justify-center text-center">
-                            <span class="text-[10px] text-emerald-700/70 dark:text-emerald-400/70 font-bold uppercase tracking-wider mb-1">Nicotine</span>
-                            <span class="text-xl font-black text-emerald-600 dark:text-emerald-400">${round1(finalNic)} <span class="text-xs">mg</span></span>
+                        <div class="bg-brand-50 dark:bg-brand-900/20 p-4 rounded-2xl border border-brand-100 dark:border-brand-800/50 flex flex-col justify-center text-center transition-colors">
+                            <span class="text-[10px] text-brand-700/70 dark:text-brand-400/70 font-bold uppercase tracking-wider mb-1">Nicotine</span>
+                            <span class="text-xl font-black text-brand-600 dark:text-brand-400">${round1(finalNic)} <span class="text-xs">mg</span></span>
                         </div>
 
-                        <div class="bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center">
+                        <div class="bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center transition-colors">
                             <span class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider mb-1">Ratio PG/VG</span>
                             <span class="text-sm font-black ${ratioKnown ? 'text-brand-600 dark:text-brand-400' : 'text-stone-400 dark:text-stone-500'} mt-1">${ratioStr}</span>
                         </div>
@@ -2011,7 +2118,7 @@
             }
 
             if(exact.length > 0) {
-                allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${exact.length} Recette(s) Parfaite(s)</div>`;
+                allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-brand-600 dark:text-brand-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-brand-500"></span> ${exact.length} Recette(s) Parfaite(s)</div>`;
                 exact.forEach(r => allHtml += buildCard(r, prefix, false));
             }
 
@@ -2030,8 +2137,8 @@
         }
 
         function buildCard(r, prefix, isAlt) {
-            let bColor = isAlt ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20' : 'border-emerald-200 dark:border-emerald-700/50 bg-emerald-50 dark:bg-emerald-900/20';
-            let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400';
+            let bColor = isAlt ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20' : 'border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20';
+            let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-brand-700 dark:text-brand-400';
 
             let aromaWeight = getWeight(r.aroma, r.aromaPg || 100);
             let totalWeight = aromaWeight;
@@ -2039,10 +2146,10 @@
             let html = `<div class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">`;
             
             html += `<div class="flex-1">`;
-            html += `<div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700">
+            html += `<div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700 transition-colors">
                 <div>
                     <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg leading-tight">${prefix==='t1'?'Liquide Prêt':'Base Shortfill'} <span class="text-brand-600 dark:text-brand-400">${round1(prefix==='t1'?r.finalVol:r.prepVol)} ml</span></div>
-                    <div class="mt-1.5"><span class="text-xs font-bold ${tColor} px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm">${formatRatioStr(r.realPgRatio, true)}</span></div>
+                    <div class="mt-1.5"><span class="text-xs font-bold ${tColor} px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm transition-colors">${formatRatioStr(r.realPgRatio, true)}</span></div>
                 </div>
                 <button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-500 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Options de la recette">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1.5"></circle><circle cx="19" cy="12" r="1.5"></circle><circle cx="5" cy="12" r="1.5"></circle></svg>
@@ -2065,7 +2172,7 @@
                     totalWeight += baseWeight;
                     html += `
                         <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-                            <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded">${formatRatioStr(b.pgRatio)}</span></span>
+                            <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(b.pgRatio)}</span></span>
                             <div class="text-right leading-tight">
                                 <span class="font-black text-stone-800 dark:text-stone-200">${round1(b.vol)} ml</span>
                                 <span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(baseWeight)} g</span>
@@ -2079,7 +2186,7 @@
                 totalWeight += nicWeight;
                 html += `
                     <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-                        <span class="text-sm font-bold text-emerald-600 dark:text-emerald-50 flex items-center gap-2">Booster <span class="text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-1.5 py-0.5 rounded">${formatRatioStr(r.nicRatio)}</span></span>
+                        <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(r.nicRatio)}</span></span>
                         <div class="text-right leading-tight">
                             <span class="font-black text-stone-800 dark:text-stone-200">${round1(r.nic)} ml</span>
                             <span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(nicWeight)} g</span>
@@ -2093,7 +2200,7 @@
                 let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
                 let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
                 html += `
-                <div class="mt-auto pt-4 border-t border-stone-200/50 dark:border-stone-700">
+                <div class="mt-auto pt-4 border-t border-stone-200/50 dark:border-stone-700 transition-colors">
                     <div class="flex justify-between items-center">
                         <span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span>
                         <div class="text-right">
@@ -2108,11 +2215,11 @@
 
             if(prefix === 't2') {
                 html += `
-                <div class="mt-auto border-t border-stone-200/50 dark:border-stone-700 pt-2 mb-2 text-right">
+                <div class="mt-auto border-t border-stone-200/50 dark:border-stone-700 pt-2 mb-2 text-right transition-colors">
                     <span class="text-xs font-bold text-brand-600 dark:text-brand-400">Poids total estimé : ${round1(totalWeight)} g</span>
                 </div>
                 <div class="sim-container mt-1 p-3 bg-white dark:bg-stone-900/80 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
-                    <div class="flex items-center justify-center gap-2 mb-2 text-stone-500 dark:text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5">
+                    <div class="flex items-center justify-center gap-2 mb-2 text-stone-500 dark:text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors">
                         <span>🧪 Simulation d'ajout de boosters</span>
                     </div>
                     
@@ -2154,374 +2261,269 @@
                         </div>
                         <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mt-0.5">ml</span>
                     </div>
-
-                    <div class="flex flex-col items-center gap-0.5 mb-2">
-                        <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400">Profil des boosters</span>
-                        
-                        <select onchange="updateSim(this)" class="sim-boost-pg w-full max-w-[180px] bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors">`;
-                        
-                RATIOS.forEach(pg => {
-                    html += `<option value="${pg}" ${pg===50 ? 'selected' : ''}>${formatRatioStr(pg, true)}</option>`;
-                });
-
-                html += `
-                        </select>
-                        
-                        <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 my-1">dosés à</span>
-                        
-                        <div class="flex items-center bg-white dark:bg-stone-800 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
-                            <button onclick="adjustSimVal(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">-</button>
-                            <input type="number" value="20" step="1" min="0" onchange="updateSim(this)" class="sim-boost-str hide-arrows w-12 min-w-0 h-6 bg-white dark:bg-stone-800 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors">
-                            <button onclick="adjustSimVal(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">+</button>
-                        </div>
-                        <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mt-0.5">mg/ml</span>
+                    
+                    <div class="mt-3 text-center bg-stone-100 dark:bg-stone-800 p-2 rounded w-full border border-stone-200 dark:border-stone-700 transition-colors">
+                        <div class="text-[10px] font-bold text-stone-500 dark:text-stone-400">Résultat estimé :</div>
+                        <div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result">...</div>
                     </div>
-
-                    <div class="pt-2 mt-2 border-t border-stone-200 dark:border-stone-700 flex flex-col items-center text-center transition-colors">
-                        <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest mb-1.5">Résultat Final</span>
-                        <div class="sim-res w-full flex flex-col gap-0.5">...</div>
-                    </div>
-                    <div class="sim-warning mt-2 pt-1.5 border-t border-red-500/30 text-[9px] text-red-600 dark:text-red-400 font-bold text-center hidden"></div>
-                    <input type="hidden" class="sim-data" data-aroma="${r.aroma/r.prepVol}" data-pgratio="${r.realPgRatio}">
-                </div>`;
+                </div>
+            </div>`;
             }
 
             html += `</div>`;
             return html;
         }
 
-        function handlePreleveChange(el) {
-            let container = el.closest('.sim-container');
-            let customWrapper = container.querySelector('.sim-custom-wrapper');
-            let customInput = container.querySelector('.sim-custom-vol');
-            if (el.value === 'custom') {
-                customWrapper.classList.remove('hidden');
-                customWrapper.classList.add('flex');
-                customInput.focus();
+        // --- SIMULATION SHORTFILL ---
+        function handlePreleveChange(selectEl) {
+            let wrapper = selectEl.parentElement.querySelector('.sim-custom-wrapper');
+            if (selectEl.value === 'custom') {
+                wrapper.classList.remove('hidden');
+                wrapper.classList.add('flex');
             } else {
-                customWrapper.classList.add('hidden');
-                customWrapper.classList.remove('flex');
+                wrapper.classList.add('hidden');
+                wrapper.classList.remove('flex');
             }
-            updateSim(el);
+            updateSim(selectEl);
         }
 
         function adjustCustomPreleve(btn, step) {
-            let wrapper = btn.closest('.sim-custom-wrapper');
-            if (!wrapper) return;
-            let input = wrapper.querySelector('.sim-custom-vol');
-            if (!input) return;
+            let input = btn.parentElement.querySelector('input');
             let val = parseFloat(input.value) || 0;
-            let newVal = val + step;
-            if(newVal < 0) newVal = 0;
-            input.value = newVal;
+            input.value = Math.max(0, val + step);
             updateSim(input);
         }
 
-        function adjustSimMl(btn, step) {
-            let container = btn.closest('.sim-container');
-            if (!container) return;
-            let input = container.querySelector('.sim-ml-count');
-            if (!input) return;
+        function adjustSimBoosters(btn, step) {
+            let input = btn.parentElement.querySelector('input');
             let val = parseFloat(input.value) || 0;
-            let newVal = val + step;
-            if(newVal < 0) newVal = 0;
-            input.value = newVal;
+            input.value = Math.max(0, val + step);
+            syncSimInputs(input, 'boosters');
+        }
+
+        function adjustSimMl(btn, step) {
+            let input = btn.parentElement.querySelector('input');
+            let val = parseFloat(input.value) || 0;
+            input.value = Math.max(0, val + step);
             syncSimInputs(input, 'ml');
         }
 
-        function adjustSimBoosters(btn, step) {
-            let container = btn.closest('.sim-container');
-            if (!container) return;
+        function syncSimInputs(inputEl, source) {
+            let container = inputEl.closest('.sim-container');
             let bInput = container.querySelector('.sim-b-count');
-            if (!bInput) return;
-
-            let val = parseFloat(bInput.value) || 0;
-            let newVal;
-            if (step > 0) {
-                newVal = Math.floor(val) + 1;
-            } else {
-                newVal = Math.ceil(val) - 1;
-            }
-            if (newVal < 0) newVal = 0;
-            bInput.value = newVal;
-            syncSimInputs(bInput, 'boosters');
-        }
-
-        function syncSimInputs(el, source) {
-            let container = el.closest('.sim-container');
-            if (!container) return;
             let mlInput = container.querySelector('.sim-ml-count');
-            let bInput = container.querySelector('.sim-b-count');
             
-            if (source === 'ml') {
-                let ml = parseFloat(mlInput.value) || 0;
-                bInput.value = round2(ml / 10);
+            if (source === 'boosters') {
+                let count = parseFloat(bInput.value) || 0;
+                mlInput.value = round1(count * 10);
             } else {
-                let b = parseFloat(bInput.value) || 0;
-                mlInput.value = round1(b * 10);
+                let ml = parseFloat(mlInput.value) || 0;
+                bInput.value = round1(ml / 10);
             }
-            updateSim(el);
+            updateSim(inputEl);
         }
 
         function updateSim(el) {
-            let container = el.closest('.sim-container');
-            if (!container) return;
+            let container = el.closest('.recipe-card-wrapper');
+            if(!container) return;
             
-            let selVolEl = container.querySelector('.sim-sel-vol');
-            let selVol = 0;
-            if (selVolEl.value === 'custom') {
-                selVol = parseFloat(container.querySelector('.sim-custom-vol').value) || 0;
+            let sel = container.querySelector('.sim-sel-vol');
+            let customInp = container.querySelector('.sim-custom-vol');
+            let bCountInp = container.querySelector('.sim-b-count');
+            let resEl = container.querySelector('.sim-result');
+            
+            if(!sel || !bCountInp || !resEl) return;
+
+            let preleveVol = 0;
+            if (sel.value === 'custom') {
+                preleveVol = parseFloat(customInp.value) || 0;
             } else {
-                selVol = parseFloat(selVolEl.value) || 0;
+                preleveVol = parseFloat(sel.value) || 0;
             }
-            
-            let bCount = parseFloat(container.querySelector('.sim-b-count').value) || 0;
-            let boostPg = parseFloat(container.querySelector('.sim-boost-pg').value) || 50;
-            let bStr = parseFloat(container.querySelector('.sim-boost-str').value) || 20;
-            
-            let data = container.querySelector('.sim-data');
-            let aromaRatio = parseFloat(data.dataset.aroma) || 0;
-            let prepPgRatio = parseFloat(data.dataset.pgratio) || 0;
 
-            let finalVol = selVol + (bCount * 10);
-            let nic = finalVol > 0 ? (bCount * 10 * bStr) / finalVol : 0;
-            let aFinal = finalVol > 0 ? (selVol * aromaRatio / finalVol) * 100 : 0;
+            let bCount = parseFloat(bCountInp.value) || 0;
+            let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
             
-            let totalPgMl = (selVol * (prepPgRatio / 100)) + ((bCount * 10) * (boostPg / 100));
-            let finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 0;
-
-            container.querySelector('.sim-res').innerHTML = `
-                <div class="text-base font-black text-stone-800 dark:text-white mb-1">${round1(finalVol)} <span class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest">ml au total</span></div>
-                <div class="text-xs font-bold text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800/50 rounded py-0.5 px-2 inline-block mx-auto border border-stone-200 dark:border-stone-700">${formatRatioStr(finalPgRatio, true)}</div>
-                <div class="text-base font-black text-brand-600 dark:text-brand-400 mt-1">${round1(aFinal)}% <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest ml-1">arôme</span></div>
-                <div class="text-xl font-black text-emerald-600 dark:text-emerald-400">${round1(nic)} <span class="text-xs font-bold text-emerald-600/70 dark:text-emerald-600">mg/ml</span></div>
-            `;
+            let bVol = bCount * 10;
+            let finalVol = preleveVol + bVol;
             
-            let warnDiv = container.querySelector('.sim-warning');
-            let targetAroma = parseFloat(document.getElementById('t2_aroma_perc').value) || 0;
-            
-            if (aFinal < targetAroma - 0.1) {
-                warnDiv.classList.remove('hidden');
-                warnDiv.innerHTML = `⚠️ Attention : la concentration descend sous les ${targetAroma}% idéaux.`;
+            if (finalVol > 0) {
+                let finalNic = (bVol * bStr) / finalVol;
+                resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>`;
             } else {
-                warnDiv.classList.add('hidden');
+                resEl.innerText = "0 ml";
             }
         }
 
-        function openHelpModal() {
-            document.getElementById('help_modal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+        // --- MODAL & EXPORT ---
+        let currentRecipeCard = null;
 
-        function closeHelpModal() {
-            document.getElementById('help_modal').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
-        
         function openModalFromCard(btn) {
             let card = btn.closest('.recipe-card-wrapper');
-            let contentDest = document.getElementById('recipe_modal_content');
+            currentRecipeCard = card;
             
+            // Clone la carte pour la modale
             let clone = card.cloneNode(true);
             
-            let originalInputs = card.querySelectorAll('input, select');
-            let cloneInputs = clone.querySelectorAll('input, select');
-            for (let i = 0; i < originalInputs.length; i++) {
-                cloneInputs[i].value = originalInputs[i].value;
-            }
+            // Supprime le bouton d'options de la carte clonée
+            let optBtn = clone.querySelector('button');
+            if(optBtn) optBtn.remove();
             
-            let expandBtn = clone.querySelector('button[title="Options de la recette"]');
-            let actionBtns = document.createElement('div');
-            actionBtns.className = 'modal-buttons flex gap-2 print:hidden';
-            actionBtns.innerHTML = `
-                <button onclick="showExportPrompt()" class="p-2 text-brand-600 dark:text-brand-400 hover:text-brand-700 dark:hover:text-brand-300 bg-white dark:bg-stone-800 hover:bg-brand-50 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Options d'exportation">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                </button>
-                <button onclick="closeRecipeModal()" class="p-2 text-stone-600 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-xl transition-all shadow-sm ring-1 ring-stone-200/50 dark:ring-stone-700" title="Fermer">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-                </button>
+            // On conserve les classes de couleur d'origine, on adapte juste pour l'affichage modal
+            clone.classList.remove('hover:shadow-xl', 'hover:-translate-y-1', 'h-full', 'dark:bg-brand-900/20', 'dark:bg-amber-900/20');
+            clone.classList.add('export-card', 'relative', 'w-full', 'shadow-2xl', 'dark:bg-stone-800');
+            
+            // Création des boutons de la modale de recette
+            let buttonsHtml = `
+                <div class="modal-buttons flex justify-between gap-3 mt-6 pt-4 border-t border-stone-200 dark:border-stone-700 print:hidden">
+                    <button onclick="closeRecipeModal()" class="px-5 py-2.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-bold text-sm rounded-xl transition-colors">Fermer</button>
+                    <button onclick="openExportPrompt()" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                        Exporter
+                    </button>
+                </div>
             `;
             
-            if (expandBtn) expandBtn.replaceWith(actionBtns);
+            clone.innerHTML += buttonsHtml;
             
-            clone.classList.remove('h-full');
-            clone.classList.add('shadow-2xl', 'max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
-            
-            contentDest.innerHTML = '';
-            contentDest.appendChild(clone);
+            let modalContent = document.getElementById('recipe_modal_content');
+            modalContent.innerHTML = '';
+            modalContent.appendChild(clone);
             
             document.getElementById('recipe_modal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
+            
+            // Initialiser les select de simulation si présents dans le clone
+            let sel = clone.querySelector('.sim-sel-vol');
+            if(sel) updateSim(sel);
         }
 
         function closeRecipeModal() {
             document.getElementById('recipe_modal').classList.add('hidden');
-            document.body.style.overflow = '';
+            currentRecipeCard = null;
         }
-        
-        function showExportPrompt() {
+
+        function openExportPrompt() {
             document.getElementById('export_prompt_modal').classList.remove('hidden');
-            let input = document.getElementById('recipe_name_input');
-            input.value = ''; 
-            input.focus();
+            document.getElementById('recipe_name_input').focus();
         }
 
         function cancelExport() {
             document.getElementById('export_prompt_modal').classList.add('hidden');
+            document.getElementById('recipe_name_input').value = '';
         }
 
-        // ---- EXPORTATION ET PARTAGE ----
-
         function getRecipeText() {
-            let name = document.getElementById('recipe_name_input').value.trim() || 'Ma Recette';
-            let card = document.querySelector('#recipe_modal_content .recipe-card-wrapper');
-            if (!card) return "";
-
-            let titleElement = card.querySelector('.font-extrabold.text-lg');
-            let titleMatch = titleElement ? titleElement.innerText.replace(/\n/g, ' ').trim() : '';
+            if (!currentRecipeCard) return "";
             
-            let ratioSpan = card.querySelector('.text-xs.font-bold.px-2.bg-white, .text-xs.font-bold.px-2.bg-stone-800');
-            let ratio = ratioSpan ? ratioSpan.innerText.trim() : '';
-
+            let name = document.getElementById('recipe_name_input').value.trim() || "Ma Recette DIY";
             let text = `🧪 ${name}\n`;
-            text += `📊 ${titleMatch} | ${ratio}\n`;
-            text += `--------------------------------\n`;
-
-            let rows = card.querySelectorAll('.flex.justify-between.items-center.bg-white, .flex.justify-between.items-center.bg-stone-800');
+            text += `-----------------------\n`;
+            
+            let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
+            
+            // Titre principal (Volume final/Shortfill)
+            let titleEl = clone.querySelector('.font-extrabold.text-lg');
+            if(titleEl) text += `${titleEl.innerText.replace(/\n/g, ' ')}\n`;
+            
+            // Lignes d'ingrédients
+            let rows = clone.querySelectorAll('.bg-white.dark\\:bg-stone-800.p-2\\.5');
             rows.forEach(row => {
-                let nameSpan = row.querySelector('.text-sm.font-bold');
-                if (nameSpan) {
-                    let ingName = nameSpan.innerText.replace(/\n/g, ' ').trim();
-                    let valEl = row.querySelector('.text-right');
-                    let ingVol = valEl ? (valEl.querySelector('.font-black')?.innerText || '') : '';
-                    let ingWeight = valEl ? (valEl.querySelector('.mt-0\\.5')?.innerText || '') : '';
-                    text += `💧 ${ingName} : ${ingVol} (${ingWeight})\n`;
-                }
+                let name = row.querySelector('.text-sm').innerText.replace(/\n/g, ' ').trim();
+                let vols = row.querySelector('.text-right').innerText.split('\n');
+                let ml = vols[0].trim();
+                let g = vols.length > 1 ? ` (${vols[1].trim()})` : '';
+                text += `- ${name} : ${ml}${g}\n`;
             });
-
-            text += `--------------------------------\n`;
             
-            // Taux finaux pour T1
-            let finalStatsRow = card.querySelector('.mt-auto.pt-4 .text-right');
-            if (finalStatsRow) {
-                text += `🎯 Taux finaux : ${finalStatsRow.innerText.replace(/\n/g, ' ').replace(/\|/g, '-').replace(/\s+/g, ' ').trim()}\n`;
-            }
-
-            // Poids total
-            let totalWeights = card.querySelectorAll('.text-right.text-xs.font-bold.text-brand-600');
-            let lastWeight = totalWeights[totalWeights.length - 1];
-            if (lastWeight) {
-                text += `⚖️ ${lastWeight.innerText.trim()}\n`;
-            }
-            
-            // T2 Simulation
-            let simRes = card.querySelector('.sim-res');
-            if (simRes && simRes.innerText.trim() !== '...') {
-                text += `--------------------------------\n`;
-                text += `🔬 Simu d'ajout boosters :\n`;
-                text += simRes.innerText.replace(/\n/g, ' | ').replace(/\s+/g, ' ') + '\n';
-            }
-
-            return text + `\nCalculé avec Je-DIY 🚀`;
+            text += `-----------------------\nGénéré avec Je-DIY`;
+            return text;
         }
 
         function copyRecipeText() {
             let text = getRecipeText();
-            const textArea = document.createElement("textarea");
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
+            navigator.clipboard.writeText(text).then(() => {
                 let btn = document.getElementById('btn_copy_text');
                 let originalHtml = btn.innerHTML;
-                btn.innerHTML = `<span class="text-emerald-500 font-bold mb-1">✅</span><span class="text-xs font-bold text-emerald-600">Copié !</span>`;
-                setTimeout(() => btn.innerHTML = originalHtml, 2000);
-            } catch (err) {
-                console.error('Copie échouée', err);
-            }
-            document.body.removeChild(textArea);
+                btn.innerHTML = `<svg class="mb-2 text-brand-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="text-xs font-bold text-brand-500">Copié !</span>`;
+                setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+            }).catch(err => console.error("Erreur copie", err));
         }
 
         function shareRecipe() {
             let text = getRecipeText();
-            let name = document.getElementById('recipe_name_input').value.trim() || 'Ma Recette';
-            
             if (navigator.share) {
                 navigator.share({
-                    title: name,
+                    title: 'Recette E-Liquide',
                     text: text
-                }).then(() => cancelExport()).catch(err => console.log('Partage annulé', err));
+                }).catch((err) => console.log('Partage annulé', err));
             } else {
                 copyRecipeText();
             }
         }
 
-        // Prépare la carte visuelle pour l'export PDF
-        function prepareExportCard(name) {
-            let card = document.querySelector('#recipe_modal_content .recipe-card-wrapper');
-            if (!card) return null;
-
-            let wasDark = document.documentElement.classList.contains('dark');
-            if (wasDark) document.documentElement.classList.remove('dark');
-
-            document.body.classList.add('exporting');
+        function prepareCardForExport() {
+            let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
+            if (!clone) return null;
             
-            let originalClasses = card.className;
-            card.classList.remove('animate-fade-in', 'max-h-[85vh]', 'overflow-y-auto', 'shadow-2xl');
-            card.classList.add('export-card');
+            let name = document.getElementById('recipe_name_input').value.trim();
+            if (name) {
+                let titleDiv = document.createElement('div');
+                titleDiv.className = 'export-title text-2xl font-black text-center mb-4 pb-4 border-b-2 border-stone-200 text-stone-800';
+                titleDiv.innerText = name;
+                clone.insertBefore(titleDiv, clone.firstChild);
+            }
             
-            let buttons = card.querySelector('.modal-buttons');
+            // Masquer les boutons pour le PDF
+            let buttons = clone.querySelector('.modal-buttons');
             if (buttons) buttons.style.display = 'none';
 
-            let titleEl = card.querySelector('.print-recipe-title');
-            if (!titleEl) {
-                titleEl = document.createElement('h2');
-                titleEl.className = 'print-recipe-title text-2xl font-black text-brand-600 mb-6 pb-3 border-b border-stone-200 text-center w-full';
-                card.insertBefore(titleEl, card.firstChild);
-            }
-            titleEl.innerText = name;
-            titleEl.style.display = 'block';
-
-            card.querySelectorAll('input').forEach(i => i.setAttribute('value', i.value));
-            card.querySelectorAll('select').forEach(s => {
-                Array.from(s.options).forEach(o => {
-                    if (o.value === s.value) o.setAttribute('selected', 'selected');
-                    else o.removeAttribute('selected');
-                });
-            });
-
-            window.scrollTo(0, 0);
-
+            // Ajouter le footer avec le QR code
+            let footerDiv = document.createElement('div');
+            footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-8 pt-6 border-t-2 border-stone-100';
+            footerDiv.innerHTML = `
+                <img src="jediy.png" alt="QR Code Je-DIY" class="w-16 h-16 rounded-xl shadow-sm border border-stone-200">
+                <div class="text-stone-500 font-bold text-sm text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-lg">Je-DIY</span></div>
+            `;
+            clone.appendChild(footerDiv);
+            
+            // Force light mode on clone and fix colors
+            document.body.classList.add('exporting');
+            document.documentElement.classList.remove('dark');
+            
             return {
-                card,
-                restore: function() {
-                    if (!document.body.classList.contains('exporting')) return; 
-                    titleEl.style.display = 'none'; 
-                    card.className = originalClasses;
-                    if (buttons) buttons.style.display = '';
+                card: clone,
+                restore: () => {
                     document.body.classList.remove('exporting');
-                    if (wasDark) document.documentElement.classList.add('dark');
+                    applyTheme(); // Restore dark/light theme
+                    let addedTitle = clone.querySelector('.export-title');
+                    if (addedTitle) addedTitle.remove();
+                    let addedFooter = clone.querySelector('.export-footer');
+                    if (addedFooter) addedFooter.remove();
+                    if (buttons) buttons.style.display = ''; // Réaffiche les boutons
                 }
             };
         }
 
         function exportRecipePDF() {
-            let name = document.getElementById('recipe_name_input').value.trim() || 'Ma Recette';
-            cancelExport();
-            let ctx = prepareExportCard(name);
-            if(!ctx) return;
-
+            let ctx = prepareCardForExport();
+            if (!ctx) return;
+            
+            let name = document.getElementById('recipe_name_input').value.trim() || "recette";
+            
+            // Timeout to allow DOM rendering for exporting class
             setTimeout(() => {
                 let opt = {
-                    margin:       [10, 10], 
-                    filename:     name.replace(/[^a-z0-9]/gi, '_').toLowerCase() + '.pdf',
-                    image:        { type: 'jpeg', quality: 1 },
+                    margin:       10,
+                    filename:     `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+                    image:        { type: 'jpeg', quality: 0.98 },
                     html2canvas:  { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#ffffff' },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
-                html2pdf().set(opt).from(ctx.card).save().then(ctx.restore).catch(err => {
+                html2pdf().set(opt).from(ctx.card).save().then(() => {
+                    ctx.restore();
+                    cancelExport();
+                }).catch(err => {
                     console.error("Erreur PDF:", err);
                     ctx.restore();
                 });
