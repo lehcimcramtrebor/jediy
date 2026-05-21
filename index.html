@@ -10,6 +10,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Je-DIY">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Librairies pour l'export PDF et Image -->
@@ -1325,37 +1327,18 @@
             }
         });
 
-        function setupPWA() {
-            const appIconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1c1917"/><path d="M256 90c-85 130-130 240-130 320 0 70 58 128 130 128s130-58 130-128c0-80-45-190-130-320z" fill="#d97706"/></svg>`;
-            const iconDataUri = "data:image/svg+xml;base64," + btoa(appIconSVG);
-
-            const manifest = {
-                name: "Je-DIY Calculateur",
-                short_name: "Je-DIY",
-                start_url: window.location.pathname || "/",
-                display: "standalone",
-                background_color: "#1c1917",
-                theme_color: "#d97706",
-                icons: [{ src: iconDataUri, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }]
-            };
-            
-            const manifestLink = document.createElement('link');
-            manifestLink.rel = 'manifest';
-            manifestLink.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(manifest));
-            document.head.appendChild(manifestLink);
-
-            const appleIcon = document.createElement('link');
-            appleIcon.rel = 'apple-touch-icon';
-            appleIcon.href = iconDataUri;
-            document.head.appendChild(appleIcon);
-
-            if ('serviceWorker' in navigator) {
-                const swCode = `self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => self.clients.claim()); self.addEventListener('fetch', (e) => {});`;
-                const swBlob = new Blob([swCode], {type: 'application/javascript'});
-                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
-            }
+        // Nouvel enregistrement propre du Service Worker physique
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker enregistré avec succès.', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Erreur d\'enregistrement du ServiceWorker:', error);
+                    });
+            });
         }
-        setupPWA();
 
         function shareApp() {
             const shareData = {
