@@ -1,4 +1,54 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<rect width="512" height="512" rx="112" fill="#1c1917"/>
-<path d="M256 90c-85 130-130 240-130 320 0 70 58 128 130 128s130-58 130-128c0-80-45-190-130-320z" fill="#d97706"/>
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2a2a2a"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </linearGradient>
+
+    <linearGradient id="dropGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFB067"/>
+      <stop offset="40%" stop-color="#DC7612"/>
+      <stop offset="100%" stop-color="#8B4500"/>
+    </linearGradient>
+
+    <filter id="glowOuter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="22" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="glowInner" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="110" fill="url(#bgGrad)"/>
+
+  <path d="M 256,50 C 256,50 350,220 350,300 C 350,350 300,380 256,380 C 212,380 162,350 162,300 C 162,220 256,50 256,50 Z" fill="#DC7612" opacity="0.35" filter="url(#glowOuter)"/>
+
+  <path d="M 256,70 C 256,70 330,220 330,300 C 330,340 290,365 256,365 C 222,365 182,340 182,300 C 182,220 256,70 256,70 Z" fill="url(#dropGrad)" filter="url(#glowInner)"/>
+
+  <path d="M 256,100 C 256,100 290,230 290,290 C 290,320 270,345 256,345 C 242,345 222,320 222,290 C 222,230 256,100 256,100 Z" fill="#FFF5EB" filter="url(#glowInner)"/>
+
+  <rect x="236" y="360" width="40" height="100" rx="4" fill="#3a3a3a"/>
+
+  <rect x="240" y="370" width="32" height="26" fill="#151515"/>
+  <rect x="244" y="373" width="24" height="20" rx="3" fill="#050505"/>
+  <rect x="244" y="383" width="24" height="10" rx="2" fill="#DC7612" opacity="0.9"/>
+  <rect x="254" y="373" width="4" height="20" fill="#777"/>
+
+  <rect x="246" y="406" width="20" height="14" rx="4" fill="#222"/>
+  <circle cx="256" cy="413" r="3.5" fill="#FFB067" filter="url(#glowInner)"/>
+
+  <rect x="232" y="428" width="48" height="5" rx="1.5" fill="#1a1a1a"/>
+  <rect x="232" y="438" width="48" height="5" rx="1.5" fill="#1a1a1a"/>
+  <rect x="232" y="448" width="48" height="5" rx="1.5" fill="#1a1a1a"/>
+
+  <path d="M 230 365 L 282 365 L 272 345 L 240 345 Z" fill="#555"/>
+  <rect x="236" y="340" width="40" height="5" rx="2" fill="#2a2a2a"/>
+  
+  <path d="M 236 340 L 236 320 L 242 332 L 242 340 Z" fill="#444"/>
+  <path d="M 276 340 L 276 320 L 270 332 L 270 340 Z" fill="#444"/>
+
+  <path d="M 236 460 L 276 460 L 266 475 L 246 475 Z" fill="#4a4a4a"/>
+  <rect x="244" y="475" width="24" height="5" rx="2" fill="#222"/>
 </svg>
