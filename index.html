@@ -193,7 +193,7 @@
             width: 100% !important;
             box-shadow: none !important;
             border: none !important; /* Plus de bordure pour l'impression PDF */
-            page-break-inside: avoid;
+            page-break-inside: auto !important; /* Permet le saut de page si trop long */
             max-height: none !important; /* Fix pour ne pas tronquer l'image footer */
             overflow: visible !important;
         }
@@ -2646,7 +2646,7 @@ function openModalFromCard(btn) {
             let name = document.getElementById('recipe_name_input').value.trim() || "Recette Je-DIY";
             
             let titleDiv = document.createElement('div');
-            titleDiv.className = 'export-title text-2xl font-black text-center mb-4 pb-4 border-b-2 border-stone-200 text-stone-800';
+            titleDiv.className = 'export-title text-xl font-black text-center mb-3 pb-3 border-b-2 border-stone-200 text-stone-800';
             titleDiv.innerText = name;
             clone.insertBefore(titleDiv, clone.firstChild);
             
@@ -2672,14 +2672,14 @@ function openModalFromCard(btn) {
                 let finalAromaPerc = finalVol > 0 ? (aromaInSample / finalVol) * 100 : 0;
 
                 cleanSimDiv = document.createElement('div');
-                cleanSimDiv.className = 'mt-4 p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-sm';
+                cleanSimDiv.className = 'mt-3 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-sm';
                 cleanSimDiv.innerHTML = `
-                    <div class="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-3 border-b border-stone-200 pb-1">Exemple de Boost Personnalisé</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-2 border-b border-stone-200 pb-1">Exemple de Boost Personnalisé</div>
                     <div class="flex justify-between items-center mb-1">
                         <span class="font-bold">Base prélevée :</span>
                         <span class="font-black">${round1(preleveVol)} ml</span>
                     </div>
-                    <div class="flex justify-between items-center mb-3">
+                    <div class="flex justify-between items-center mb-2">
                         <span class="font-bold">Boosters ajoutés :</span>
                         <span class="font-black">${round1(bCount)} <span class="text-xs font-normal">x10ml (${bStr}mg/ml)</span></span>
                     </div>
@@ -2699,10 +2699,10 @@ function openModalFromCard(btn) {
 
             // Ajouter le footer avec le QR code
             let footerDiv = document.createElement('div');
-            footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-8 pt-6 border-t-2 border-stone-100';
+            footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-6 pt-4 border-t-2 border-stone-100';
             footerDiv.innerHTML = `
-                <img src="jediy.png" alt="QR Code Je-DIY" class="w-32 h-32 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/128x128/e2e8f0/475569?text=Je-DIY'">
-                <div class="text-stone-500 font-bold text-sm text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-lg">Je-DIY</span></div>
+                <img src="jediy.png" alt="QR Code Je-DIY" class="w-20 h-20 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/80x80/e2e8f0/475569?text=Je-DIY'">
+                <div class="text-stone-500 font-bold text-xs text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-base">Je-DIY</span></div>
             `;
             clone.appendChild(footerDiv);
             
@@ -2741,11 +2741,12 @@ function openModalFromCard(btn) {
             // Timeout to allow DOM rendering for exporting class
             setTimeout(() => {
                 let opt = {
-                    margin:       10,
+                    margin:       [10, 10, 10, 10],
                     filename:     `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
                     image:        { type: 'jpeg', quality: 0.98 },
                     html2canvas:  { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#ffffff' },
-                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak:    { mode: ['css', 'avoid-all'] }
                 };
 
                 html2pdf().set(opt).from(ctx.card).save().then(ctx.restore).catch(err => {
