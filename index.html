@@ -1083,28 +1083,42 @@
     <!-- Modal d'Export et Partage -->
     <div id="export_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="cancelExport()"></div>
-        <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700">
+        <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
             <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2">Exporter / Partager</h3>
-            <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Donne un nom à ta recette pour les documents exportés.</p>
-            <input type="text" id="recipe_name_input" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-xl p-3 mb-5 text-stone-800 dark:text-stone-100 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="Ex: Red Astaire Maison">
+            <p class="text-xs text-stone-500 dark:text-stone-400 mb-4" id="export_modal_desc">Donne un nom à ta recette pour l'export.</p>
+            <input type="text" id="recipe_name_input" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-xl p-3 mb-5 text-stone-800 dark:text-stone-100 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" placeholder="Ex: Red Astaire Maison">
             
-            <div class="grid grid-cols-3 gap-3 mb-5">
+            <!-- Étape 1 : Choix format -->
+            <div id="export_step_1" class="grid grid-cols-3 gap-3 mb-5">
                 <button id="btn_copy_text" onclick="copyRecipeText()" class="flex flex-col items-center justify-center py-4 bg-stone-50 dark:bg-stone-700/50 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl transition-all border border-stone-200 dark:border-stone-600 shadow-sm group">
                     <svg class="mb-2 text-stone-400 group-hover:text-brand-500 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    <span class="text-xs font-bold">Copier Texte</span>
+                    <span class="text-[10px] font-bold">Copier Texte</span>
                 </button>
-                <button onclick="shareRecipe()" class="flex flex-col items-center justify-center py-4 bg-stone-50 dark:bg-stone-700/50 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl transition-all border border-stone-200 dark:border-stone-600 shadow-sm group">
+                <button onclick="shareRecipeText()" class="flex flex-col items-center justify-center py-4 bg-stone-50 dark:bg-stone-700/50 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl transition-all border border-stone-200 dark:border-stone-600 shadow-sm group">
                     <svg class="mb-2 text-stone-400 group-hover:text-brand-500 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                    <span class="text-xs font-bold">Partager</span>
+                    <span class="text-[10px] font-bold">Partager Texte</span>
                 </button>
-                <button onclick="exportRecipePDF()" class="flex flex-col items-center justify-center py-4 bg-stone-50 dark:bg-stone-700/50 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl transition-all border border-stone-200 dark:border-stone-600 shadow-sm group">
+                <button onclick="showPdfOptions()" class="flex flex-col items-center justify-center py-4 bg-stone-50 dark:bg-stone-700/50 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl transition-all border border-stone-200 dark:border-stone-600 shadow-sm group">
                     <svg class="mb-2 text-stone-400 group-hover:text-brand-500 transition-colors" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    <span class="text-xs font-bold">Doc PDF</span>
+                    <span class="text-[10px] font-bold">Format PDF</span>
+                </button>
+            </div>
+
+            <!-- Étape 2 : Actions PDF -->
+            <div id="export_step_2" class="hidden gap-3 mb-5">
+                <button onclick="exportRecipePDF('download')" class="flex-1 flex flex-col items-center justify-center py-4 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 text-brand-700 dark:text-brand-300 rounded-xl transition-all border border-brand-200 dark:border-brand-700 shadow-sm group">
+                    <svg class="mb-2 text-brand-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span class="text-xs font-bold">Enregistrer PDF</span>
+                </button>
+                <button onclick="exportRecipePDF('share')" class="flex-1 flex flex-col items-center justify-center py-4 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 text-brand-700 dark:text-brand-300 rounded-xl transition-all border border-brand-200 dark:border-brand-700 shadow-sm group">
+                    <svg class="mb-2 text-brand-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                    <span class="text-xs font-bold">Partager PDF</span>
                 </button>
             </div>
             
-            <div class="flex justify-end">
-                <button onclick="cancelExport()" class="px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors">Fermer</button>
+            <div class="flex justify-between w-full">
+                <button id="btn_back_export" onclick="hidePdfOptions()" class="hidden px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors">Retour</button>
+                <button onclick="cancelExport()" class="px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors ml-auto">Fermer</button>
             </div>
         </div>
     </div>
@@ -2497,6 +2511,20 @@
             currentRecipeCard = null;
         }
 
+        function showPdfOptions() {
+            document.getElementById('export_step_1').classList.add('hidden');
+            document.getElementById('export_step_2').classList.remove('hidden');
+            document.getElementById('export_step_2').classList.add('flex');
+            document.getElementById('btn_back_export').classList.remove('hidden');
+        }
+
+        function hidePdfOptions() {
+            document.getElementById('export_step_1').classList.remove('hidden');
+            document.getElementById('export_step_2').classList.add('hidden');
+            document.getElementById('export_step_2').classList.remove('flex');
+            document.getElementById('btn_back_export').classList.add('hidden');
+        }
+
         function openExportPrompt() {
             document.getElementById('export_prompt_modal').classList.remove('hidden');
             document.getElementById('recipe_name_input').focus();
@@ -2505,6 +2533,7 @@
         function cancelExport() {
             document.getElementById('export_prompt_modal').classList.add('hidden');
             document.getElementById('recipe_name_input').value = '';
+            hidePdfOptions();
         }
 
         function getRecipeText() {
@@ -2630,12 +2659,12 @@
             navigator.clipboard.writeText(text).then(() => {
                 let btn = document.getElementById('btn_copy_text');
                 let originalHtml = btn.innerHTML;
-                btn.innerHTML = `<svg class="mb-2 text-brand-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="text-xs font-bold text-brand-500">Copié !</span>`;
+                btn.innerHTML = `<svg class="mb-2 text-brand-500" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg><span class="text-[10px] font-bold text-brand-500">Copié !</span>`;
                 setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
             }).catch(err => console.error("Erreur copie", err));
         }
 
-        function shareRecipe() {
+        function shareRecipeText() {
             let text = getRecipeText();
             if (navigator.share) {
                 navigator.share({
@@ -2645,6 +2674,74 @@
             } else {
                 copyRecipeText();
             }
+        }
+
+        // --- GÉNÉRATION DES GUIDES PDF ---
+        let generatedSignatures = new Set();
+
+        function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr) {
+            let aromaVolInSample = baseVol * (totalAroma / prepVol);
+            let targets = [3, 6, 9, 12];
+            let sims = new Map();
+            
+            targets.forEach(target => {
+                if (target < nicMax) {
+                    let exactBVol = (baseVol * target) / (bStr - target);
+                    let bCount = Math.round(exactBVol / 10);
+                    if (bCount > 0) {
+                        let actualVol = bCount * 10;
+                        let actualNic = (actualVol * bStr) / (baseVol + actualVol);
+                        let finalAromaPerc = (aromaVolInSample / (baseVol + actualVol)) * 100;
+                        sims.set(bCount, { nic: actualNic, aroma: finalAromaPerc });
+                    }
+                }
+            });
+            
+            let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
+            let maxBCount = exactMaxBVol / 10;
+            let roundedMax = round1(maxBCount);
+            let floorMax = Math.floor(maxBCount);
+            
+            if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
+                let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
+                let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
+                sims.set(floorMax, { nic: actualNicFloor, aroma: finalAromaPercFloor, isFloorMax: true });
+            }
+            
+            let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
+            sims.set(roundedMax, { nic: nicMax, aroma: maxAromaPerc, isMax: true });
+            
+            let results = Array.from(sims, ([bCount, data]) => ({ bCount, ...data }));
+            results.sort((a, b) => a.bCount - b.bCount);
+            return results;
+        }
+
+        function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax) {
+            let data = computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr);
+            let html = `
+                <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
+                    <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center gap-2">
+                        <span>💡 ${title}</span>
+                        <span class="text-[8px] bg-stone-200 px-1.5 py-0.5 rounded">${round1(baseVol)} ml</span>
+                    </div>
+                    <table class="w-full text-left font-medium mt-1">
+            `;
+            data.forEach(row => {
+                generatedSignatures.add(`${baseVol}-${row.bCount}`);
+                let isMax = row.isMax;
+                let warning = (row.nic > nicMax) ? `<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Taux max dépassé</span>` : '';
+                let trClass = isMax ? "text-brand-700 font-bold" : "text-stone-600";
+                let prefix = isMax ? "MAX: " : "+ ";
+                html += `
+                    <tr class="${trClass} border-b border-stone-100/50 last:border-0">
+                        <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${row.bCount} boost.</td>
+                        <td class="py-1 align-middle whitespace-nowrap pr-2">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</td>
+                        <td class="py-1 align-middle text-right">Arôme: ${isMax ? '' : '~'}${round1(row.aroma)}% ${warning}</td>
+                    </tr>
+                `;
+            });
+            html += `</table></div>`;
+            return html;
         }
 
         function prepareCardForExport() {
@@ -2666,54 +2763,62 @@
             let buttons = clone.querySelector('.modal-buttons');
             if (buttons) buttons.style.display = 'none';
 
-            // Mettre au propre la zone de simulation pour le shortfill
+            // Mettre au propre la zone de simulation pour le shortfill et insérer les Guides Miniatures
             let simContainer = clone.querySelector('.sim-container');
             let cleanSimDiv = null;
             if (simContainer) {
-                let sel = clone.querySelector('.sim-sel-vol');
-                let preleveVol = sel.value === 'custom' ? (parseFloat(clone.querySelector('.sim-custom-vol').value) || 0) : (parseFloat(sel.value) || 0);
-                let bCount = parseFloat(clone.querySelector('.sim-b-count').value) || 0;
-                let bVol = bCount * 10;
-                let bStr = parseFloat(clone.getAttribute('data-booster-str')) || 20;
-                let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
-                let prepVolAttr = parseFloat(clone.getAttribute('data-prep-vol')) || 0;
-                let maxNic = parseFloat(clone.getAttribute('data-nic-max')) || 0;
+                let type = clone.getAttribute('data-type');
+                if (type === 't2') {
+                    let bStr = parseFloat(clone.getAttribute('data-booster-str')) || 20;
+                    let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
+                    let prepVolAttr = parseFloat(clone.getAttribute('data-prep-vol')) || 0;
+                    let maxNic = parseFloat(clone.getAttribute('data-nic-max')) || 0;
 
-                let finalVol = preleveVol + bVol;
-                let finalNic = finalVol > 0 ? (bVol * bStr) / finalVol : 0;
-                let aromaInSample = preleveVol * (totalAroma / prepVolAttr);
-                let finalAromaPerc = finalVol > 0 ? (aromaInSample / finalVol) * 100 : 0;
-                
-                let warningHtml = '';
-                if (maxNic > 0 && finalNic > maxNic) {
-                    warningHtml = `<div class="text-right text-[10px] text-red-500 font-bold mt-2 leading-tight">⚠️ Taux max (${maxNic} mg) dépassé,<br>arôme trop dilué !</div>`;
+                    generatedSignatures.clear(); // Reset du traçage des doublons
+
+                    cleanSimDiv = document.createElement('div');
+                    cleanSimDiv.className = 'mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 w-full pdf-guides';
+                    
+                    let guidesHtml = getGuideHtmlForVol(prepVolAttr, "Bidon Complet", totalAroma, prepVolAttr, bStr, maxNic);
+                    
+                    if (prepVolAttr > 50) {
+                        guidesHtml += getGuideHtmlForVol(50, "Prélèvement", totalAroma, prepVolAttr, bStr, maxNic);
+                    }
+                    
+                    let sel = clone.querySelector('.sim-sel-vol');
+                    let customPreleveVol = sel.value === 'custom' ? (parseFloat(clone.querySelector('.sim-custom-vol').value) || 0) : (parseFloat(sel.value) || 0);
+                    let customBCount = parseFloat(clone.querySelector('.sim-b-count').value) || 0;
+                    
+                    // Ajout Simulation personnalisée si elle n'est pas déjà un doublon
+                    if (customPreleveVol > 0 && customBCount > 0) {
+                        let sig = `${customPreleveVol}-${customBCount}`;
+                        if (!generatedSignatures.has(sig)) {
+                            let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10);
+                            let aromaVolInSample = customPreleveVol * (totalAroma / prepVolAttr);
+                            let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100;
+                            let warning = actualNic > maxNic;
+                            
+                            guidesHtml += `
+                            <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
+                                <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center gap-2">
+                                    <span>💡 Personnalisé</span>
+                                    <span class="text-[8px] bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded">${round1(customPreleveVol)} ml</span>
+                                </div>
+                                <table class="w-full text-left font-medium mt-1">
+                                    <tr class="border-b border-stone-100/50 last:border-0">
+                                        <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${customBCount} boost.</td>
+                                        <td class="py-1 align-middle whitespace-nowrap pr-2">-> ~${round1(actualNic)} mg</td>
+                                        <td class="py-1 align-middle text-right">Arôme: ~${round1(finalAromaPerc)}% ${warning ? '<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Taux max dépassé</span>' : ''}</td>
+                                    </tr>
+                                </table>
+                            </div>`;
+                        }
+                    }
+
+                    cleanSimDiv.innerHTML = guidesHtml;
+                    simContainer.style.display = 'none';
+                    simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
                 }
-
-                cleanSimDiv = document.createElement('div');
-                cleanSimDiv.className = 'mt-3 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-sm';
-                cleanSimDiv.innerHTML = `
-                    <div class="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-2 border-b border-stone-200 pb-1">Exemple de Boost Personnalisé</div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="font-bold">Base prélevée :</span>
-                        <span class="font-black">${round1(preleveVol)} ml</span>
-                    </div>
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold">Boosters ajoutés :</span>
-                        <span class="font-black">${round1(bCount)} <span class="text-xs font-normal">x10ml (${bStr}mg/ml)</span></span>
-                    </div>
-                    <div class="pt-2 border-t border-stone-200 flex justify-between items-center">
-                        <span class="font-bold text-brand-600">Résultat estimé :</span>
-                        <div class="text-right">
-                            <span class="text-base font-black text-brand-600">${round1(finalVol)} ml</span>
-                            <span class="text-xs font-bold text-brand-600 mx-1">à</span>
-                            <span class="text-base font-black text-brand-600">${round1(finalNic)} mg/ml</span>
-                        </div>
-                    </div>
-                    <div class="text-right text-[10px] text-stone-500 font-bold mt-1">Arôme dilué à ${round1(finalAromaPerc)}%</div>
-                    ${warningHtml}
-                `;
-                simContainer.style.display = 'none';
-                simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
             }
 
             // Ajouter le footer avec le QR code
@@ -2751,27 +2856,61 @@
             };
         }
 
-        function exportRecipePDF() {
+        function exportRecipePDF(action) {
             let ctx = prepareCardForExport();
             if (!ctx) return;
             
             let name = document.getElementById('recipe_name_input').value.trim() || "recette";
+            let filename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
             
             // Timeout to allow DOM rendering for exporting class
             setTimeout(() => {
                 let opt = {
                     margin:       [10, 10, 10, 10],
-                    filename:     `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`,
+                    filename:     filename,
                     image:        { type: 'jpeg', quality: 0.98 },
                     html2canvas:  { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#ffffff' },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
                     pagebreak:    { mode: ['css', 'avoid-all'] }
                 };
 
-                html2pdf().set(opt).from(ctx.card).save().then(ctx.restore).catch(err => {
-                    console.error("Erreur PDF:", err);
-                    ctx.restore();
-                });
+                let worker = html2pdf().set(opt).from(ctx.card);
+
+                if (action === 'download') {
+                    worker.save().then(() => {
+                        ctx.restore();
+                        cancelExport();
+                    }).catch(err => {
+                        console.error("Erreur PDF:", err);
+                        ctx.restore();
+                    });
+                } else if (action === 'share') {
+                    worker.output('blob').then(pdfBlob => {
+                        let file = new File([pdfBlob], filename, { type: 'application/pdf' });
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            navigator.share({
+                                files: [file],
+                                title: name,
+                                text: 'Voici ma recette E-Liquide générée avec Je-DIY.'
+                            }).then(() => {
+                                ctx.restore();
+                                cancelExport();
+                            }).catch(err => {
+                                console.log('Partage annulé', err);
+                                ctx.restore();
+                            });
+                        } else {
+                            alert("Le partage de fichier n'est pas supporté par votre navigateur. Le fichier va être téléchargé à la place.");
+                            worker.save().then(() => {
+                                ctx.restore();
+                                cancelExport();
+                            });
+                        }
+                    }).catch(err => {
+                        console.error("Erreur Blob PDF:", err);
+                        ctx.restore();
+                    });
+                }
             }, 300);
         }
 
