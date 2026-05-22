@@ -110,6 +110,18 @@
             }
         }
 
+        @layer components {
+            .btn-adjust {
+                @apply w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-brand-100 dark:hover:bg-brand-900/40 hover:border-brand-300 dark:hover:border-brand-600 font-black text-brand-600 dark:text-brand-400 text-2xl flex items-center justify-center transition-all shadow-sm active:scale-95;
+            }
+            .btn-adjust-sm {
+                @apply w-10 h-10 shrink-0 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-brand-100 dark:hover:bg-brand-900/40 hover:border-brand-300 dark:hover:border-brand-600 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all shadow-sm active:scale-95;
+            }
+            .btn-adjust-xs {
+                @apply w-8 h-7 shrink-0 rounded-md bg-stone-100 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 hover:bg-brand-100 dark:hover:bg-brand-900/40 hover:border-brand-300 dark:hover:border-brand-600 font-black text-brand-600 dark:text-brand-400 text-lg flex items-center justify-center transition-all shadow-sm active:scale-95 print:hidden;
+            }
+        }
+
         /* Bloque le "pull-to-refresh" natif sur mobile Chrome/Safari de façon agressive */
         html, body {
             overscroll-behavior-y: none;
@@ -183,7 +195,7 @@
             page-break-inside: avoid;
         }
 
-        /* Variables "en dur" pour que l'export PDF (html2canvas) comprenne bien les couleurs sans l'alpha de Tailwind */
+        /* Variables "en dur" pour que l'export PDF comprenne bien les couleurs */
         body.exporting .bg-brand-50 { background-color: rgb(var(--brand-50)) !important; }
         body.exporting .bg-brand-100 { background-color: rgb(var(--brand-100)) !important; }
         body.exporting .border-brand-200 { border-color: rgb(var(--brand-200)) !important; }
@@ -354,9 +366,9 @@
                         <div id="wiz_vol_defined_block">
                             <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Volume final souhaité <span id="wiz_vol_help" class="text-xs font-normal text-stone-400"></span></label>
                             <div class="flex items-center gap-3">
-                                <button onclick="adjustVal('wiz_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                                <button onclick="adjustVal('wiz_vol', -10)" class="btn-adjust">-</button>
                                 <input type="number" id="wiz_vol" value="200" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors">
-                                <button onclick="adjustVal('wiz_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                                <button onclick="adjustVal('wiz_vol', 10)" class="btn-adjust">+</button>
                                 <span class="font-bold text-stone-500 dark:text-stone-400">ml</span>
                             </div>
                         </div>
@@ -365,9 +377,9 @@
                         <div id="wiz_vol_max_block" class="hidden">
                             <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Quantité d'arôme que tu possèdes</label>
                             <div class="flex items-center gap-3">
-                                <button onclick="adjustVal('wiz_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                                <button onclick="adjustVal('wiz_aroma_avail', -1)" class="btn-adjust">-</button>
                                 <input type="number" id="wiz_aroma_avail" value="30" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors">
-                                <button onclick="adjustVal('wiz_aroma_avail', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
+                                <button onclick="adjustVal('wiz_aroma_avail', 1)" class="btn-adjust">+</button>
                                 <span class="font-bold text-stone-500 dark:text-stone-400">ml</span>
                             </div>
                         </div>
@@ -394,10 +406,10 @@
                         
                         <input type="hidden" id="wiz_ratio_pg" value="50">
                         <div class="flex gap-4 mb-4">
-                            <button onclick="let el=document.getElementById('wiz_ratio_pg'); el.value = Math.max(0, parseInt(el.value)-5); document.getElementById('wiz_ratio_disp').innerText = formatRatioStr(100 - el.value, true)" class="flex-1 py-3 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl font-black text-stone-700 dark:text-stone-200 transition-colors shadow-sm active:scale-95 flex items-center justify-center gap-1">
+                            <button onclick="let el=document.getElementById('wiz_ratio_pg'); el.value = Math.max(0, parseInt(el.value)-5); document.getElementById('wiz_ratio_disp').innerText = formatRatioStr(100 - el.value, true)" class="flex-1 py-3 bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-brand-900/40 hover:border-brand-300 dark:hover:border-brand-600 border border-stone-200 dark:border-stone-600 rounded-xl font-black text-stone-700 dark:text-stone-200 transition-colors shadow-sm active:scale-95 flex items-center justify-center gap-1">
                                 <span class="text-xl text-brand-600 dark:text-brand-400">+</span> <span>PG</span>
                             </button>
-                            <button onclick="let el=document.getElementById('wiz_ratio_pg'); el.value = Math.min(100, parseInt(el.value)+5); document.getElementById('wiz_ratio_disp').innerText = formatRatioStr(100 - el.value, true)" class="flex-1 py-3 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl font-black text-stone-700 dark:text-stone-200 transition-colors shadow-sm active:scale-95 flex items-center justify-center gap-1">
+                            <button onclick="let el=document.getElementById('wiz_ratio_pg'); el.value = Math.min(100, parseInt(el.value)+5); document.getElementById('wiz_ratio_disp').innerText = formatRatioStr(100 - el.value, true)" class="flex-1 py-3 bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-brand-900/40 hover:border-brand-300 dark:hover:border-brand-600 border border-stone-200 dark:border-stone-600 rounded-xl font-black text-stone-700 dark:text-stone-200 transition-colors shadow-sm active:scale-95 flex items-center justify-center gap-1">
                                 <span>VG</span> <span class="text-xl text-brand-600 dark:text-brand-400">+</span>
                             </button>
                         </div>
@@ -419,9 +431,9 @@
                         <div id="wiz_nic_t1_block">
                             <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Taux souhaité au final</label>
                             <div class="flex items-center gap-3 mb-4">
-                                <button onclick="adjustVal('wiz_nic_mg', -0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                                <button onclick="adjustVal('wiz_nic_mg', -0.5)" class="btn-adjust">-</button>
                                 <input type="number" id="wiz_nic_mg" value="3" step="0.5" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
-                                <button onclick="adjustVal('wiz_nic_mg', 0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                                <button onclick="adjustVal('wiz_nic_mg', 0.5)" class="btn-adjust">+</button>
                                 <span class="font-bold text-stone-500">mg/ml</span>
                             </div>
                         </div>
@@ -431,9 +443,9 @@
                             <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Taux maximum que tu ajouteras plus tard</label>
                             <p class="text-xs text-stone-400 mb-3">On a besoin de le savoir pour laisser assez de place dans le bidon.</p>
                             <div class="flex items-center gap-3 mb-4">
-                                <button onclick="adjustVal('wiz_max_nic', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                                <button onclick="adjustVal('wiz_max_nic', -1)" class="btn-adjust">-</button>
                                 <input type="number" id="wiz_max_nic" value="6" step="1" class="hide-arrows flex-1 min-w-0 h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
-                                <button onclick="adjustVal('wiz_max_nic', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                                <button onclick="adjustVal('wiz_max_nic', 1)" class="btn-adjust">+</button>
                                 <span class="font-bold text-stone-500">mg/ml</span>
                             </div>
                         </div>
@@ -505,9 +517,9 @@
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Volume actuel du jus (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('tab_boost_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('tab_boost_vol', -10)" class="btn-adjust">-</button>
                             <input type="number" id="tab_boost_vol" value="50" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('tab_boost_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('tab_boost_vol', 10)" class="btn-adjust">+</button>
                         </div>
                         <div class="flex gap-2 mt-1">
                             <button onclick="document.getElementById('tab_boost_vol').value=50; triggerCalc()" class="flex-1 py-1.5 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-lg text-xs font-bold text-stone-600 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700 transition-colors">50 ml</button>
@@ -521,9 +533,9 @@
                     <div class="flex flex-col gap-3 bg-brand-50 dark:bg-brand-900/20 p-4 rounded-xl border border-brand-200 dark:border-brand-800/50 transition-colors">
                         <label class="block text-sm font-bold text-brand-800 dark:text-brand-400">Nombre de boosters ajoutés (fioles 10ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('tab_boost_count', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-brand-200 dark:border-brand-700 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('tab_boost_count', -1)" class="btn-adjust">-</button>
                             <input type="number" id="tab_boost_count" value="1" step="1" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-brand-200 dark:border-brand-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('tab_boost_count', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-brand-200 dark:border-brand-700 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('tab_boost_count', 1)" class="btn-adjust">+</button>
                         </div>
                         <div class="flex items-center justify-between pt-2 mt-2 border-t border-brand-200/50 dark:border-brand-700/50">
                             <span class="text-xs font-bold text-brand-700 dark:text-brand-500">Taux du booster (mg/ml)</span>
@@ -583,9 +595,9 @@
                     <div id="t1_vol_panel" class="mb-8 animate-fade-in">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité finale souhaitée (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t1_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('t1_vol', -10)" class="btn-adjust">-</button>
                             <input type="number" id="t1_vol" value="200" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t1'); triggerCalc()">
-                            <button onclick="adjustVal('t1_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t1_vol', 10)" class="btn-adjust">+</button>
                         </div>
                     </div>
 
@@ -593,9 +605,9 @@
                     <div id="t1_aroma_avail_panel" class="mb-8 hidden animate-fade-in">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité d'arôme possédée (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t1_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('t1_aroma_avail', -1)" class="btn-adjust">-</button>
                             <input type="number" id="t1_aroma_avail" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t1')" onchange="triggerCalc()">
-                            <button onclick="adjustVal('t1_aroma_avail', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t1_aroma_avail', 1)" class="btn-adjust">+</button>
                         </div>
                     </div>
 
@@ -659,18 +671,18 @@
 
                         <div id="t1_nic_mg_panel" class="flex flex-col mb-4 animate-fade-in">
                             <div class="flex items-center gap-3">
-                                <button onclick="adjustVal('t1_nic_mg', -0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
+                                <button onclick="adjustVal('t1_nic_mg', -0.5)" class="btn-adjust">-</button>
                                 <input type="number" id="t1_nic_mg" value="3" step="0.5" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
-                                <button onclick="adjustVal('t1_nic_mg', 0.5)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
+                                <button onclick="adjustVal('t1_nic_mg', 0.5)" class="btn-adjust">+</button>
                             </div>
                             <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_mg_preview">Quantité : <span class="text-brand-600 dark:text-brand-400">0 ml</span> <span class="text-stone-400 dark:text-stone-500 font-normal">(soit 0 booster)</span></div>
                         </div>
 
                         <div id="t1_nic_boost_panel" class="hidden flex-col mb-4 animate-fade-in">
                             <div class="flex items-center gap-3">
-                                <button onclick="adjustVal('t1_nic_boost', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
+                                <button onclick="adjustVal('t1_nic_boost', -1)" class="btn-adjust">-</button>
                                 <input type="number" id="t1_nic_boost" value="8" step="1" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateNicPreview('t1'); triggerCalc()" onchange="triggerCalc()">
-                                <button onclick="adjustVal('t1_nic_boost', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
+                                <button onclick="adjustVal('t1_nic_boost', 1)" class="btn-adjust">+</button>
                             </div>
                             <div class="text-center text-xs font-bold text-stone-500 dark:text-stone-400 mt-2" id="t1_nic_boost_preview">Taux final : <span class="text-brand-600 dark:text-brand-400">0 mg/ml</span></div>
                         </div>
@@ -733,9 +745,9 @@
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-1">Volume à préparer (Avant boost)</label>
                         <p class="text-[10px] text-stone-400 dark:text-stone-500 mb-2">C'est la quantité de liquide sur-concentré à créer.</p>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t2_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">-</button>
+                            <button onclick="adjustVal('t2_vol', -10)" class="btn-adjust">-</button>
                             <input type="number" id="t2_vol" value="100" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 transition-colors" oninput="updateAromaPreview('t2'); triggerCalc()">
-                            <button onclick="adjustVal('t2_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl transition-colors">+</button>
+                            <button onclick="adjustVal('t2_vol', 10)" class="btn-adjust">+</button>
                         </div>
                     </div>
 
@@ -743,9 +755,9 @@
                     <div id="t2_aroma_avail_panel" class="mb-8 hidden animate-fade-in">
                         <label class="block text-sm font-bold text-stone-500 dark:text-stone-400 mb-2">Quantité d'arôme possédée (ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t2_aroma_avail', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('t2_aroma_avail', -1)" class="btn-adjust">-</button>
                             <input type="number" id="t2_aroma_avail" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="updateAromaPreview('t2')" onchange="triggerCalc()">
-                            <button onclick="adjustVal('t2_aroma_avail', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 font-bold text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t2_aroma_avail', 1)" class="btn-adjust">+</button>
                         </div>
                     </div>
 
@@ -754,9 +766,9 @@
                         <div class="bg-stone-50 dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
                             <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">Taux Nicotine Max visé</label>
                             <div class="flex items-center gap-2 mb-2">
-                                <button onclick="adjustVal('t2_max_nic', -1)" class="w-10 h-10 shrink-0 rounded-lg bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                                <button onclick="adjustVal('t2_max_nic', -1)" class="btn-adjust-sm">-</button>
                                 <input type="number" id="t2_max_nic" value="6" step="1" class="hide-arrows flex-1 min-w-0 w-full h-10 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-lg text-center font-bold text-stone-800 dark:text-stone-100 transition-colors" oninput="updateAromaPreview('t2'); triggerCalc()" onchange="triggerCalc()">
-                                <button onclick="adjustVal('t2_max_nic', 1)" class="w-10 h-10 shrink-0 rounded-lg bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                                <button onclick="adjustVal('t2_max_nic', 1)" class="btn-adjust-sm">+</button>
                                 <span class="text-sm font-bold text-stone-400 dark:text-stone-500 ml-1">mg/ml</span>
                             </div>
                             <div class="flex items-center justify-between pt-2 border-t border-stone-200 dark:border-stone-700">
@@ -836,9 +848,9 @@
                             <span id="t3_aroma_w" class="text-sm text-brand-600 dark:text-brand-400 font-black">0 g</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_aroma_vol', -5)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('t3_aroma_vol', -5)" class="btn-adjust">-</button>
                             <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_aroma_vol', 5)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_aroma_vol', 5)" class="btn-adjust">+</button>
                         </div>
                         <div class="mt-2">
                             <div class="flex justify-between items-center mb-1">
@@ -856,9 +868,9 @@
                             <span id="t3_base_w" class="text-sm text-brand-600 dark:text-brand-400 font-black">0 g</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_base_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('t3_base_vol', -10)" class="btn-adjust">-</button>
                             <input type="number" id="t3_base_vol" value="120" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_base_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_base_vol', 10)" class="btn-adjust">+</button>
                         </div>
                         <div class="mt-2">
                             <div class="flex justify-between items-center mb-1">
@@ -876,9 +888,9 @@
                             <span id="t3_boost_w" class="text-sm text-brand-600 dark:text-brand-400 font-black">0 g</span>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_boost_vol', -10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('t3_boost_vol', -10)" class="btn-adjust">-</button>
                             <input type="number" id="t3_boost_vol" value="50" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_boost_vol', 10)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_boost_vol', 10)" class="btn-adjust">+</button>
                         </div>
                         <div class="mt-2">
                             <div class="flex justify-between items-center mb-1">
@@ -893,9 +905,9 @@
                     <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-900/50 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Taux des Boosters (mg/ml)</label>
                         <div class="flex items-center gap-3">
-                            <button onclick="adjustVal('t3_boost_str', -1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">-</button>
+                            <button onclick="adjustVal('t3_boost_str', -1)" class="btn-adjust">-</button>
                             <input type="number" id="t3_boost_str" value="20" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                            <button onclick="adjustVal('t3_boost_str', 1)" class="w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-600 hover:bg-stone-100 dark:hover:bg-stone-700 font-bold text-stone-600 dark:text-stone-300 text-xl flex items-center justify-center transition-colors">+</button>
+                            <button onclick="adjustVal('t3_boost_str', 1)" class="btn-adjust">+</button>
                         </div>
                     </div>
                 </div>
@@ -1646,17 +1658,6 @@
             }
         }
 
-        function adjustSimVal(btn, step) {
-            let container = btn.parentElement;
-            let input = container.querySelector('input[type="number"]');
-            if (!input) return;
-            let val = parseFloat(input.value) || 0;
-            let newVal = val + step;
-            if(newVal < 0) newVal = 0;
-            input.value = newVal;
-            updateSim(input);
-        }
-
         function updateNicPreview(prefix) {
             if (prefix !== 't1') return;
             let finalVol = 0;
@@ -2290,9 +2291,9 @@
                             <option value="custom">Manuel...</option>
                         </select>
                         <div class="sim-custom-wrapper hidden items-center bg-stone-50 dark:bg-stone-800 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors">
-                            <button onclick="adjustCustomPreleve(this, -1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">-</button>
+                            <button onclick="adjustCustomPreleve(this, -1)" class="btn-adjust-xs">-</button>
                             <input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)">
-                            <button onclick="adjustCustomPreleve(this, 1)" class="w-8 h-7 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">+</button>
+                            <button onclick="adjustCustomPreleve(this, 1)" class="btn-adjust-xs">+</button>
                         </div>
                     </div>
 
@@ -2300,18 +2301,18 @@
                         <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mb-1">J'ajoute</span>
                         
                         <div class="flex items-center bg-white dark:bg-stone-800 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
-                            <button onclick="adjustSimBoosters(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">-</button>
-                            <input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-6 bg-white dark:bg-stone-800 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors">
-                            <button onclick="adjustSimBoosters(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">+</button>
+                            <button onclick="adjustSimBoosters(this, -1)" class="btn-adjust-xs">-</button>
+                            <input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-800 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors">
+                            <button onclick="adjustSimBoosters(this, 1)" class="btn-adjust-xs">+</button>
                         </div>
                         <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mt-0.5">boosters</span>
                         
                         <span class="text-[9px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest my-1">ou</span>
                         
                         <div class="flex items-center bg-white dark:bg-stone-800 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
-                            <button onclick="adjustSimMl(this, -1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">-</button>
-                            <input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-6 bg-white dark:bg-stone-800 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors">
-                            <button onclick="adjustSimMl(this, 1)" class="w-8 h-6 shrink-0 flex items-center justify-center bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-600 dark:text-white font-bold transition-colors print:hidden">+</button>
+                            <button onclick="adjustSimMl(this, -1)" class="btn-adjust-xs">-</button>
+                            <input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-800 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors">
+                            <button onclick="adjustSimMl(this, 1)" class="btn-adjust-xs">+</button>
                         </div>
                         <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mt-0.5">ml</span>
                     </div>
@@ -2397,13 +2398,18 @@
 
             let bCount = parseFloat(bCountInp.value) || 0;
             let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+            let maxNic = parseFloat(container.getAttribute('data-nic-max')) || 0;
             
             let bVol = bCount * 10;
             let finalVol = preleveVol + bVol;
             
             if (finalVol > 0) {
                 let finalNic = (bVol * bStr) / finalVol;
-                resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>`;
+                if (finalNic > maxNic) {
+                    resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span><br><span class="text-[10px] text-red-500 dark:text-red-400 font-bold block mt-1 leading-tight">⚠️ Taux max (${maxNic} mg) dépassé,<br>arôme trop dilué !</span>`;
+                } else {
+                    resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>`;
+                }
             } else {
                 resEl.innerText = "0 ml";
             }
@@ -2437,10 +2443,6 @@ function openModalFromCard(btn) {
     `;
     clone.innerHTML += buttonsHtml;
     
-    let modalContent = document.getElementById('recipe_modal_content');
-    modalContent.innerHTML = '';
-    modalContent.appendChild(clone);
-    
     // --- CORRECTIF ICI : Reporte les valeurs de la carte source vers le clone ---
     let sourceSimSel = card.querySelector('.sim-sel-vol');
     let sourceBCount = card.querySelector('.sim-b-count');
@@ -2457,6 +2459,10 @@ function openModalFromCard(btn) {
     }
     if(sourceBCount) clone.querySelector('.sim-b-count').value = sourceBCount.value;
     if(sourceMlCount) clone.querySelector('.sim-ml-count').value = sourceMlCount.value;
+    
+    let modalContent = document.getElementById('recipe_modal_content');
+    modalContent.innerHTML = '';
+    modalContent.appendChild(clone);
     
     document.getElementById('recipe_modal').classList.remove('hidden');
     
@@ -2561,16 +2567,35 @@ function openModalFromCard(btn) {
                     return out;
                 }
 
+                // Affichage du bidon complet
                 text += getGuideForVol(prepVol, "pour le bidon complet de " + round1(prepVol) + " ml");
 
-                [30, 50, 100].forEach(v => {
-                    if (v < prepVol) {
-                        text += getGuideForVol(v, "si tu prélèves " + v + " ml");
+                // Suppression de 30 et 100, ne reste que 50ml si applicable
+                if (50 < prepVol) {
+                    text += getGuideForVol(50, "si tu prélèves 50 ml");
+                }
+                
+                // Ajout de la simulation personnalisée en cours si elle existe
+                let simSel = clone.querySelector('.sim-sel-vol');
+                let customPreleveVol = (simSel.value === 'custom') ? (parseFloat(clone.querySelector('.sim-custom-vol').value) || 0) : (parseFloat(simSel.value) || 0);
+                let customBCount = parseFloat(clone.querySelector('.sim-b-count').value) || 0;
+                
+                if (customPreleveVol > 0 && customBCount > 0) {
+                    let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10);
+                    let customLine = `+ ${customBCount} booster(s) -> ~${round1(actualNic)} mg/ml\n`;
+                    
+                    // On ne l'ajoute que si la ligne générée n'est pas déjà un doublon strict
+                    if (!text.includes(customLine)) {
+                        text += `\n💡 GUIDE DE BOOST PERSONNALISÉ (pour ${round1(customPreleveVol)} ml) :\n`;
+                        text += customLine;
+                        if (actualNic > nicMax) {
+                            text += `⚠️ ATTENTION : Taux max (${nicMax} mg/ml) dépassé, arôme trop dilué !\n`;
+                        }
                     }
-                });
+                }
             }
             
-            text += `-----------------------\nGénéré avec Je-DIY`;
+            text += `\n-----------------------\nRéalise toi-même ton liquide avec l'application Je-DIY.\nhttps://lehcimcramtrebor.github.io/jediy/`;
             return text;
         }
 
@@ -2616,7 +2641,7 @@ function openModalFromCard(btn) {
 			let footerDiv = document.createElement('div');
 			footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-8 pt-6 border-t-2 border-stone-100';
 			footerDiv.innerHTML = `
-				<img src="jediy.png" alt="QR Code Je-DIY" class="w-32 h-32 rounded-xl shadow-sm border border-stone-200">
+				<img src="jediy.png" alt="QR Code Je-DIY" class="w-32 h-32 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/128x128/e2e8f0/475569?text=Je-DIY'">
 				<div class="text-stone-500 font-bold text-sm text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-lg">Je-DIY</span></div>
 			`;
 			clone.appendChild(footerDiv);
