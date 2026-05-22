@@ -2666,11 +2666,17 @@
                 let bStr = parseFloat(clone.getAttribute('data-booster-str')) || 20;
                 let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
                 let prepVolAttr = parseFloat(clone.getAttribute('data-prep-vol')) || 0;
+                let maxNic = parseFloat(clone.getAttribute('data-nic-max')) || 0;
 
                 let finalVol = preleveVol + bVol;
                 let finalNic = finalVol > 0 ? (bVol * bStr) / finalVol : 0;
                 let aromaInSample = preleveVol * (totalAroma / prepVolAttr);
                 let finalAromaPerc = finalVol > 0 ? (aromaInSample / finalVol) * 100 : 0;
+                
+                let warningHtml = '';
+                if (maxNic > 0 && finalNic > maxNic) {
+                    warningHtml = `<div class="text-right text-[10px] text-red-500 font-bold mt-2 leading-tight">⚠️ Taux max (${maxNic} mg) dépassé,<br>arôme trop dilué !</div>`;
+                }
 
                 cleanSimDiv = document.createElement('div');
                 cleanSimDiv.className = 'mt-3 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-sm';
@@ -2693,6 +2699,7 @@
                         </div>
                     </div>
                     <div class="text-right text-[10px] text-stone-500 font-bold mt-1">Arôme dilué à ${round1(finalAromaPerc)}%</div>
+                    ${warningHtml}
                 `;
                 simContainer.style.display = 'none';
                 simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
