@@ -2550,7 +2550,7 @@
             
             let name = document.getElementById('recipe_name_input').value.trim() || "Ma Recette DIY";
             let text = `🧪 ${name}\n`;
-            text += `-----------------------\n`;
+            text += `-----------------\n`;
             
             let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
             
@@ -2570,14 +2570,15 @@
             // Lignes d'ingrédients
             let rows = clone.querySelectorAll('.bg-white.dark\\:bg-stone-800.p-2\\.5');
             rows.forEach(row => {
-                let name = row.querySelector('.text-sm').innerText.replace(/\n/g, ' ').trim();
+                let nameNode = row.querySelector('.text-sm');
+                let name = nameNode.innerText.replace(/\n/g, ' ').replace(' Concentré', '').trim();
                 let vols = row.querySelector('.text-right').innerText.split('\n');
                 let ml = vols[0].trim();
                 let g = vols.length > 1 ? ` (${vols[1].trim()})` : '';
-                text += `- ${name} : ${ml}${g}\n`;
+                text += `- ${name}: ${ml}${g}\n`;
             });
             
-            text += `\n🎯 RÉSULTAT FINAL :\n`;
+            text += `\n🎯 RÉSULTAT :\n`;
             text += `- Arôme : ${aromaPerc}%\n`;
             
             if (type === 't1') {
@@ -2589,11 +2590,11 @@
                 let bStr = parseFloat(clone.getAttribute('data-booster-str'));
                 let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
                 
-                text += `- Nicotine max conseillée : ${nicMax} mg/ml\n`;
+                text += `- Nic. max : ${nicMax} mg/ml\n`;
                 
                 function getGuideForVol(baseVol, title) {
                     let aromaVolInSample = baseVol * (totalAroma / prepVol);
-                    let out = `\n💡 GUIDE DE BOOST (${title}) :\n`;
+                    let out = `\n💡 GUIDE DE BOOST\n(${title}) :\n`;
                     let targets = [3, 6, 9, 12];
                     let sims = new Map();
                     
@@ -2611,7 +2612,9 @@
                     });
                     
                     sims.forEach((data, bCount) => {
-                        out += `+ ${bCount} booster(s) -> ~${round1(data.nic)} mg/ml | Arôme: ~${round1(data.aroma)}%\n`;
+                        out += `+ ${bCount} boost. (${round1(bCount*10)}ml)\n`;
+                        out += `  > Nic: ~${round1(data.nic)} mg\n`;
+                        out += `  > Arôme: ~${round1(data.aroma)} %\n`;
                     });
                     
                     let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
@@ -2622,20 +2625,24 @@
                     if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
                         let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
                         let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
-                        out += `+ ${floorMax} booster(s) -> ~${round1(actualNicFloor)} mg/ml | Arôme: ~${round1(finalAromaPercFloor)}%\n`;
+                        out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml)\n`;
+                        out += `  > Nic: ~${round1(actualNicFloor)} mg\n`;
+                        out += `  > Arôme: ~${round1(finalAromaPercFloor)} %\n`;
                     }
                     
                     let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
-                    out += `+ MAX : ${roundedMax} booster(s) -> ${nicMax} mg/ml | Arôme: ${round1(maxAromaPerc)}%\n`;
+                    out += `+ MAX ${roundedMax} boost. (${round1(roundedMax*10)}ml)\n`;
+                    out += `  > Nic: ${nicMax} mg\n`;
+                    out += `  > Arôme: ${round1(maxAromaPerc)} %\n`;
                     return out;
                 }
 
                 // Affichage du bidon complet
-                text += getGuideForVol(prepVol, "pour le bidon complet de " + round1(prepVol) + " ml");
+                text += getGuideForVol(prepVol, "bidon complet " + round1(prepVol) + " ml");
 
                 // Suppression de 30 et 100, ne reste que 50ml si applicable
                 if (50 < prepVol) {
-                    text += getGuideForVol(50, "si tu prélèves 50 ml");
+                    text += getGuideForVol(50, "si prélèvement 50 ml");
                 }
                 
                 // Ajout de la simulation personnalisée en cours si elle existe
@@ -2647,19 +2654,21 @@
                     let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10);
                     let aromaVolInSample = customPreleveVol * (totalAroma / prepVol);
                     let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100;
-                    let customLine = `+ ${customBCount} booster(s) -> ~${round1(actualNic)} mg/ml | Arôme: ~${round1(finalAromaPerc)}%\n`;
+                    let customLine = `+ ${customBCount} boost. (${round1(customBCount*10)}ml)\n`;
+                    customLine += `  > Nic: ~${round1(actualNic)} mg\n`;
+                    customLine += `  > Arôme: ~${round1(finalAromaPerc)} %\n`;
                     
                     if (!text.includes(customLine)) {
-                        text += `\n💡 GUIDE DE BOOST PERSONNALISÉ (pour ${round1(customPreleveVol)} ml) :\n`;
+                        text += `\n💡 GUIDE PERSONNALISÉ\n(pour ${round1(customPreleveVol)} ml) :\n`;
                         text += customLine;
                         if (actualNic > nicMax) {
-                            text += `⚠️ ATTENTION : Taux max (${nicMax} mg/ml) dépassé, arôme trop dilué !\n`;
+                            text += `⚠️ ATTENTION : Taux max dépassé !\n`;
                         }
                     }
                 }
             }
             
-            text += `\n-----------------------\nRéalise toi-même ton liquide avec l'application Je-DIY.\nhttps://lehcimcramtrebor.github.io/jediy/`;
+            text += `\n-----------------\nL'app Je-DIY :\nhttps://lehcimcramtrebor.github.io/jediy/`;
             return text;
         }
 
@@ -2738,12 +2747,13 @@
             data.forEach(row => {
                 generatedSignatures.add(`${baseVol}-${row.bCount}`);
                 let isMax = row.isMax;
-                let warning = (row.nic > nicMax) ? `<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Taux max dépassé</span>` : '';
+                let warning = (row.nic > nicMax) ? `<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Max dépassé</span>` : '';
                 let trClass = isMax ? "text-brand-700 font-bold" : "text-stone-600";
                 let prefix = isMax ? "MAX: " : "+ ";
+                let mlText = round1(row.bCount * 10);
                 html += `
                     <tr class="${trClass} border-b border-stone-100/50 last:border-0">
-                        <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${row.bCount} boost.</td>
+                        <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${row.bCount} boost. <span class="text-[8px] opacity-70">(${mlText}ml)</span></td>
                         <td class="py-1 align-middle whitespace-nowrap pr-2">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</td>
                         <td class="py-1 align-middle text-right">Arôme: ${isMax ? '' : '~'}${round1(row.aroma)}% ${warning}</td>
                     </tr>
@@ -2806,6 +2816,7 @@
                             let aromaVolInSample = customPreleveVol * (totalAroma / prepVolAttr);
                             let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100;
                             let warning = actualNic > maxNic;
+                            let customMlText = round1(customBCount * 10);
                             
                             guidesHtml += `
                             <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
@@ -2815,9 +2826,9 @@
                                 </div>
                                 <table class="w-full text-left font-medium mt-1">
                                     <tr class="border-b border-stone-100/50 last:border-0">
-                                        <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${customBCount} boost.</td>
+                                        <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${customBCount} boost. <span class="text-[8px] opacity-70">(${customMlText}ml)</span></td>
                                         <td class="py-1 align-middle whitespace-nowrap pr-2">-> ~${round1(actualNic)} mg</td>
-                                        <td class="py-1 align-middle text-right">Arôme: ~${round1(finalAromaPerc)}% ${warning ? '<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Taux max dépassé</span>' : ''}</td>
+                                        <td class="py-1 align-middle text-right">Arôme: ~${round1(finalAromaPerc)}% ${warning ? '<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Max dépassé</span>' : ''}</td>
                                     </tr>
                                 </table>
                             </div>`;
