@@ -1152,6 +1152,8 @@
         function switchTheme(theme) {
             document.documentElement.dataset.theme = theme;
         }
+        
+        let pendingNewRecipe = false; // Flag pour vider le nom d'export seulement s'il y a de nouveaux calculs
 
         // Anti pull-to-refresh ajusté pour mobile (permet le scroll des modales)
         let startY = 0;
@@ -1870,6 +1872,7 @@
         }
 
         function triggerCalc() {
+            pendingNewRecipe = true; // Signale qu'un nouveau calcul a été fait
             let activeTab = document.querySelector('.tab-content.active').id;
             if(activeTab === 'tab_complet') calcTab1();
             else if(activeTab === 'tab_booster') calcTab2();
@@ -2529,13 +2532,16 @@
         }
 
         function openExportPrompt() {
+            if (pendingNewRecipe) {
+                document.getElementById('recipe_name_input').value = '';
+                pendingNewRecipe = false;
+            }
             document.getElementById('export_prompt_modal').classList.remove('hidden');
             document.getElementById('recipe_name_input').focus();
         }
 
         function cancelExport() {
             document.getElementById('export_prompt_modal').classList.add('hidden');
-            document.getElementById('recipe_name_input').value = '';
             hidePdfOptions();
         }
 
