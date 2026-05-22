@@ -176,7 +176,7 @@
         body.exporting #recipe_modal {
             position: static !important;
             display: block !important;
-            padding: 2rem 0 !important;
+            padding: 0 !important;
             background-color: #ffffff !important;
             height: auto !important;
             overflow: visible !important;
@@ -187,12 +187,15 @@
             display: none !important;
         }
         
-        .export-card {
+        body.exporting .export-card {
             margin: 0 auto !important;
             max-width: 600px !important;
             width: 100% !important;
             box-shadow: none !important;
+            border: none !important; /* Plus de bordure pour l'impression PDF */
             page-break-inside: avoid;
+            max-height: none !important; /* Fix pour ne pas tronquer l'image footer */
+            overflow: visible !important;
         }
 
         /* Variables "en dur" pour que l'export PDF comprenne bien les couleurs */
@@ -653,7 +656,7 @@
 
                     <!-- Ratio PG/VG -->
                     <div class="mb-8">
-                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1 sm:gap-0">
+                        <div class="flex justify-between items-center mb-2">
                             <label class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG cible</label>
                             <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="t1_ratio_disp">50/50</span>
                         </div>
@@ -806,7 +809,7 @@
 
                     <!-- Ratio -->
                     <div class="mb-4">
-                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1 sm:gap-0">
+                        <div class="flex justify-between items-center mb-2">
                             <label class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG du Shortfill (avant boost)</label>
                             <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="t2_ratio_disp">50/50</span>
                         </div>
@@ -2195,7 +2198,7 @@
             } else if (prefix === 't2') {
                 let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
                 let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
-                dataAttrs += `data-aroma-perc="${round1(finalAroma)}" data-nic-max="${r.nicMax}" data-prep-vol="${round1(r.prepVol)}" data-booster-str="${bStr}" `;
+                dataAttrs += `data-aroma-perc="${round1(finalAroma)}" data-aroma-vol="${r.aroma}" data-nic-max="${r.nicMax}" data-prep-vol="${round1(r.prepVol)}" data-booster-str="${bStr}" `;
             }
 
             let html = `<div ${dataAttrs} class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">`;
@@ -2399,16 +2402,22 @@
             let bCount = parseFloat(bCountInp.value) || 0;
             let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
             let maxNic = parseFloat(container.getAttribute('data-nic-max')) || 0;
+            let totalAroma = parseFloat(container.getAttribute('data-aroma-vol')) || 0;
+            let prepVolAttr = parseFloat(container.getAttribute('data-prep-vol')) || 0;
             
             let bVol = bCount * 10;
             let finalVol = preleveVol + bVol;
+            let aromaInSample = preleveVol * (totalAroma / prepVolAttr);
             
             if (finalVol > 0) {
                 let finalNic = (bVol * bStr) / finalVol;
+                let finalAromaPerc = (aromaInSample / finalVol) * 100;
+                let aromaHtml = `<br><span class="text-[10px] text-stone-500 dark:text-stone-400 font-bold mt-1 inline-block">Arôme dilué à ${round1(finalAromaPerc)}%</span>`;
+
                 if (finalNic > maxNic) {
-                    resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span><br><span class="text-[10px] text-red-500 dark:text-red-400 font-bold block mt-1 leading-tight">⚠️ Taux max (${maxNic} mg) dépassé,<br>arôme trop dilué !</span>`;
+                    resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>${aromaHtml}<br><span class="text-[10px] text-red-500 dark:text-red-400 font-bold block mt-1 leading-tight">⚠️ Taux max (${maxNic} mg) dépassé,<br>arôme trop dilué !</span>`;
                 } else {
-                    resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>`;
+                    resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>${aromaHtml}`;
                 }
             } else {
                 resEl.innerText = "0 ml";
@@ -2528,10 +2537,12 @@ function openModalFromCard(btn) {
                 let nicMax = parseFloat(clone.getAttribute('data-nic-max'));
                 let prepVol = parseFloat(clone.getAttribute('data-prep-vol'));
                 let bStr = parseFloat(clone.getAttribute('data-booster-str'));
+                let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
                 
                 text += `- Nicotine max conseillée : ${nicMax} mg/ml\n`;
                 
                 function getGuideForVol(baseVol, title) {
+                    let aromaVolInSample = baseVol * (totalAroma / prepVol);
                     let out = `\n💡 GUIDE DE BOOST (${title}) :\n`;
                     let targets = [3, 6, 9, 12];
                     let sims = new Map();
@@ -2543,13 +2554,14 @@ function openModalFromCard(btn) {
                             if (bCount > 0) {
                                 let actualVol = bCount * 10;
                                 let actualNic = (actualVol * bStr) / (baseVol + actualVol);
-                                sims.set(bCount, actualNic);
+                                let finalAromaPerc = (aromaVolInSample / (baseVol + actualVol)) * 100;
+                                sims.set(bCount, {nic: actualNic, aroma: finalAromaPerc});
                             }
                         }
                     });
                     
-                    sims.forEach((actualNic, bCount) => {
-                        out += `+ ${bCount} booster(s) -> ~${round1(actualNic)} mg/ml\n`;
+                    sims.forEach((data, bCount) => {
+                        out += `+ ${bCount} booster(s) -> ~${round1(data.nic)} mg/ml | Arôme: ~${round1(data.aroma)}%\n`;
                     });
                     
                     let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
@@ -2557,13 +2569,14 @@ function openModalFromCard(btn) {
                     let roundedMax = round1(maxBCount);
                     let floorMax = Math.floor(maxBCount);
                     
-                    // Proposer le booster entier en dessous du max s'il est pertinent
                     if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
                         let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
-                        out += `+ ${floorMax} booster(s) -> ~${round1(actualNicFloor)} mg/ml\n`;
+                        let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
+                        out += `+ ${floorMax} booster(s) -> ~${round1(actualNicFloor)} mg/ml | Arôme: ~${round1(finalAromaPercFloor)}%\n`;
                     }
                     
-                    out += `+ MAX : ${roundedMax} booster(s) -> ${nicMax} mg/ml\n`;
+                    let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
+                    out += `+ MAX : ${roundedMax} booster(s) -> ${nicMax} mg/ml | Arôme: ${round1(maxAromaPerc)}%\n`;
                     return out;
                 }
 
@@ -2582,9 +2595,10 @@ function openModalFromCard(btn) {
                 
                 if (customPreleveVol > 0 && customBCount > 0) {
                     let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10);
-                    let customLine = `+ ${customBCount} booster(s) -> ~${round1(actualNic)} mg/ml\n`;
+                    let aromaVolInSample = customPreleveVol * (totalAroma / prepVol);
+                    let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100;
+                    let customLine = `+ ${customBCount} booster(s) -> ~${round1(actualNic)} mg/ml | Arôme: ~${round1(finalAromaPerc)}%\n`;
                     
-                    // On ne l'ajoute que si la ligne générée n'est pas déjà un doublon strict
                     if (!text.includes(customLine)) {
                         text += `\n💡 GUIDE DE BOOST PERSONNALISÉ (pour ${round1(customPreleveVol)} ml) :\n`;
                         text += customLine;
@@ -2621,48 +2635,102 @@ function openModalFromCard(btn) {
             }
         }
 
-		function prepareCardForExport() {
-			let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
-			if (!clone) return null;
-			
-			// Ajout du fallback "Recette Je-DIY" si le champ est vide
-			let name = document.getElementById('recipe_name_input').value.trim() || "Recette Je-DIY";
-			
-			let titleDiv = document.createElement('div');
-			titleDiv.className = 'export-title text-2xl font-black text-center mb-4 pb-4 border-b-2 border-stone-200 text-stone-800';
-			titleDiv.innerText = name;
-			clone.insertBefore(titleDiv, clone.firstChild);
-			
-			// Masquer les boutons pour le PDF
-			let buttons = clone.querySelector('.modal-buttons');
-			if (buttons) buttons.style.display = 'none';
+        function prepareCardForExport() {
+            let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
+            if (!clone) return null;
+            
+            // Fix bug PDF tronqué : On retire la limite de hauteur et l'overflow le temps de l'export
+            clone.classList.remove('max-h-[90vh]', 'overflow-y-auto', 'hide-scrollbar');
+            
+            // Ajout du fallback "Recette Je-DIY" si le champ est vide
+            let name = document.getElementById('recipe_name_input').value.trim() || "Recette Je-DIY";
+            
+            let titleDiv = document.createElement('div');
+            titleDiv.className = 'export-title text-2xl font-black text-center mb-4 pb-4 border-b-2 border-stone-200 text-stone-800';
+            titleDiv.innerText = name;
+            clone.insertBefore(titleDiv, clone.firstChild);
+            
+            // Masquer les boutons pour le PDF
+            let buttons = clone.querySelector('.modal-buttons');
+            if (buttons) buttons.style.display = 'none';
 
-			// Ajouter le footer avec le QR code
-			let footerDiv = document.createElement('div');
-			footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-8 pt-6 border-t-2 border-stone-100';
-			footerDiv.innerHTML = `
-				<img src="jediy.png" alt="QR Code Je-DIY" class="w-32 h-32 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/128x128/e2e8f0/475569?text=Je-DIY'">
-				<div class="text-stone-500 font-bold text-sm text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-lg">Je-DIY</span></div>
-			`;
-			clone.appendChild(footerDiv);
-			
-			// Force light mode on clone and fix colors
-			document.body.classList.add('exporting');
-			document.documentElement.classList.remove('dark');
-			
-			return {
-				card: clone,
-				restore: () => {
-					document.body.classList.remove('exporting');
-					applyTheme(); // Restore dark/light theme
-					let addedTitle = clone.querySelector('.export-title');
-					if (addedTitle) addedTitle.remove();
-					let addedFooter = clone.querySelector('.export-footer');
-					if (addedFooter) addedFooter.remove();
-					if (buttons) buttons.style.display = ''; // Réaffiche les boutons
-				}
-			};
-		}
+            // Mettre au propre la zone de simulation pour le shortfill
+            let simContainer = clone.querySelector('.sim-container');
+            let cleanSimDiv = null;
+            if (simContainer) {
+                let sel = clone.querySelector('.sim-sel-vol');
+                let preleveVol = sel.value === 'custom' ? (parseFloat(clone.querySelector('.sim-custom-vol').value) || 0) : (parseFloat(sel.value) || 0);
+                let bCount = parseFloat(clone.querySelector('.sim-b-count').value) || 0;
+                let bVol = bCount * 10;
+                let bStr = parseFloat(clone.getAttribute('data-booster-str')) || 20;
+                let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
+                let prepVolAttr = parseFloat(clone.getAttribute('data-prep-vol')) || 0;
+
+                let finalVol = preleveVol + bVol;
+                let finalNic = finalVol > 0 ? (bVol * bStr) / finalVol : 0;
+                let aromaInSample = preleveVol * (totalAroma / prepVolAttr);
+                let finalAromaPerc = finalVol > 0 ? (aromaInSample / finalVol) * 100 : 0;
+
+                cleanSimDiv = document.createElement('div');
+                cleanSimDiv.className = 'mt-4 p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-sm';
+                cleanSimDiv.innerHTML = `
+                    <div class="text-[10px] font-black uppercase tracking-widest text-stone-500 mb-3 border-b border-stone-200 pb-1">Exemple de Boost Personnalisé</div>
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="font-bold">Base prélevée :</span>
+                        <span class="font-black">${round1(preleveVol)} ml</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="font-bold">Boosters ajoutés :</span>
+                        <span class="font-black">${round1(bCount)} <span class="text-xs font-normal">x10ml (${bStr}mg/ml)</span></span>
+                    </div>
+                    <div class="pt-2 border-t border-stone-200 flex justify-between items-center">
+                        <span class="font-bold text-brand-600">Résultat estimé :</span>
+                        <div class="text-right">
+                            <span class="text-base font-black text-brand-600">${round1(finalVol)} ml</span>
+                            <span class="text-xs font-bold text-brand-600 mx-1">à</span>
+                            <span class="text-base font-black text-brand-600">${round1(finalNic)} mg/ml</span>
+                        </div>
+                    </div>
+                    <div class="text-right text-[10px] text-stone-500 font-bold mt-1">Arôme dilué à ${round1(finalAromaPerc)}%</div>
+                `;
+                simContainer.style.display = 'none';
+                simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
+            }
+
+            // Ajouter le footer avec le QR code
+            let footerDiv = document.createElement('div');
+            footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-8 pt-6 border-t-2 border-stone-100';
+            footerDiv.innerHTML = `
+                <img src="jediy.png" alt="QR Code Je-DIY" class="w-32 h-32 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/128x128/e2e8f0/475569?text=Je-DIY'">
+                <div class="text-stone-500 font-bold text-sm text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-lg">Je-DIY</span></div>
+            `;
+            clone.appendChild(footerDiv);
+            
+            // Force light mode on clone and fix colors
+            document.body.classList.add('exporting');
+            document.documentElement.classList.remove('dark');
+            
+            return {
+                card: clone,
+                restore: () => {
+                    document.body.classList.remove('exporting');
+                    applyTheme(); // Restore dark/light theme
+                    let addedTitle = clone.querySelector('.export-title');
+                    if (addedTitle) addedTitle.remove();
+                    let addedFooter = clone.querySelector('.export-footer');
+                    if (addedFooter) addedFooter.remove();
+                    
+                    // On remet la limite de scroll pour la modale après l'export
+                    clone.classList.add('max-h-[90vh]', 'overflow-y-auto', 'hide-scrollbar');
+                    
+                    // Restaure la simulation interactive
+                    if (cleanSimDiv) cleanSimDiv.remove();
+                    if (simContainer) simContainer.style.display = '';
+
+                    if (buttons) buttons.style.display = ''; // Réaffiche les boutons
+                }
+            };
+        }
 
         function exportRecipePDF() {
             let ctx = prepareCardForExport();
