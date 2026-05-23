@@ -818,7 +818,6 @@
         </div>
     </div>
 
-    <!-- Modale Easter Egg -->
     <div id="easter_egg_modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div class="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
         <div class="relative bg-stone-900 p-6 rounded-3xl shadow-2xl w-full max-w-xs border border-stone-700 flex flex-col">
@@ -845,7 +844,6 @@
         </div>
     </div>
 
-    <!-- Modale Identité Pro Mode -->
     <div id="agent_identity_modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm cursor-pointer" onclick="closeIdentityModal()"></div>
         <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
@@ -1065,7 +1063,11 @@
             } else {
                 logoClicks++;
                 if (logoClicks >= 7) {
-                    openEasterEgg();
+                    if (agentIdentity) {
+                        alert("007, vous êtes déjà sur le coup !");
+                    } else {
+                        openEasterEgg();
+                    }
                     logoClicks = 0;
                 }
             }
