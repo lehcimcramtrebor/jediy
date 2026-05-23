@@ -51,6 +51,7 @@
                     animation: {
                         'fade-in': 'fadeIn 0.3s ease-out forwards',
                         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                     },
                     keyframes: {
                         fadeIn: {
@@ -128,7 +129,7 @@
         /* --- STYLES D'EXPORTATION (PDF) --- */
         body.exporting { background-color: #ffffff !important; height: auto !important; overflow: visible !important; }
         body.exporting * { transition: none !important; animation: none !important; }
-        body.exporting #main_app_container, body.exporting #help_modal, body.exporting #calc_modal { display: none !important; }
+        body.exporting #main_app_container, body.exporting #help_modal, body.exporting #calc_modal, body.exporting #easter_egg_modal, body.exporting #agent_identity_modal { display: none !important; }
         body.exporting #recipe_modal {
             position: static !important; display: block !important; padding: 0 !important;
             background-color: #ffffff !important; height: auto !important; overflow: visible !important; z-index: auto !important;
@@ -181,6 +182,9 @@
         </div>
 
         <div class="absolute top-0 right-0 sm:right-2 md:right-4 flex gap-2 z-10">
+            <button onclick="openIdentityModal()" id="btn_pro_mode" class="hidden w-12 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 rounded-full text-white shadow-md border border-red-800 transition-all animate-fade-in" title="Mode Agent 007">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+            </button>
             <button onclick="openCalcModal()" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Calculatrice Rapide">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="16" y1="18" x2="16" y2="18.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line></svg>
             </button>
@@ -190,9 +194,9 @@
             </button>
         </div>
 
-        <header class="mb-6 text-center pt-14 sm:pt-0">
+        <header class="mb-6 text-center pt-14 sm:pt-0 cursor-pointer select-none" onclick="handleLogoClick()">
             <h1 class="text-4xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-2">Je-<span class="text-brand-600 dark:text-brand-500 transition-colors">DIY</span></h1>
-            <p class="text-stone-500 dark:text-stone-400 font-medium text-sm">Calculateur de e-liquide</p>
+            <p class="text-stone-500 dark:text-stone-400 font-medium text-sm pointer-events-none">Calculateur de e-liquide</p>
         </header>
 
         <div class="bg-stone-200/70 dark:bg-stone-800/70 p-1.5 rounded-2xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-1.5 mb-6 shadow-inner transition-colors">
@@ -814,6 +818,51 @@
         </div>
     </div>
 
+    <!-- Modale Easter Egg -->
+    <div id="easter_egg_modal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
+        <div class="relative bg-stone-900 p-6 rounded-3xl shadow-2xl w-full max-w-xs border border-stone-700 flex flex-col">
+            <div id="ee_msg" class="text-sm text-green-500 mb-4 text-center font-mono h-10 flex items-center justify-center">Bienvenue Monsieur Bond, entrez votre code secret !</div>
+            
+            <div class="bg-black h-16 rounded-xl border border-stone-700 mb-6 p-3 flex items-center justify-center shadow-inner overflow-hidden">
+                <div id="ee_display" class="text-3xl font-mono text-red-500 tracking-[0.5em] ml-[0.25em]"></div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="eePress('1')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">1</button>
+                <button onclick="eePress('2')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">2</button>
+                <button onclick="eePress('3')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">3</button>
+                <button onclick="eePress('4')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">4</button>
+                <button onclick="eePress('5')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">5</button>
+                <button onclick="eePress('6')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">6</button>
+                <button onclick="eePress('7')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">7</button>
+                <button onclick="eePress('8')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">8</button>
+                <button onclick="eePress('9')" class="ee-btn p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">9</button>
+                <div class="col-start-2">
+                    <button onclick="eePress('0')" class="ee-btn w-full p-4 rounded-xl bg-stone-800 text-white font-mono text-xl hover:bg-stone-700 transition-colors border border-stone-600">0</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Identité Pro Mode -->
+    <div id="agent_identity_modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+        <div class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm cursor-pointer" onclick="closeIdentityModal()"></div>
+        <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
+            <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+                Mode Agent
+            </h3>
+            <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">Bienvenue Agent 007, entrez votre nouvelle identité.</p>
+            <input type="text" id="agent_identity_input" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-xl p-3 mb-5 text-stone-800 dark:text-stone-100 font-bold focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors" placeholder="Nom de l'agent">
+            
+            <div class="flex justify-end gap-3">
+                <button onclick="closeIdentityModal()" class="px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors">Annuler</button>
+                <button onclick="saveIdentity()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-colors shadow-sm">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
     <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div class="modal-backdrop absolute inset-0 bg-stone-900/80 backdrop-blur-md cursor-pointer" onclick="closeHelpModal()"></div>
         <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-stone-800 rounded-3xl shadow-2xl z-10 p-6 sm:p-10 hide-scrollbar border border-stone-200 dark:border-stone-700">
@@ -993,6 +1042,108 @@
             type: 't1', 
             volMode: 'defined'
         };
+
+        /* ========================================== */
+        /* EASTER EGG / PRO MODE AGENT 007         */
+        /* ========================================== */
+        let agentIdentity = localStorage.getItem('agentIdentity') || "";
+        let logoClicks = 0;
+        let firstClickTime = 0;
+        let eeInput = "";
+        let eeTimer = null;
+
+        // Check if pro mode was already activated
+        if (agentIdentity) {
+            document.getElementById('btn_pro_mode').classList.remove('hidden');
+        }
+
+        function handleLogoClick() {
+            let now = Date.now();
+            if (now - firstClickTime > 2000) {
+                logoClicks = 1;
+                firstClickTime = now;
+            } else {
+                logoClicks++;
+                if (logoClicks >= 7) {
+                    openEasterEgg();
+                    logoClicks = 0;
+                }
+            }
+        }
+
+        function openEasterEgg() {
+            eeInput = "";
+            document.getElementById('ee_display').innerText = "";
+            document.getElementById('ee_msg').innerText = "Bienvenue Monsieur Bond, entrez votre code secret !";
+            document.getElementById('ee_msg').classList.remove('text-red-500', 'animate-pulse-fast');
+            document.getElementById('ee_msg').classList.add('text-green-500');
+            
+            document.querySelectorAll('.ee-btn').forEach(btn => btn.disabled = false);
+            
+            if (eeTimer) clearInterval(eeTimer);
+            document.getElementById('easter_egg_modal').classList.remove('hidden');
+        }
+
+        function eePress(num) {
+            if (eeInput.length >= 3 || eeTimer) return;
+            eeInput += num;
+            document.getElementById('ee_display').innerText = '*'.repeat(eeInput.length);
+            
+            if (eeInput.length === 3) {
+                setTimeout(checkEeCode, 200);
+            }
+        }
+
+        function checkEeCode() {
+            if (eeInput === "007") {
+                document.getElementById('easter_egg_modal').classList.add('hidden');
+                document.getElementById('btn_pro_mode').classList.remove('hidden');
+                openIdentityModal();
+            } else {
+                startSelfDestruct();
+            }
+        }
+
+        function startSelfDestruct() {
+            document.querySelectorAll('.ee-btn').forEach(btn => btn.disabled = true);
+            let msgEl = document.getElementById('ee_msg');
+            msgEl.innerText = "Cet appareil va s' auto détruire dans 10 secondes";
+            msgEl.classList.remove('text-green-500');
+            msgEl.classList.add('text-red-500', 'animate-pulse-fast');
+            
+            let timeLeft = 10;
+            document.getElementById('ee_display').innerText = timeLeft;
+            
+            eeTimer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft >= 0) {
+                    document.getElementById('ee_display').innerText = timeLeft;
+                } else {
+                    clearInterval(eeTimer);
+                    eeTimer = null;
+                    document.getElementById('easter_egg_modal').classList.add('hidden');
+                }
+            }, 1000);
+        }
+
+        function openIdentityModal() {
+            document.getElementById('agent_identity_input').value = agentIdentity;
+            document.getElementById('agent_identity_modal').classList.remove('hidden');
+        }
+
+        function closeIdentityModal() {
+            document.getElementById('agent_identity_modal').classList.add('hidden');
+        }
+
+        function saveIdentity() {
+            agentIdentity = document.getElementById('agent_identity_input').value.trim();
+            if (agentIdentity) {
+                localStorage.setItem('agentIdentity', agentIdentity);
+            } else {
+                localStorage.removeItem('agentIdentity');
+            }
+            closeIdentityModal();
+        }
 
         // Blocage agressif du "pull-to-refresh" sur mobile sauf si on scroll
         let startY = 0;
@@ -2161,6 +2312,12 @@
         // Touche Echap pour fermer les modales
         document.addEventListener('keydown', function(event) {
             if (event.key === "Escape") {
+                let eeModal = document.getElementById('easter_egg_modal');
+                if (!eeModal.classList.contains('hidden')) { return; } // On ne ferme pas la self-destruct au pif
+                
+                let idModal = document.getElementById('agent_identity_modal');
+                if (!idModal.classList.contains('hidden')) { closeIdentityModal(); return; }
+
                 let exportModal = document.getElementById('export_prompt_modal');
                 if (!exportModal.classList.contains('hidden')) { cancelExport(); return; }
                 let recipeModal = document.getElementById('recipe_modal');
@@ -2359,6 +2516,10 @@
                     }
                 }
             }
+
+            if (agentIdentity) {
+                text += `\nCette recette a été partagée par ${agentIdentity}\n`;
+            }
             
             text += `\n-----------------\nL'app Je-DIY :\nhttps://lehcimcramtrebor.github.io/jediy/`;
             return text;
@@ -2529,9 +2690,14 @@ clone.insertBefore(headerDiv, clone.firstChild);
 
             let footerDiv = document.createElement('div');
             footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-6 pt-4 border-t-2 border-stone-100';
+            
+            let footerText = agentIdentity 
+                ? `Cette recette a été partagée par <span class="text-brand-600 font-black text-base">${agentIdentity}</span>`
+                : `Scanne ce code pour réaliser tes propres calculs<br><span class="text-brand-600 font-black text-base">Je-DIY</span>`;
+
             footerDiv.innerHTML = `
                 <img src="jediy.png" alt="QR Code Je-DIY" class="w-20 h-20 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/80x80/e2e8f0/475569?text=Je-DIY'">
-                <div class="text-stone-500 font-bold text-xs text-left leading-tight">Scanne ce code pour réaliser tes propres calculs<br><span class="text-brand-600 font-black text-base">Je-DIY</span></div>
+                <div class="text-stone-500 font-bold text-xs text-left leading-tight">${footerText}</div>
             `;
             clone.appendChild(footerDiv);
             
@@ -2604,10 +2770,15 @@ clone.insertBefore(headerDiv, clone.firstChild);
         function closeShareFlyerModal() { document.getElementById('share_flyer_modal').classList.add('hidden'); }
 
         function executeShare() {
+            let shareText = 'Découvre Je-DIY, le calculateur expert de e-liquide super pratique pour la vape !';
+            if (agentIdentity) {
+                shareText = `Cette application a été partagée par ${agentIdentity}. ` + shareText;
+            }
+
             const shareData = {
                 title: 'Je-DIY - Calculateur Expert',
-                text: 'Découvre Je-DIY, le calculateur expert de e-liquide super pratique pour la vape !',
-                url: window.location.href
+                text: shareText,
+                url: 'https://lehcimcramtrebor.github.io/jediy/'
             };
 
             if (navigator.share) {
