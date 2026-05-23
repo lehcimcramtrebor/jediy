@@ -1056,6 +1056,8 @@
         }
 
         function handleLogoClick() {
+            if (agentIdentity) return; // Si identité enregistrée, ça ne fait plus rien
+
             let now = Date.now();
             if (now - firstClickTime > 2000) {
                 logoClicks = 1;
@@ -1063,11 +1065,7 @@
             } else {
                 logoClicks++;
                 if (logoClicks >= 7) {
-                    if (agentIdentity) {
-                        alert("007, vous êtes déjà sur le coup !");
-                    } else {
-                        openEasterEgg();
-                    }
+                    openEasterEgg();
                     logoClicks = 0;
                 }
             }
