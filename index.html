@@ -135,9 +135,15 @@
         }
         body.exporting #recipe_modal .modal-backdrop, body.exporting #recipe_modal .modal-buttons { display: none !important; }
         body.exporting .export-card {
-            margin: 0 auto !important; max-width: 600px !important; width: 100% !important;
-            box-shadow: none !important; border: none !important; page-break-inside: auto !important; 
-            max-height: none !important; overflow: visible !important;
+			margin: 0 auto !important; 
+			max-width: 600px !important; 
+			width: 100% !important;
+			border: 2px solid #e7e5e4 !important; /* Le contour (couleur gris clair) */
+			border-radius: 1.5rem !important; /* L'arrondi des angles */
+			box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; /* L'ombre */
+			page-break-inside: auto !important; 
+			max-height: none !important; 
+			overflow: visible !important;
         }
         body.exporting .bg-brand-50 { background-color: rgb(var(--brand-50)) !important; }
         body.exporting .bg-brand-100 { background-color: rgb(var(--brand-100)) !important; }
@@ -2452,12 +2458,18 @@
             
             clone.classList.remove('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
             
-            let name = document.getElementById('recipe_name_input').value.trim() || "Recette Je-DIY";
-            let titleDiv = document.createElement('div');
-            titleDiv.className = 'export-title text-xl font-black text-center mb-3 pb-3 border-b-2 border-stone-200 text-stone-800';
-            titleDiv.innerText = name;
-            clone.insertBefore(titleDiv, clone.firstChild);
-            
+let name = document.getElementById('recipe_name_input').value.trim() || "Recette personnalisée";
+
+let headerDiv = document.createElement('div');
+headerDiv.className = 'export-title text-center mb-3 pb-3 border-b-2 border-stone-200';
+
+// Injection du titre du site + nom de la recette
+headerDiv.innerHTML = `
+    <div class="text-3xl font-black text-stone-800 tracking-tight mb-1">Je-<span class="text-brand-600">DIY</span></div>
+    <div class="text-lg font-bold text-stone-500">${name}</div>
+`;
+
+clone.insertBefore(headerDiv, clone.firstChild);            
             let buttons = clone.querySelector('.modal-buttons');
             if (buttons) buttons.style.display = 'none';
 
@@ -2519,7 +2531,7 @@
             footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-6 pt-4 border-t-2 border-stone-100';
             footerDiv.innerHTML = `
                 <img src="jediy.png" alt="QR Code Je-DIY" class="w-20 h-20 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/80x80/e2e8f0/475569?text=Je-DIY'">
-                <div class="text-stone-500 font-bold text-xs text-left leading-tight">Calcul réalisé avec l'application<br><span class="text-brand-600 font-black text-base">Je-DIY</span></div>
+                <div class="text-stone-500 font-bold text-xs text-left leading-tight">Scanne ce code pour réaliser tes propres calculs<br><span class="text-brand-600 font-black text-base">Je-DIY</span></div>
             `;
             clone.appendChild(footerDiv);
             
