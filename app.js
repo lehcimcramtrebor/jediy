@@ -155,7 +155,7 @@ document.addEventListener('touchmove', e => {
 
 // Fonction de démarrage (appelée au chargement)
 function init() {
-    switchTheme('complet'); // Couleur par defaut au chargement
+    switchTheme('assistant'); // Définit le thème assistant par défaut
     generateCheckboxes('t1');
     generateCheckboxes('t2');
     generateCheckboxes('wiz'); 
@@ -284,11 +284,13 @@ function switchTab(tabId) {
     else if (tabId === 'tab_booster') document.documentElement.dataset.theme = 'shortfill';
     else if (tabId === 'tab_manuel') document.documentElement.dataset.theme = 'manuel';
     else if (tabId === 'tab_assistant') {
-        if (wizState.step > 0) {
+        // Applique le thème assistant si on est au début (step 0), 
+        // sinon on garde le thème du mode sélectionné
+        if (wizState.step === 0) {
+            document.documentElement.dataset.theme = 'assistant';
+        } else {
              if (wizState.type === 't1') document.documentElement.dataset.theme = 'complet';
              else if (wizState.type === 't2') document.documentElement.dataset.theme = 'shortfill';
-        } else {
-             document.documentElement.dataset.theme = 'complet';
         }
     }
 
