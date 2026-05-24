@@ -284,7 +284,7 @@
                 <div id="wiz_s3" class="wiz-step hidden animate-slide-up h-full flex flex-col">
                     <h2 class="text-2xl font-black text-stone-800 dark:text-stone-100 mb-2">Parlons quantités !</h2>
                     <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Dis-m'en plus sur ce que tu cherches à faire.</p>
-                    <div class="space-y-6 mt-auto mb-auto">
+                    <div class="space-y-4 mt-auto mb-auto">
                         <div id="wiz_vol_defined_block">
                             <label class="block text-sm font-bold text-stone-700 dark:text-stone-300 mb-2">Volume final souhaité <span id="wiz_vol_help" class="text-xs font-normal text-stone-400"></span></label>
                             <div class="flex items-center gap-3">
@@ -312,6 +312,24 @@
                             </div>
                             <input type="range" id="wiz_aroma_perc" min="1" max="30" step="0.5" value="15" oninput="document.getElementById('wiz_aroma_perc_disp').innerText = this.value + '%'">
                             <p id="wiz_aroma_perc_help" class="text-[10px] text-brand-600/80 dark:text-brand-400/80 mt-3 leading-tight hidden">Le pourcentage idéal que tu vises (une fois que les boosters seront ajoutés).</p>
+                        </div>
+
+                        <div class="bg-stone-50 dark:bg-stone-900/50 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
+                            <div class="flex justify-between items-center">
+                                <label class="text-sm font-bold text-stone-800 dark:text-stone-200">Ratio de l'arôme</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="checkbox" id="wiz_adv_aroma" class="rounded text-brand-600 focus:ring-brand-500 dark:bg-stone-800 dark:border-stone-600" onchange="document.getElementById('wiz_aroma_pg_panel').classList.toggle('hidden', !this.checked); if(!this.checked){document.getElementById('wiz_aroma_pg').value=0; document.getElementById('wiz_aroma_pg_val').innerText='100% PG';}">
+                                    <label for="wiz_adv_aroma" class="text-xs text-stone-500 dark:text-stone-400 cursor-pointer">Pas 100% PG ?</label>
+                                </div>
+                            </div>
+                            <div id="wiz_aroma_pg_panel" class="hidden mt-4 pt-4 border-t border-stone-200 dark:border-stone-700 animate-fade-in">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio :</span>
+                                    <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="wiz_aroma_pg_val">100% PG</span>
+                                </div>
+                                <input type="range" id="wiz_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('wiz_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false)">
+                                <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -450,16 +468,20 @@
                         </label>
                         <div id="tab_boost_ratio_panel" class="hidden mt-4 space-y-4 animate-fade-in border-t border-stone-200 dark:border-stone-700 pt-4">
                             <div>
-                                <div class="flex justify-between text-xs font-bold text-stone-500 mb-1">
-                                    <span>Ratio du jus de base :</span><span id="tab_boost_pg_val" class="text-brand-600 dark:text-brand-400">50/50</span>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio du jus de base :</span>
+                                    <span id="tab_boost_pg_val" class="text-xs font-bold text-brand-600 dark:text-brand-400">50/50</span>
                                 </div>
-                                <input type="range" id="tab_boost_pg" min="0" max="100" step="5" value="50" oninput="document.getElementById('tab_boost_pg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                                <input type="range" id="tab_boost_pg" min="0" max="100" step="5" value="50" class="w-full" oninput="document.getElementById('tab_boost_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                                <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                             </div>
                             <div>
-                                <div class="flex justify-between text-xs font-bold text-stone-500 mb-1">
-                                    <span>Ratio des boosters :</span><span id="tab_boost_bpg_val" class="text-brand-600 dark:text-brand-400">50/50</span>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio des boosters :</span>
+                                    <span id="tab_boost_bpg_val" class="text-xs font-bold text-brand-600 dark:text-brand-400">50/50</span>
                                 </div>
-                                <input type="range" id="tab_boost_bpg" min="0" max="100" step="5" value="50" oninput="document.getElementById('tab_boost_bpg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                                <input type="range" id="tab_boost_bpg" min="0" max="100" step="5" value="50" class="w-full" oninput="document.getElementById('tab_boost_bpg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                                <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                             </div>
                         </div>
                     </div>
@@ -511,9 +533,12 @@
                         </div>
                         
                         <div id="t1_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 transition-colors animate-fade-in">
-                            <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">Ratio PG de l'arôme (%)</label>
-                            <input type="range" id="t1_aroma_pg" min="0" max="100" step="10" value="100" oninput="document.getElementById('t1_aroma_pg_val').innerText = this.value + '%'; triggerCalc()">
-                            <div class="text-right text-sm font-bold text-brand-600 dark:text-brand-400 mt-1" id="t1_aroma_pg_val">100%</div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG de l'arôme :</span>
+                                <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t1_aroma_pg_val">100% PG</span>
+                            </div>
+                            <input type="range" id="t1_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t1_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                            <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                         </div>
 
                         <div id="t1_aroma_perc_panel" class="animate-fade-in">
@@ -540,10 +565,10 @@
 
                     <div class="mb-8">
                         <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG cible</label>
+                            <span class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG cible :</span>
                             <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="t1_ratio_disp">50/50</span>
                         </div>
-                        <input type="range" id="t1_ratio_pg" min="0" max="100" step="5" value="50" oninput="updateRatioDisp('t1'); triggerCalc()">
+                        <input type="range" id="t1_ratio_pg" min="0" max="100" step="5" value="50" class="w-full" oninput="updateRatioDisp('t1'); triggerCalc()">
                         <div class="flex justify-between text-xs text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                     </div>
 
@@ -634,6 +659,25 @@
                         </div>
                     </div>
 
+                    <div class="bg-stone-50 dark:bg-stone-900/50 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 mb-8 transition-colors">
+                        <div class="flex justify-between items-center mb-4">
+                            <label class="text-sm font-bold text-stone-800 dark:text-stone-200">Concentration de l'arôme</label>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="t2_adv_aroma" class="rounded text-brand-600 focus:ring-brand-500 dark:bg-stone-800 dark:border-stone-600" onchange="toggleAdvAroma('t2'); triggerCalc()">
+                                <label for="t2_adv_aroma" class="text-xs text-stone-500 dark:text-stone-400 cursor-pointer">Arôme non full PG</label>
+                            </div>
+                        </div>
+                        
+                        <div id="t2_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 transition-colors animate-fade-in">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG de l'arôme :</span>
+                                <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t2_aroma_pg_val">100% PG</span>
+                            </div>
+                            <input type="range" id="t2_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t2_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                            <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="bg-stone-50 dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
                             <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">Taux Nicotine Max visé</label>
@@ -676,10 +720,10 @@
 
                     <div class="mb-4">
                         <div class="flex justify-between items-center mb-2">
-                            <label class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG du Shortfill (avant boost)</label>
+                            <span class="text-sm font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG du Shortfill (avant boost) :</span>
                             <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="t2_ratio_disp">50/50</span>
                         </div>
-                        <input type="range" id="t2_ratio_pg" min="0" max="100" step="5" value="50" oninput="updateRatioDisp('t2'); triggerCalc()">
+                        <input type="range" id="t2_ratio_pg" min="0" max="100" step="5" value="50" class="w-full" oninput="updateRatioDisp('t2'); triggerCalc()">
                         <div class="flex justify-between text-xs text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                     </div>
                 </div>
@@ -722,7 +766,8 @@
                                 <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
                                 <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t3_aroma_pg_val">100% PG</span>
                             </div>
-                            <input type="range" id="t3_aroma_pg" min="0" max="100" step="5" value="100" class="w-full" oninput="document.getElementById('t3_aroma_pg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                            <input type="range" id="t3_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t3_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                            <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                         </div>
                     </div>
 
@@ -741,7 +786,8 @@
                                 <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
                                 <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t3_base_pg_val">50/50</span>
                             </div>
-                            <input type="range" id="t3_base_pg" min="0" max="100" step="5" value="50" class="w-full" oninput="document.getElementById('t3_base_pg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                            <input type="range" id="t3_base_pg" min="0" max="100" step="5" value="50" class="w-full" oninput="document.getElementById('t3_base_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                            <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                         </div>
                     </div>
 
@@ -760,7 +806,8 @@
                                 <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
                                 <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t3_boost_pg_val">50/50</span>
                             </div>
-                            <input type="range" id="t3_boost_pg" min="0" max="100" step="5" value="50" class="w-full" oninput="document.getElementById('t3_boost_pg_val').innerText = formatRatioStr(this.value, false); triggerCalc()">
+                            <input type="range" id="t3_boost_pg" min="0" max="100" step="5" value="50" class="w-full" oninput="document.getElementById('t3_boost_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                            <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
                         </div>
                     </div>
                     
@@ -1379,7 +1426,7 @@
             let chk = document.getElementById(`${prefix}_adv_aroma`).checked;
             let panel = document.getElementById(`${prefix}_aroma_pg_panel`);
             if(chk) panel.classList.remove('hidden');
-            else { panel.classList.add('hidden'); document.getElementById(`${prefix}_aroma_pg`).value = 100; document.getElementById(`${prefix}_aroma_pg_val`).innerText = '100%'; }
+            else { panel.classList.add('hidden'); document.getElementById(`${prefix}_aroma_pg`).value = 0; document.getElementById(`${prefix}_aroma_pg_val`).innerText = '100% PG'; }
         }
 
         // Mise à jour visuelle des taux en direct
@@ -1595,6 +1642,23 @@
             }
             document.getElementById(prefix + '_aroma_perc').value = document.getElementById('wiz_aroma_perc').value;
 
+            // --- Transfert du ratio d'arôme ---
+            let isAdvAroma = document.getElementById('wiz_adv_aroma').checked;
+            let aromaPgVal = document.getElementById('wiz_aroma_pg').value;
+
+            let tabAdvChk = document.getElementById(prefix + '_adv_aroma');
+            if (tabAdvChk) {
+                tabAdvChk.checked = isAdvAroma;
+                toggleAdvAroma(prefix); // Gère l'affichage du panel dans l'onglet
+                if (isAdvAroma) {
+                    document.getElementById(prefix + '_aroma_pg').value = aromaPgVal;
+                    document.getElementById(prefix + '_aroma_pg_val').innerText = formatRatioStr(100 - aromaPgVal, false);
+                } else {
+                    document.getElementById(prefix + '_aroma_pg').value = 0;
+                    document.getElementById(prefix + '_aroma_pg_val').innerText = '100% PG';
+                }
+            }
+
             document.getElementById(prefix + '_ratio_pg').value = document.getElementById('wiz_ratio_pg').value;
             updateRatioDisp(prefix);
 
@@ -1660,10 +1724,10 @@
         // Essaye de trouver un mix entre 2 bases pour arriver au ratio exact
         function findBaseMixes(targetVol, targetPgMl, basesObj) {
             let results = [];
-            let targetRatio = (targetPgMl / targetVol) * 100;
+            let targetRatio = targetVol > 0 ? (targetPgMl / targetVol) * 100 : 0;
 
             for(let basePg of basesObj) {
-                if(Math.abs(basePg - targetRatio) < 0.5) {
+                if(Math.abs(basePg - targetRatio) < 0.1) {
                     results.push([{ pgRatio: basePg, vol: targetVol }]);
                 }
             }
@@ -1677,7 +1741,11 @@
                     let v1 = (targetPgMl - targetVol * (pg2/100)) / ((pg1/100) - (pg2/100));
                     let v2 = targetVol - v1;
                     
-                    if(v1 >= 0.1 && v2 >= 0.1) {
+                    // Nettoyage de la virgule flottante
+                    if(Math.abs(v1) < 1e-5) v1 = 0;
+                    if(Math.abs(v2) < 1e-5) v2 = 0;
+                    
+                    if(v1 >= 0 && v2 >= 0) {
                         results.push([
                             { pgRatio: pg1, vol: v1 },
                             { pgRatio: pg2, vol: v2 }
@@ -1697,14 +1765,14 @@
             let ratioKnown = document.getElementById(prefix + '_ratio_known').checked;
             
             let pgVal = parseFloat(document.getElementById(prefix + '_pg').value);
-            let pg = isNaN(pgVal) ? 50 : pgVal;
+            let pg = isNaN(pgVal) ? 50 : (100 - pgVal);
             
             let strEl = document.getElementById(prefix + '_str');
             let strVal = strEl ? parseFloat(strEl.value) : 20;
             let bStr = isNaN(strVal) ? 20 : strVal;
             
             let bPgVal = parseFloat(document.getElementById(prefix + '_bpg').value);
-            let bPg = isNaN(bPgVal) ? 50 : bPgVal;
+            let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
 
             let bVol = bCount * 10;
             let finalVol = vol + bVol;
@@ -1768,7 +1836,7 @@
         function calcTab1() {
             let finalVol, aromaVol;
             let aromaPgVal = parseInt(document.getElementById('t1_aroma_pg').value);
-            let aromaPg = isNaN(aromaPgVal) ? 100 : aromaPgVal;
+            let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal); // VG mapping
 
             if(state.t1.vol_mode === 'defined') {
                 finalVol = parseFloat(document.getElementById('t1_vol').value) || 0;
@@ -1798,10 +1866,10 @@
             }
 
             let baseVol = finalVol - aromaVol - nicVol;
-            if(baseVol < -0.1) {
+            if (Math.abs(baseVol) < 1e-6) baseVol = 0; // Fix flottant
+            if(baseVol < 0) {
                 renderRecipes('t1', [], [{err: "Pas de place pour la base ! Réduisez l'arôme ou la nicotine."}]); return;
             }
-            baseVol = Math.max(0, baseVol);
 
             let basesAvail = getChecked('t1_base_chk');
             let boostsAvail = getChecked('t1_boost_chk');
@@ -1880,8 +1948,11 @@
             }
 
             let baseVol = prepVol - aromaVol;
+            if (Math.abs(baseVol) < 1e-6) baseVol = 0; // Fix flottant
             let shortfillTargetPgRatio = 100 - parseInt(document.getElementById('t2_ratio_pg').value);
-            let aromaPg = 100; 
+            
+            let aromaPgVal = parseInt(document.getElementById('t2_aroma_pg').value);
+            let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
 
             let shortfillTargetPgMl = prepVol * (shortfillTargetPgRatio / 100);
             let aromaPgMl = aromaVol * (aromaPg / 100);
@@ -1899,7 +1970,7 @@
             if(mixes) {
                 for(let mix of mixes) {
                     exactRecipes.push({
-                        aroma: aromaVol, aromaPg: 100, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost,
+                        aroma: aromaVol, aromaPg: aromaPg, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost,
                         realPgRatio: shortfillTargetPgRatio, nicMax: maxNic
                     });
                 }
@@ -1913,7 +1984,7 @@
                 }
                 let realPg = ((aromaPgMl + (baseVol * (bestBase/100))) / prepVol) * 100;
                 altRecipes.push({
-                    aroma: aromaVol, aromaPg: 100, bases: [{pgRatio: bestBase, vol: baseVol}],
+                    aroma: aromaVol, aromaPg: aromaPg, bases: [{pgRatio: bestBase, vol: baseVol}],
                     prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic
                 });
             }
@@ -1929,15 +2000,15 @@
 		 function calcTab3() {
 			let aVol = parseFloat(document.getElementById('t3_aroma_vol').value)||0;
 			let aPgVal = parseFloat(document.getElementById('t3_aroma_pg').value);
-			let aPg = isNaN(aPgVal) ? 100 : aPgVal;
+			let aPg = isNaN(aPgVal) ? 100 : (100 - aPgVal);
 			
 			let bVol = parseFloat(document.getElementById('t3_base_vol').value)||0;
 			let bPgVal = parseFloat(document.getElementById('t3_base_pg').value);
-			let bPg = isNaN(bPgVal) ? 50 : bPgVal;
+			let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
 			
 			let nVol = parseFloat(document.getElementById('t3_boost_vol').value)||0;
 			let nPgVal = parseFloat(document.getElementById('t3_boost_pg').value);
-			let nPg = isNaN(nPgVal) ? 50 : nPgVal;
+			let nPg = isNaN(nPgVal) ? 50 : (100 - nPgVal);
 			
 			let strVal = parseFloat(document.getElementById('t3_boost_str').value);
 			let str = isNaN(strVal) ? 20 : strVal;
@@ -1960,7 +2031,6 @@
 			let aRatio = (aVol / tVol) * 100;
 			let finalNic = (nVol * str) / tVol;
 
-			// Structure de la carte cachée (data-type="t1" pour que l'export fonctionne direct)
 			let hiddenCardHtml = `
 			<div id="t3_hidden_card" class="hidden">
 				<div data-type="t1" data-ratio="${formatRatioStr(pgRatio, true)}" data-aroma-perc="${round1(aRatio)}" data-nic-mg="${round1(finalNic)}" class="recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20 rounded-3xl flex flex-col transition-all w-full">
@@ -1974,7 +2044,7 @@
 						<div class="space-y-2 mb-4">
 							${aVol > 0 ? `
 							<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-								<span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme Concentré</span>
+								<span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(aPg, false)}</span></span>
 								<div class="text-right leading-tight">
 									<span class="font-black text-stone-800 dark:text-stone-200">${round1(aVol)} ml</span>
 									<span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(aWeight)} g</span>
@@ -1982,7 +2052,7 @@
 							</div>` : ''}
 							${bVol > 0 ? `
 							<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-								<span class="text-sm font-bold text-stone-600 dark:text-stone-400">Base Neutre</span>
+								<span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(bPg, false)}</span></span>
 								<div class="text-right leading-tight">
 									<span class="font-black text-stone-800 dark:text-stone-200">${round1(bVol)} ml</span>
 									<span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(bWeight)} g</span>
@@ -1990,7 +2060,7 @@
 							</div>` : ''}
 							${nVol > 0 ? `
 							<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-								<span class="text-sm font-bold text-brand-600 dark:text-brand-500">Boosters</span>
+								<span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(nPg, false)}</span></span>
 								<div class="text-right leading-tight">
 									<span class="font-black text-stone-800 dark:text-stone-200">${round1(nVol)} ml</span>
 									<span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(nWeight)} g</span>
@@ -2125,7 +2195,9 @@
             let bColor = isAlt ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20' : 'border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20';
             let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-brand-700 dark:text-brand-400';
 
-            let aromaWeight = getWeight(r.aroma, r.aromaPg || 100);
+            // FIX: Prendre correctement le VG à 100% (aromaPg = 0)
+            let actualAromaPg = (r.aromaPg !== undefined && r.aromaPg !== null && !isNaN(r.aromaPg)) ? r.aromaPg : 100;
+            let aromaWeight = getWeight(r.aroma, actualAromaPg);
             let totalWeight = aromaWeight;
 
             // On stocke les métadonnées dans des attributs HTML pour l'export plus tard
@@ -2157,7 +2229,7 @@
             html += `<div class="space-y-2 mb-4">`;
             html += `
                 <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme Concentré</span>
+                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme Concentré <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(actualAromaPg, false)}</span></span>
                     <div class="text-right leading-tight">
                         <span class="font-black text-stone-800 dark:text-stone-200">${round1(r.aroma)} ml</span>
                         <span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(aromaWeight)} g</span>
@@ -2170,7 +2242,7 @@
                     totalWeight += baseWeight;
                     html += `
                         <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-                            <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(b.pgRatio)}</span></span>
+                            <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(b.pgRatio, false)}</span></span>
                             <div class="text-right leading-tight">
                                 <span class="font-black text-stone-800 dark:text-stone-200">${round1(b.vol)} ml</span>
                                 <span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(baseWeight)} g</span>
@@ -2184,7 +2256,7 @@
                 totalWeight += nicWeight;
                 html += `
                     <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
-                        <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(r.nicRatio)}</span></span>
+                        <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(r.nicRatio, false)}</span></span>
                         <div class="text-right leading-tight">
                             <span class="font-black text-stone-800 dark:text-stone-200">${round1(r.nic)} ml</span>
                             <span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(nicWeight)} g</span>
