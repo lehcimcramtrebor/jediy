@@ -135,36 +135,22 @@
             background-color: #ffffff !important; height: auto !important; overflow: visible !important; z-index: auto !important;
         }
         body.exporting #recipe_modal .modal-backdrop, body.exporting #recipe_modal .modal-buttons { display: none !important; }
-        body.exporting .export-card {
-			margin: 0 auto !important; 
-			max-width: 600px !important; 
-			width: 100% !important;
-			border: 2px solid #e7e5e4 !important; /* Le contour (couleur gris clair) */
-			border-radius: 1.5rem !important; /* L'arrondi des angles */
-			box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1) !important; /* L'ombre */
-			page-break-inside: auto !important; 
-			max-height: none !important; 
-			overflow: visible !important;
-        }
-        body.exporting .bg-brand-50 { background-color: rgb(var(--brand-50)) !important; }
-        body.exporting .bg-brand-100 { background-color: rgb(var(--brand-100)) !important; }
-        body.exporting .border-brand-200 { border-color: rgb(var(--brand-200)) !important; }
-        body.exporting .text-brand-600 { color: rgb(var(--brand-600)) !important; }
-        body.exporting .text-brand-700 { color: rgb(var(--brand-700)) !important; }
-        body.exporting .bg-amber-50 { background-color: #fffbeb !important; }
-        body.exporting .border-amber-200 { border-color: #fde68a !important; }
-        body.exporting .text-amber-500 { color: #f59e0b !important; }
-        body.exporting .text-amber-700 { color: #b45309 !important; }
-        body.exporting .bg-stone-50 { background-color: #fafaf9 !important; }
-        body.exporting .bg-stone-100 { background-color: #f5f5f4 !important; }
         
-        @media print {
-            @page { margin: 10mm; size: A4 portrait; }
-            body, html { background-color: #ffffff !important; background: none !important; height: auto !important; }
-            body:not(.exporting) #main_app_container { display: none !important; }
+        body.exporting .export-card {
+            margin: 0 auto !important; width: 100% !important;
+            font-size: 11px !important; /* Compactage police */
+            padding: 8px !important;
+        }
+        
+        /* Rendu PDF compact */
+        body.exporting .p-5 { padding: 8px !important; }
+        body.exporting .p-3 { padding: 4px !important; }
+        body.exporting .space-y-2 { gap: 4px !important; }
+        body.exporting .pdf-guides { gap: 2px !important; }
+
+        @media print, .exporting {
             .print\:hidden { display: none !important; }
-            #recipe_modal, #recipe_modal_content { background-color: #ffffff !important; background: #ffffff !important; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
     </style>
 </head>
@@ -2190,7 +2176,7 @@
             container.querySelectorAll('select').forEach(s => updateSim(s));
         }
 
-        // Crée le composant HTML d'une carte de recette complète (avec données cachées pour l'export)
+// Crée le composant HTML d'une carte de recette complète (avec données cachées pour l'export)
         function buildCard(r, prefix, isAlt) {
             let bColor = isAlt ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20' : 'border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20';
             let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-brand-700 dark:text-brand-400';
@@ -2201,7 +2187,7 @@
             let totalWeight = aromaWeight;
 
             // On stocke les métadonnées dans des attributs HTML pour l'export plus tard
-            let dataAttrs = `data-type="${prefix}" data-ratio="${formatRatioStr(r.realPgRatio, true)}" `;
+            let dataAttrs = `data-type="${prefix}" data-ratio="${formatRatioStr(r.realPgRatio, true)}" data-base-pg="${r.realPgRatio}" `;
             if (prefix === 't1') {
                 let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
                 let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
@@ -2313,6 +2299,22 @@
                     </div>
 
                     <div class="flex flex-col items-center mb-3 bg-stone-50 dark:bg-black/20 p-2 rounded-lg border border-stone-200 dark:border-stone-700/50 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
+                        <div class="w-full flex justify-between items-center mb-2 px-1">
+                            <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400">Ratio des boosters:</span>
+                            <select class="sim-b-ratio bg-white dark:bg-stone-800 text-stone-800 dark:text-white rounded px-1 py-0.5 text-[10px] font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors" onchange="updateSim(this)">
+                                <option value="100">100% PG</option>
+                                <option value="90">90/10</option>
+                                <option value="80">80/20</option>
+                                <option value="70">70/30</option>
+                                <option value="60">60/40</option>
+                                <option value="50" selected>50/50</option>
+                                <option value="40">40/60</option>
+                                <option value="30">30/70</option>
+                                <option value="20">20/80</option>
+                                <option value="10">10/90</option>
+                                <option value="0">100% VG</option>
+                            </select>
+                        </div>
                         <span class="text-[10px] font-bold text-stone-500 dark:text-stone-400 mb-1">J'ajoute</span>
                         
                         <div class="flex items-center bg-white dark:bg-stone-800 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
@@ -2404,6 +2406,7 @@
             let customInp = container.querySelector('.sim-custom-vol');
             let bCountInp = container.querySelector('.sim-b-count');
             let resEl = container.querySelector('.sim-result');
+            let bRatioSel = container.querySelector('.sim-b-ratio');
             
             if(!sel || !bCountInp || !resEl) return;
 
@@ -2414,6 +2417,8 @@
             let maxNic = parseFloat(container.getAttribute('data-nic-max')) || 0;
             let totalAroma = parseFloat(container.getAttribute('data-aroma-vol')) || 0;
             let prepVolAttr = parseFloat(container.getAttribute('data-prep-vol')) || 0;
+            let basePg = parseFloat(container.getAttribute('data-base-pg')) || 50;
+            let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
             
             let bVol = bCount * 10;
             let finalVol = preleveVol + bVol;
@@ -2422,7 +2427,9 @@
             if (finalVol > 0) {
                 let finalNic = (bVol * bStr) / finalVol;
                 let finalAromaPerc = (aromaInSample / finalVol) * 100;
-                let aromaHtml = `<br><span class="text-[10px] text-stone-500 dark:text-stone-400 font-bold mt-1 inline-block">Arôme dilué à ${round1(finalAromaPerc)}%</span>`;
+                let finalPgRatio = ((preleveVol * (basePg / 100)) + (bVol * (bPg / 100))) / finalVol * 100;
+                
+                let aromaHtml = `<br><span class="text-[10px] text-stone-500 dark:text-stone-400 font-bold mt-1 inline-block">Arôme dilué à ${round1(finalAromaPerc)}% | Ratio final: ${formatRatioStr(finalPgRatio)}</span>`;
 
                 if (finalNic > maxNic) {
                     resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>${aromaHtml}<br><span class="text-[10px] text-red-500 dark:text-red-400 font-bold block mt-1 leading-tight">⚠️ Taux max (${maxNic} mg) dépassé,<br>arôme trop dilué !</span>`;
@@ -2524,6 +2531,9 @@
                     clone.querySelector('.sim-custom-vol').value = card.querySelector('.sim-custom-vol').value;
                 }
             }
+            let sourceBRatio = card.querySelector('.sim-b-ratio');
+            if(sourceBRatio) clone.querySelector('.sim-b-ratio').value = sourceBRatio.value;
+            
             let sourceBCount = card.querySelector('.sim-b-count');
             let sourceMlCount = card.querySelector('.sim-ml-count');
             if(sourceBCount) clone.querySelector('.sim-b-count').value = sourceBCount.value;
@@ -2582,6 +2592,7 @@
             let type = clone.getAttribute('data-type');
             let ratio = clone.getAttribute('data-ratio');
             let aromaPerc = clone.getAttribute('data-aroma-perc');
+            let basePg = parseFloat(clone.getAttribute('data-base-pg')) || 50;
             
             let titleEl = clone.querySelector('.font-extrabold.text-lg');
             if(titleEl) text += `${titleEl.innerText.replace(/\n/g, ' ')}\n`;
@@ -2610,11 +2621,14 @@
                 let bStr = parseFloat(clone.getAttribute('data-booster-str'));
                 let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
                 
+                let bRatioSel = clone.querySelector('.sim-b-ratio');
+                let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
+                
                 text += `- Nic. max : ${nicMax} mg/ml\n`;
                 
                 function getGuideForVol(baseVol, title) {
                     let aromaVolInSample = baseVol * (totalAroma / prepVol);
-                    let out = `\n💡 GUIDE DE BOOST\n(${title}) :\n`;
+                    let out = `\n💡 GUIDE DE BOOST AVEC RATIO ${formatRatioStr(bPg)}\n(${title}) :\n`;
                     let targets = [3, 6, 9, 12];
                     let sims = new Map();
                     
@@ -2626,13 +2640,14 @@
                                 let actualVol = bCount * 10;
                                 let actualNic = (actualVol * bStr) / (baseVol + actualVol);
                                 let finalAromaPerc = (aromaVolInSample / (baseVol + actualVol)) * 100;
-                                sims.set(bCount, {nic: actualNic, aroma: finalAromaPerc});
+                                let finalPg = ((baseVol * (basePg/100)) + (actualVol * (bPg/100))) / (baseVol + actualVol) * 100;
+                                sims.set(bCount, {nic: actualNic, aroma: finalAromaPerc, pg: finalPg});
                             }
                         }
                     });
                     
                     sims.forEach((data, bCount) => {
-                        out += `+ ${bCount} boost. (${round1(bCount*10)}ml)\n  > Nic: ~${round1(data.nic)} mg\n  > Arôme: ~${round1(data.aroma)} %\n`;
+                        out += `+ ${bCount} boost. (${round1(bCount*10)}ml)\n  > Nic: ~${round1(data.nic)} mg\n  > Arôme: ~${round1(data.aroma)} %\n  > Ratio final: ~${formatRatioStr(data.pg)}\n`;
                     });
                     
                     let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
@@ -2643,11 +2658,13 @@
                     if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
                         let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
                         let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
-                        out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(finalAromaPercFloor)} %\n`;
+                        let finalPgFloor = ((baseVol * (basePg/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100;
+                        out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(finalAromaPercFloor)} %\n  > Ratio final: ~${formatRatioStr(finalPgFloor)}\n`;
                     }
                     
                     let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
-                    out += `+ MAX ${roundedMax} boost. (${round1(roundedMax*10)}ml)\n  > Nic: ${nicMax} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n`;
+                    let maxFinalPg = ((baseVol * (basePg/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100;
+                    out += `+ MAX ${roundedMax} boost. (${round1(roundedMax*10)}ml)\n  > Nic: ${nicMax} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
                     return out;
                 }
 
@@ -2662,10 +2679,12 @@
                     let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10);
                     let aromaVolInSample = customPreleveVol * (totalAroma / prepVol);
                     let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100;
-                    let customLine = `+ ${customBCount} boost. (${round1(customBCount*10)}ml)\n  > Nic: ~${round1(actualNic)} mg\n  > Arôme: ~${round1(finalAromaPerc)} %\n`;
+                    let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
+                    
+                    let customLine = `+ ${customBCount} boost. (${round1(customBCount*10)}ml)\n  > Nic: ~${round1(actualNic)} mg\n  > Arôme: ~${round1(finalAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(customFinalPg)}\n`;
                     
                     if (!text.includes(customLine)) {
-                        text += `\n💡 GUIDE PERSONNALISÉ\n(pour ${round1(customPreleveVol)} ml) :\n${customLine}`;
+                        text += `\n💡 GUIDE PERSONNALISÉ RATIO ${formatRatioStr(bPg)}\n(pour ${round1(customPreleveVol)} ml) :\n${customLine}`;
                         if (actualNic > nicMax) text += `⚠️ ATTENTION : Taux max dépassé !\n`;
                     }
                 }
@@ -2700,7 +2719,7 @@
 
         let generatedSignatures = new Set(); // Pour le système shortfill PDF
 
-        function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr) {
+        function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, bPg) {
             let aromaVolInSample = baseVol * (totalAroma / prepVol);
             let targets = [3, 6, 9, 12];
             let sims = new Map();
@@ -2713,7 +2732,8 @@
                         let actualVol = bCount * 10;
                         let actualNic = (actualVol * bStr) / (baseVol + actualVol);
                         let finalAromaPerc = (aromaVolInSample / (baseVol + actualVol)) * 100;
-                        sims.set(bCount, { nic: actualNic, aroma: finalAromaPerc });
+                        let finalPg = ((baseVol * (basePg/100)) + (actualVol * (bPg/100))) / (baseVol + actualVol) * 100;
+                        sims.set(bCount, { nic: actualNic, aroma: finalAromaPerc, pg: finalPg });
                     }
                 }
             });
@@ -2726,19 +2746,21 @@
             if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
                 let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
                 let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
-                sims.set(floorMax, { nic: actualNicFloor, aroma: finalAromaPercFloor, isFloorMax: true });
+                let finalPgFloor = ((baseVol * (basePg/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100;
+                sims.set(floorMax, { nic: actualNicFloor, aroma: finalAromaPercFloor, pg: finalPgFloor, isFloorMax: true });
             }
             
             let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
-            sims.set(roundedMax, { nic: nicMax, aroma: maxAromaPerc, isMax: true });
+            let maxFinalPg = ((baseVol * (basePg/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100;
+            sims.set(roundedMax, { nic: nicMax, aroma: maxAromaPerc, pg: maxFinalPg, isMax: true });
             
             let results = Array.from(sims, ([bCount, data]) => ({ bCount, ...data }));
             results.sort((a, b) => a.bCount - b.bCount);
             return results;
         }
 
-        function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax) {
-            let data = computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr);
+        function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, basePg, bPg) {
+            let data = computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, bPg);
             let html = `
                 <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
                     <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center gap-2">
@@ -2758,7 +2780,12 @@
                     <tr class="${trClass} border-b border-stone-100/50 last:border-0">
                         <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${row.bCount} boost. <span class="text-[8px] opacity-70">(${mlText}ml)</span></td>
                         <td class="py-1 align-middle whitespace-nowrap pr-2">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</td>
-                        <td class="py-1 align-middle text-right">Arôme: ${isMax ? '' : '~'}${round1(row.aroma)}% ${warning}</td>
+                        <td class="py-1 align-middle text-right">
+                            Arôme: ${isMax ? '' : '~'}${round1(row.aroma)}%<br>
+                            <span class="text-[8px] text-stone-400 font-bold">Boosters: ${formatRatioStr(bPg)}</span><br>
+                            <span class="text-[8px] text-stone-400 font-bold">Ratio final: ~${formatRatioStr(row.pg)}</span> 
+                            ${warning}
+                        </td>
                     </tr>
                 `;
             });
@@ -2773,18 +2800,19 @@
             
             clone.classList.remove('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
             
-let name = document.getElementById('recipe_name_input').value.trim() || "Recette personnalisée";
+            let name = document.getElementById('recipe_name_input').value.trim() || "Recette personnalisée";
 
-let headerDiv = document.createElement('div');
-headerDiv.className = 'export-title text-center mb-3 pb-3 border-b-2 border-stone-200';
+            let headerDiv = document.createElement('div');
+            headerDiv.className = 'export-title text-center mb-3 pb-3 border-b-2 border-stone-200';
 
-// Injection du titre du site + nom de la recette
-headerDiv.innerHTML = `
-    <div class="text-3xl font-black text-stone-800 tracking-tight mb-1">Je-<span class="text-brand-600">DIY</span></div>
-    <div class="text-lg font-bold text-stone-500">${name}</div>
-`;
+            // Injection du titre du site + nom de la recette
+            headerDiv.innerHTML = `
+                <div class="text-3xl font-black text-stone-800 tracking-tight mb-1">Je-<span class="text-brand-600">DIY</span></div>
+                <div class="text-lg font-bold text-stone-500">${name}</div>
+            `;
 
-clone.insertBefore(headerDiv, clone.firstChild);            
+            clone.insertBefore(headerDiv, clone.firstChild);            
+            
             let buttons = clone.querySelector('.modal-buttons');
             if (buttons) buttons.style.display = 'none';
 
@@ -2797,14 +2825,18 @@ clone.insertBefore(headerDiv, clone.firstChild);
                     let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
                     let prepVolAttr = parseFloat(clone.getAttribute('data-prep-vol')) || 0;
                     let maxNic = parseFloat(clone.getAttribute('data-nic-max')) || 0;
+                    let basePg = parseFloat(clone.getAttribute('data-base-pg')) || 50;
+                    
+                    let bRatioSel = clone.querySelector('.sim-b-ratio');
+                    let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
 
                     generatedSignatures.clear(); 
 
                     cleanSimDiv = document.createElement('div');
                     cleanSimDiv.className = 'mt-3 flex flex-col gap-2 w-full pdf-guides';
                     
-                    let guidesHtml = getGuideHtmlForVol(prepVolAttr, "Bidon Complet", totalAroma, prepVolAttr, bStr, maxNic);
-                    if (prepVolAttr > 50) guidesHtml += getGuideHtmlForVol(50, "Prélèvement", totalAroma, prepVolAttr, bStr, maxNic);
+                    let guidesHtml = getGuideHtmlForVol(prepVolAttr, `Bidon Complet (Boosters ${formatRatioStr(bPg)})`, totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
+                    if (prepVolAttr > 50) guidesHtml += getGuideHtmlForVol(50, "Prélèvement", totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
                     
                     let sel = clone.querySelector('.sim-sel-vol');
                     let customPreleveVol = sel.value === 'custom' ? (parseFloat(clone.querySelector('.sim-custom-vol').value) || 0) : (parseFloat(sel.value) || 0);
@@ -2816,6 +2848,8 @@ clone.insertBefore(headerDiv, clone.firstChild);
                             let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10);
                             let aromaVolInSample = customPreleveVol * (totalAroma / prepVolAttr);
                             let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100;
+                            let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
+                            
                             let warning = actualNic > maxNic;
                             let customMlText = round1(customBCount * 10);
                             
@@ -2829,7 +2863,12 @@ clone.insertBefore(headerDiv, clone.firstChild);
                                     <tr class="border-b border-stone-100/50 last:border-0">
                                         <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${customBCount} boost. <span class="text-[8px] opacity-70">(${customMlText}ml)</span></td>
                                         <td class="py-1 align-middle whitespace-nowrap pr-2">-> ~${round1(actualNic)} mg</td>
-                                        <td class="py-1 align-middle text-right">Arôme: ~${round1(finalAromaPerc)}% ${warning ? '<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Max dépassé</span>' : ''}</td>
+                                        <td class="py-1 align-middle text-right">
+                                            Arôme: ~${round1(finalAromaPerc)}%<br>
+                                            <span class="text-[8px] text-stone-400 font-bold">Boosters: ${formatRatioStr(bPg)}</span><br>
+                                            <span class="text-[8px] text-stone-400 font-bold">Ratio final: ~${formatRatioStr(customFinalPg)}</span>
+                                            ${warning ? '<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Max dépassé</span>' : ''}
+                                        </td>
                                     </tr>
                                 </table>
                             </div>`;
@@ -2886,13 +2925,19 @@ clone.insertBefore(headerDiv, clone.firstChild);
             let filename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
             
             setTimeout(() => {
-                let opt = {
-                    margin:       [10, 10, 10, 10],
+let opt = {
+                    margin:       [5, 5, 5, 5], // Réduction des marges pour gagner de la place
                     filename:     filename,
-                    image:        { type: 'jpeg', quality: 0.98 },
-                    html2canvas:  { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#ffffff' },
+                    image:        { type: 'jpeg', quality: 0.95 },
+                    html2canvas:  { 
+                        scale: 2, 
+                        useCORS: true, 
+                        scrollY: 0, 
+                        backgroundColor: '#ffffff',
+                        windowWidth: document.documentElement.offsetWidth 
+                    },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak:    { mode: ['css', 'avoid-all'] }
+                    pagebreak:    { mode: 'avoid' } // Évite autant que possible de couper en plein milieu
                 };
 
                 let worker = html2pdf().set(opt).from(ctx.card);
