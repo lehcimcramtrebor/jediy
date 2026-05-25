@@ -45,7 +45,7 @@ if (jediIdentity) {
 }
 
 function handleLogoClick() {
-    if (jediIdentity) return; // Si identité enregistrée, ça ne fait plus rien
+    if (jediIdentity) return; 
 
     let now = Date.now();
     if (now - firstClickTime > 2000) {
@@ -128,8 +128,10 @@ function saveJediIdentity() {
     jediIdentity = document.getElementById('jedi_identity_input').value.trim();
     if (jediIdentity) {
         localStorage.setItem('jediIdentity', jediIdentity);
+        document.getElementById('btn_pro_mode').classList.remove('hidden');
     } else {
         localStorage.removeItem('jediIdentity');
+        document.getElementById('btn_pro_mode').classList.add('hidden');
     }
     closeJediModal();
 }
@@ -155,7 +157,7 @@ document.addEventListener('touchmove', e => {
 
 // Fonction de démarrage (appelée au chargement)
 function init() {
-    switchTheme('assistant'); // Définit le thème assistant par défaut
+    switchTheme('assistant'); 
     generateCheckboxes('t1');
     generateCheckboxes('t2');
     generateCheckboxes('wiz'); 
@@ -176,24 +178,23 @@ window.onload = () => { init(); };
 /* 2. FONCTIONS UTILITAIRES DE CALCUL         */
 /* ========================================== */
 
-// Calcule le poids en grammes en fonction du volume et du ratio PG/VG
 function getWeight(vol, pgRatio) {
-    return vol * ((pgRatio * DENSITY_PG + (100 - pgRatio) * DENSITY_VG) / 100);
+    if (vol <= 0) return 0;
+    let pgVol = vol * (pgRatio / 100);
+    let vgVol = vol * ((100 - pgRatio) / 100);
+    return (pgVol * DENSITY_PG) + (vgVol * DENSITY_VG);
 }
 
-// Formate l'affichage texte du ratio (ex: "50/50" ou "50PG / 50VG")
 function formatRatioStr(pg, labels = false) {
     let p = Math.round(pg);
-    if (p === 100) return "100% PG";
-    if (p === 0) return "100% VG";
+    if (p === 100) return labels ? "Full PG" : "100% PG";
+    if (p === 0) return labels ? "Full VG" : "100% VG";
     return labels ? `${p}PG / ${100-p}VG` : `${p}/${100-p}`;
 }
 
-// On arrondit à 1 ou 2 décimales pour que l'affichage soit propre
 function round1(num) { return Math.round(num * 10) / 10; }
 function round2(num) { return Math.round(num * 100) / 100; }
 
-// Ajoute ou retire une valeur avec les boutons + et -
 function adjustVal(id, step) {
     let el = document.getElementById(id);
     if(!el) return;
@@ -209,7 +210,7 @@ function adjustVal(id, step) {
         updateAromaPreview(prefix);
         triggerCalc();
     } else if (prefix === 'wi') {
-        // Pour l'assistant, l'UI est mise à jour sans calcul direct
+        if(id === 'wiz_vol' || id === 'wiz_aroma_avail' || id === 'wiz_nic_mg' || id === 'wiz_max_nic') updateWizPreview();
     } else if (isTabBoost) {
         triggerCalc();
     } else {
@@ -217,14 +218,12 @@ function adjustVal(id, step) {
     }
 }
 
-// Renvoie un tableau des ratios cochés (bases ou boosters) triés
 function getChecked(className) {
     let arr = [];
     document.querySelectorAll(`.${className}:checked`).forEach(el => arr.push(parseInt(el.value)));
     return arr.sort((a,b)=>b-a);
 }
 
-// Évite d'afficher 4 fois la même recette mathématiquement
 function deduplicateRecipes(arr) {
     let seen = new Set();
     return arr.filter(r => {
@@ -237,12 +236,66 @@ function deduplicateRecipes(arr) {
     });
 }
 
+// Synchronisation pour le Boost Simple
+function adjustBoostCount(step) {
+    let el = document.getElementById('tab_boost_count');
+    let val = parseFloat(el.value) || 0;
+    
+    if (step > 0) val = Math.floor(val);
+    else if (step < 0) val = Math.ceil(val);
+    
+    el.value = Math.max(0, val + step);
+    syncBoostSimple('boosters');
+}
+
+function adjustBoostMl(step) {
+    let el = document.getElementById('tab_boost_ml');
+    let val = parseFloat(el.value) || 0;
+    el.value = Math.max(0, val + step);
+    syncBoostSimple('ml');
+}
+
+function syncBoostSimple(source) {
+    let countEl = document.getElementById('tab_boost_count');
+    let mlEl = document.getElementById('tab_boost_ml');
+    if (source === 'boosters') {
+        mlEl.value = round1((parseFloat(countEl.value) || 0) * 10);
+    } else {
+        countEl.value = round2((parseFloat(mlEl.value) || 0) / 10);
+    }
+    triggerCalc();
+}
+
+function openBoostRecipeModal() {
+    let card = document.getElementById('t_boost_hidden_card').querySelector('.recipe-card-wrapper');
+    currentRecipeCard = card;
+    let clone = card.cloneNode(true);
+    
+    clone.classList.add('export-card', 'relative', 'w-full', 'shadow-2xl', 'dark:bg-stone-800', 'max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
+    
+    let buttonsHtml = `
+        <div class="modal-buttons flex justify-between gap-3 mt-6 pt-4 border-t border-stone-200 dark:border-stone-700 print:hidden">
+            <button onclick="closeRecipeModal()" class="px-5 py-2.5 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 font-bold text-sm rounded-xl transition-colors">Fermer</button>
+            <button onclick="openExportPrompt()" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                Exporter
+            </button>
+        </div>
+    `;
+    clone.innerHTML += buttonsHtml;
+    
+    let modalContent = document.getElementById('recipe_modal_content');
+    modalContent.innerHTML = '';
+    modalContent.appendChild(clone);
+    
+    document.getElementById('recipe_modal').classList.remove('hidden');
+}
+
 
 /* ========================================== */
 /* 3. GESTION DE L'INTERFACE ET THÈMES        */
 /* ========================================== */
 
-// Change la couleur dominante du CSS (le "data-theme")
 function switchTheme(theme) {
     document.documentElement.dataset.theme = theme;
 }
@@ -250,7 +303,6 @@ function switchTheme(theme) {
 const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
 const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
 
-// Bascule entre mode clair et sombre (Dark Mode)
 function applyTheme() {
     if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
@@ -277,7 +329,6 @@ function toggleTheme() {
 }
 applyTheme();
 
-// Naviguer entre les onglets
 function switchTab(tabId) {
     if (tabId === 'tab_boost_simple') document.documentElement.dataset.theme = 'boost';
     else if (tabId === 'tab_complet') document.documentElement.dataset.theme = 'complet';
@@ -307,7 +358,6 @@ function switchTab(tabId) {
     triggerCalc();
 }
 
-// Change le comportement : Fixer un volume final VS Vider sa bouteille d'arôme
 function toggleVolMode(prefix, mode) {
     state[prefix].vol_mode = mode;
     let btnDef = document.getElementById(`${prefix}_mode_vol_def`);
@@ -336,7 +386,6 @@ function toggleVolMode(prefix, mode) {
     triggerCalc();
 }
 
-// Change le comportement : mg/ml cible VS ajout au nombre de boosters
 function setNicMode(prefix, mode) {
     state[prefix].nic_mode = mode;
     let btnMg = document.getElementById(`${prefix}_nic_mode_mg_btn`);
@@ -371,7 +420,6 @@ function toggleAdvAroma(prefix) {
     else { panel.classList.add('hidden'); document.getElementById(`${prefix}_aroma_pg`).value = 0; document.getElementById(`${prefix}_aroma_pg_val`).innerText = '100% PG'; }
 }
 
-// Mise à jour visuelle des taux en direct
 function updateNicPreview(prefix) {
     if (prefix !== 't1') return;
     let finalVol = 0;
@@ -446,7 +494,6 @@ function updateAromaPreview(prefix) {
     if(prefix === 't1') updateNicPreview('t1');
 }
 
-// Permet de taper les ml d'arôme manuellement et met à jour le curseur de pourcentage
 function syncAromaFromMl(prefix) {
     let syncInput = document.getElementById(`${prefix}_aroma_sync_ml`);
     let percInput = document.getElementById(`${prefix}_aroma_perc`);
@@ -486,7 +533,6 @@ function wizUpdateView() {
         if(el) { el.classList.add('hidden'); el.classList.remove('block'); }
     });
     
-    // Force le bon thème selon l'étape du wizard
     if (wizState.step < 2) {
         switchTheme('assistant');
     } else {
@@ -578,7 +624,11 @@ function wizSetVolMode(mode) {
     wizNext();
 }
 
-// Exécute le calcul en arrière-plan avec les paramètres du wizard
+function updateWizPreview() {
+    let p = document.getElementById('wiz_aroma_perc');
+    document.getElementById('wiz_aroma_perc_disp').innerText = p.value + '%';
+}
+
 function runWizCalculation() {
     let prefix = wizState.type; 
 
@@ -591,14 +641,13 @@ function runWizCalculation() {
     }
     document.getElementById(prefix + '_aroma_perc').value = document.getElementById('wiz_aroma_perc').value;
 
-    // --- Transfert du ratio d'arôme ---
     let isAdvAroma = document.getElementById('wiz_adv_aroma').checked;
     let aromaPgVal = document.getElementById('wiz_aroma_pg').value;
 
     let tabAdvChk = document.getElementById(prefix + '_adv_aroma');
     if (tabAdvChk) {
         tabAdvChk.checked = isAdvAroma;
-        toggleAdvAroma(prefix); // Gère l'affichage du panel dans l'onglet
+        toggleAdvAroma(prefix); 
         if (isAdvAroma) {
             document.getElementById(prefix + '_aroma_pg').value = aromaPgVal;
             document.getElementById(prefix + '_aroma_pg_val').innerText = formatRatioStr(100 - aromaPgVal, false);
@@ -642,10 +691,8 @@ function runWizCalculation() {
         });
     }
 
-    // Lancement du bon module
     if (prefix === 't1') calcTab1(); else calcTab2();
 
-    // Récupère le visuel pour le Wizard
     let resultHtml = document.getElementById(prefix + '_results_container').innerHTML;
     document.getElementById('wiz_results_container').innerHTML = resultHtml;
 
@@ -660,7 +707,6 @@ function runWizCalculation() {
 /* 5. MOTEUR DE CALCUL CENTRAL                */
 /* ========================================== */
 
-// Cherche le bon onglet et lance le calcul correspondant
 function triggerCalc() {
     pendingNewRecipe = true; 
     let activeTab = document.querySelector('.tab-content.active').id;
@@ -670,7 +716,6 @@ function triggerCalc() {
     else if(activeTab === 'tab_boost_simple') calcBoostSimple('tab_boost', 'tab_boost_results');
 }
 
-// Essaye de trouver un mix entre 2 bases pour arriver au ratio exact
 function findBaseMixes(targetVol, targetPgMl, basesObj) {
     let results = [];
     let targetRatio = targetVol > 0 ? (targetPgMl / targetVol) * 100 : 0;
@@ -690,7 +735,6 @@ function findBaseMixes(targetVol, targetPgMl, basesObj) {
             let v1 = (targetPgMl - targetVol * (pg2/100)) / ((pg1/100) - (pg2/100));
             let v2 = targetVol - v1;
             
-            // Nettoyage de la virgule flottante
             if(Math.abs(v1) < 1e-5) v1 = 0;
             if(Math.abs(v2) < 1e-5) v2 = 0;
             
@@ -705,12 +749,10 @@ function findBaseMixes(targetVol, targetPgMl, basesObj) {
     return results.length > 0 ? results : null;
 }
 
-// --- CALCULS PAR ONGLET ---
-
 // Calcul Boost Simple
 function calcBoostSimple(prefix, containerId) {
     let vol = parseFloat(document.getElementById(prefix + '_vol').value) || 0;
-    let bCount = parseFloat(document.getElementById(prefix + '_count').value) || 0;
+    let bVol = parseFloat(document.getElementById('tab_boost_ml').value) || 0;
     let advChecked = document.getElementById(prefix + '_adv').checked;
     
     let pgVal = parseFloat(document.getElementById(prefix + '_pg').value);
@@ -723,7 +765,6 @@ function calcBoostSimple(prefix, containerId) {
     let bPgVal = parseFloat(document.getElementById(prefix + '_bpg').value);
     let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
 
-    let bVol = bCount * 10;
     let finalVol = vol + bVol;
     
     if (finalVol <= 0) {
@@ -734,21 +775,87 @@ function calcBoostSimple(prefix, containerId) {
     let finalNic = finalVol > 0 ? (bVol * bStr) / finalVol : 0;
     let ratioHtml = "";
     
+    let jWeight = getWeight(vol, pg);
+    let bWeight = getWeight(bVol, bPg);
+    let totalWeight = jWeight + bWeight;
+
+    let jWeightEl = document.getElementById('tab_boost_vol_w');
+    let bWeightEl = document.getElementById('tab_boost_b_w');
+    if (advChecked) {
+        if(jWeightEl) { jWeightEl.innerText = round1(jWeight) + " g"; jWeightEl.classList.remove('hidden'); }
+        if(bWeightEl) { bWeightEl.innerText = round1(bWeight) + " g"; bWeightEl.classList.remove('hidden'); }
+    } else {
+        if(jWeightEl) jWeightEl.classList.add('hidden');
+        if(bWeightEl) bWeightEl.classList.add('hidden');
+    }
+
+    let hiddenCardHtml = "";
+    let btnHtml = "";
+
     if (advChecked) {
         let totalPgMl = (vol * (pg / 100)) + (bVol * (bPg / 100));
         let finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 50;
+        
         ratioHtml = `
             <div class="bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center transition-colors">
                 <span class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider mb-1">Ratio Final</span>
                 <span class="text-sm font-black text-brand-600 dark:text-brand-400 mt-1">${formatRatioStr(finalPgRatio, true)}</span>
             </div>`;
+
+        hiddenCardHtml = `
+        <div id="t_boost_hidden_card" class="hidden">
+            <div data-type="boost" data-ratio="${formatRatioStr(finalPgRatio, true)}" data-aroma-perc="Inconnu" data-nic-mg="${round1(finalNic)}" class="recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20 rounded-3xl flex flex-col transition-all w-full">
+                <div class="flex-1">
+                    <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700">
+                        <div>
+                            <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg">Mélange Boosté <span class="text-brand-600">${round1(finalVol)} ml</span></div>
+                            <div class="mt-1.5"><span class="text-xs font-bold text-brand-700 dark:text-brand-400 px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm">${formatRatioStr(finalPgRatio, true)}</span></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2 mb-4">
+                        ${vol > 0 ? `
+                        <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50">
+                            <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Jus <span class="text-xs font-bold bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded">${formatRatioStr(pg, false)}</span></span>
+                            <div class="text-right leading-tight">
+                                <span class="font-black text-stone-800 dark:text-stone-200">${round1(vol)} ml</span>
+                                <span class="block text-xs font-bold text-brand-600 mt-0.5">${round1(jWeight)} g</span>
+                            </div>
+                        </div>` : ''}
+                        ${bVol > 0 ? `
+                        <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50">
+                            <span class="text-sm font-bold text-brand-600 flex items-center gap-2">Booster <span class="text-xs font-bold bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded">${formatRatioStr(bPg, false)}</span></span>
+                            <div class="text-right leading-tight">
+                                <span class="font-black text-stone-800 dark:text-stone-200">${round1(bVol)} ml <span class="text-[10px] text-stone-500 font-bold">(${round2(bVol/10)} u.)</span></span>
+                                <span class="block text-xs font-bold text-brand-600 mt-0.5">${round1(bWeight)} g</span>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                </div>
+                <div class="mt-auto pt-4 border-t border-stone-200/50 dark:border-stone-700">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-stone-500 uppercase">Taux finaux</span>
+                        <div class="text-right">
+                            <span class="text-lg font-black text-brand-700">${round1(finalNic)} mg/ml</span>
+                        </div>
+                    </div>
+                    <div class="text-right text-xs font-bold text-brand-600 mt-1">Poids total estimé : ${round1(totalWeight)} g</div>
+                </div>
+            </div>
+        </div>`;
+
+        btnHtml = `
+        <button onclick="openBoostRecipeModal()" class="mt-5 w-full py-3 bg-white dark:bg-stone-700 hover:bg-brand-50 dark:hover:bg-stone-600 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-stone-600 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Voir la fiche recette
+        </button>`;
     }
 
-    // Génère l'interface
     let visualCap = finalVol * 1.1; 
     let hJuice = (vol / visualCap) * 100;
     let hBoost = (bVol / visualCap) * 100;
     let hAir = 100 - hJuice - hBoost;
+
+    let weightHtmlFinal = advChecked ? `<span class="text-base text-brand-600 dark:text-brand-400 font-black block mt-1">(${round1(totalWeight)} g)</span>` : '';
 
     let html = `
         <div class="animate-fade-in flex flex-col md:flex-row gap-6 items-center md:items-stretch bg-brand-50/50 dark:bg-brand-900/10 p-4 rounded-3xl border border-brand-200 dark:border-brand-800/50 transition-colors">
@@ -766,7 +873,7 @@ function calcBoostSimple(prefix, containerId) {
             <div class="flex-1 w-full grid grid-cols-2 gap-3 py-2 content-center">
                 <div class="col-span-2 bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center transition-colors">
                     <span class="text-xs text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider mb-1">Volume Final</span>
-                    <span class="text-3xl font-black text-stone-800 dark:text-stone-100">${round1(finalVol)} ml</span>
+                    <span class="text-3xl font-black text-stone-800 dark:text-stone-100">${round1(finalVol)} ml ${weightHtmlFinal}</span>
                 </div>
                 <div class="bg-brand-50 dark:bg-brand-900/20 p-4 rounded-2xl border border-brand-100 dark:border-brand-800/50 flex flex-col justify-center text-center transition-colors">
                     <span class="text-[10px] text-brand-700/70 dark:text-brand-400/70 font-bold uppercase tracking-wider mb-1">Nicotine</span>
@@ -775,6 +882,8 @@ function calcBoostSimple(prefix, containerId) {
                 ${ratioHtml}
             </div>
         </div>
+        ${btnHtml}
+        ${hiddenCardHtml}
     `;
     document.getElementById(containerId).innerHTML = html;
 }
@@ -783,7 +892,7 @@ function calcBoostSimple(prefix, containerId) {
 function calcTab1() {
     let finalVol, aromaVol;
     let aromaPgVal = parseInt(document.getElementById('t1_aroma_pg').value);
-    let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal); // VG mapping
+    let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
 
     if(state.t1.vol_mode === 'defined') {
         finalVol = parseFloat(document.getElementById('t1_vol').value) || 0;
@@ -813,7 +922,7 @@ function calcTab1() {
     }
 
     let baseVol = finalVol - aromaVol - nicVol;
-    if (Math.abs(baseVol) < 1e-6) baseVol = 0; // Fix flottant
+    if (Math.abs(baseVol) < 1e-6) baseVol = 0; 
     if(baseVol < 0) {
         renderRecipes('t1', [], [{err: "Pas de place pour la base ! Réduisez l'arôme ou la nicotine."}]); return;
     }
@@ -895,7 +1004,7 @@ function calcTab2() {
     }
 
     let baseVol = prepVol - aromaVol;
-    if (Math.abs(baseVol) < 1e-6) baseVol = 0; // Fix flottant
+    if (Math.abs(baseVol) < 1e-6) baseVol = 0; 
     let shortfillTargetPgRatio = 100 - parseInt(document.getElementById('t2_ratio_pg').value);
     
     let aromaPgVal = parseInt(document.getElementById('t2_aroma_pg').value);
@@ -1009,7 +1118,7 @@ function calcTab3() {
                     <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
                         <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(nPg, false)}</span></span>
                         <div class="text-right leading-tight">
-                            <span class="font-black text-stone-800 dark:text-stone-200">${round1(nVol)} ml</span>
+                            <span class="font-black text-stone-800 dark:text-stone-200">${round1(nVol)} ml <span class="text-[10px] text-stone-500 font-bold">(${round2(nVol/10)} u.)</span></span>
                             <span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(nWeight)} g</span>
                         </div>
                     </div>` : ''}
@@ -1072,11 +1181,11 @@ function openManualRecipeModal() {
     document.getElementById('recipe_modal').classList.remove('hidden');
 }
 
+
 /* ========================================== */
 /* 6. AFFICHAGE ET GÉNÉRATION HTML DES CARTES */
 /* ========================================== */
 
-// Injecte les checkboxes Bases et Boosters selon le profil
 function generateCheckboxes(prefix) {
     let baseContainer = document.getElementById(`${prefix}_bases_list`);
     let boostContainer = document.getElementById(`${prefix}_boosters_list`);
@@ -1098,7 +1207,6 @@ function generateCheckboxes(prefix) {
     if(boostContainer) boostContainer.innerHTML = boostHtml;
 }
 
-// Gère l'affichage global des cartes résultats
 function renderRecipes(prefix, exact, alt) {
     let container = document.getElementById(`${prefix}_results_container`);
     container.innerHTML = '';
@@ -1137,17 +1245,14 @@ function renderRecipes(prefix, exact, alt) {
     container.querySelectorAll('select').forEach(s => updateSim(s));
 }
 
-// Crée le composant HTML d'une carte de recette complète (avec données cachées pour l'export)
 function buildCard(r, prefix, isAlt) {
     let bColor = isAlt ? 'border-amber-200 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20' : 'border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20';
     let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-brand-700 dark:text-brand-400';
 
-    // FIX: Prendre correctement le VG à 100% (aromaPg = 0)
     let actualAromaPg = (r.aromaPg !== undefined && r.aromaPg !== null && !isNaN(r.aromaPg)) ? r.aromaPg : 100;
     let aromaWeight = getWeight(r.aroma, actualAromaPg);
     let totalWeight = aromaWeight;
 
-    // On stocke les métadonnées dans des attributs HTML pour l'export plus tard
     let dataAttrs = `data-type="${prefix}" data-ratio="${formatRatioStr(r.realPgRatio, true)}" data-base-pg="${r.realPgRatio}" `;
     if (prefix === 't1') {
         let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
@@ -1205,7 +1310,7 @@ function buildCard(r, prefix, isAlt) {
             <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-50 dark:border-stone-700/50 transition-colors">
                 <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900/50 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(r.nicRatio, false)}</span></span>
                 <div class="text-right leading-tight">
-                    <span class="font-black text-stone-800 dark:text-stone-200">${round1(r.nic)} ml</span>
+                    <span class="font-black text-stone-800 dark:text-stone-200">${round1(r.nic)} ml <span class="text-[10px] text-stone-500 font-bold">(${round2(r.nic/10)} u.)</span></span>
                     <span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(nicWeight)} g</span>
                 </div>
             </div>`;
@@ -1235,7 +1340,7 @@ function buildCard(r, prefix, isAlt) {
         <div class="mt-auto border-t border-stone-200/50 dark:border-stone-700 pt-2 mb-2 text-right transition-colors">
             <span class="text-xs font-bold text-brand-600 dark:text-brand-400">Poids total estimé : ${round1(totalWeight)} g</span>
         </div>
-        <div class="sim-container mt-1 p-3 bg-white dark:bg-stone-900/80 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-200 dark:border-stone-700 shadow-sm transition-colors">
+        <div class="sim-container mt-1 p-3 bg-white dark:bg-stone-900/80 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-200 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${round1(r.prepVol)}" data-aroma-vol="${round1(r.aroma)}" data-max-nic="${round1(r.nicMax)}" data-bstr="${round1(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${round1(r.realPgRatio)}">
             <div class="flex items-center justify-center gap-2 mb-2 text-stone-500 dark:text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors">
                 <span>🧪 Simulation d'ajout de boosters</span>
             </div>
@@ -1257,6 +1362,7 @@ function buildCard(r, prefix, isAlt) {
                     <input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-50 dark:bg-stone-800 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)">
                     <button onclick="adjustCustomPreleve(this, 1)" class="btn-adjust-xs">+</button>
                 </div>
+                <div class="sim-preleve-weight text-[10px] text-brand-600 dark:text-brand-400 font-bold mt-1 text-center w-full"></div>
             </div>
 
             <div class="flex flex-col items-center mb-3 bg-stone-50 dark:bg-black/20 p-2 rounded-lg border border-stone-200 dark:border-stone-700/50 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
@@ -1358,7 +1464,6 @@ function syncSimInputs(inputEl, source) {
     updateSim(inputEl);
 }
 
-// Met à jour le texte du résultat de la simulation dans la carte Shortfill
 function updateSim(el) {
     let container = el.closest('.recipe-card-wrapper');
     if(!container) return;
@@ -1368,18 +1473,22 @@ function updateSim(el) {
     let bCountInp = container.querySelector('.sim-b-count');
     let resEl = container.querySelector('.sim-result');
     let bRatioSel = container.querySelector('.sim-b-ratio');
+    let preleveWeightEl = container.querySelector('.sim-preleve-weight');
+    let simContObj = container.querySelector('.sim-container');
     
-    if(!sel || !bCountInp || !resEl) return;
+    if(!sel || !bCountInp || !resEl || !simContObj) return;
 
     let preleveVol = sel.value === 'custom' ? (parseFloat(customInp.value) || 0) : (parseFloat(sel.value) || 0);
 
     let bCount = parseFloat(bCountInp.value) || 0;
-    let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
-    let maxNic = parseFloat(container.getAttribute('data-nic-max')) || 0;
-    let totalAroma = parseFloat(container.getAttribute('data-aroma-vol')) || 0;
-    let prepVolAttr = parseFloat(container.getAttribute('data-prep-vol')) || 0;
-    let basePg = parseFloat(container.getAttribute('data-base-pg')) || 50;
+    let bStr = parseFloat(simContObj.getAttribute('data-bstr')) || 20;
+    let maxNic = parseFloat(simContObj.getAttribute('data-max-nic')) || 0;
+    let totalAroma = parseFloat(simContObj.getAttribute('data-aroma-vol')) || 0;
+    let prepVolAttr = parseFloat(simContObj.getAttribute('data-base-vol')) || 0;
+    let basePg = parseFloat(simContObj.getAttribute('data-base-pg')) || 50;
     let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
+
+    if(preleveWeightEl) preleveWeightEl.innerText = preleveVol > 0 ? round1(getWeight(preleveVol, basePg)) + " g" : "";
     
     let bVol = bCount * 10;
     let finalVol = preleveVol + bVol;
@@ -1412,7 +1521,6 @@ function closeCalcModal() { document.getElementById('calc_modal').classList.add(
 function openHelpModal() { document.getElementById('help_modal').classList.remove('hidden'); }
 function closeHelpModal() { document.getElementById('help_modal').classList.add('hidden'); }
 
-// Fonctions pour la Calculatrice Rapide
 function updateCalcDisplay() { document.getElementById('calc_display').innerText = calcExpr || "0"; }
 function calcAppend(val) {
     if (calcExpr === "Erreur") calcExpr = "";
@@ -1431,11 +1539,10 @@ function calcResult() {
     }
 }
 
-// Touche Echap pour fermer les modales
 document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         let eeModal = document.getElementById('easter_egg_modal');
-        if (!eeModal.classList.contains('hidden')) { return; } // On ne ferme pas la self-destruct au pif
+        if (!eeModal.classList.contains('hidden')) { return; } 
         
         let idModal = document.getElementById('jedi_identity_modal');
         if (!idModal.classList.contains('hidden')) { closeJediModal(); return; }
@@ -1460,7 +1567,6 @@ document.addEventListener('keydown', function(event) {
 
 let currentRecipeCard = null;
 
-// Ouvre la carte en plein écran (modale) pour accéder à l'export
 function openModalFromCard(btn) {
     let card = btn.closest('.recipe-card-wrapper');
     currentRecipeCard = card;
@@ -1542,7 +1648,6 @@ function cancelExport() {
     hidePdfOptions();
 }
 
-// Génère le texte formaté pour copier/coller
 function getRecipeText() {
     if (!currentRecipeCard) return "";
     
@@ -1571,8 +1676,9 @@ function getRecipeText() {
         text += `- ${name}: ${ml}${g}\n`;
     });
     
-    if (type === 't1') {
-        text += `\n🎯 RÉSULTAT :\n- Arôme : ${aromaPerc}%\n`;
+    if (type === 't1' || type === 'boost') {
+        let aromaStr = type === 'boost' ? 'Inconnu' : `${aromaPerc}%`;
+        text += `\n🎯 RÉSULTAT :\n- Arôme : ${aromaStr}\n`;
         let nicMg = clone.getAttribute('data-nic-mg');
         text += `- Nicotine : ${nicMg} mg/ml\n`;
     } else if (type === 't2') {
@@ -1590,8 +1696,9 @@ function getRecipeText() {
         let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
         
         function getGuideForVol(baseVol, title) {
+            let baseWeight = getWeight(baseVol, basePg);
             let aromaVolInSample = baseVol * (totalAroma / prepVol);
-            let out = `\n💡 GUIDE DE BOOST AVEC RATIO ${formatRatioStr(bPg)}\n(${title}) :\n`;
+            let out = `\n💡 GUIDE DE BOOST AVEC RATIO ${formatRatioStr(bPg)}\n(${title} - ${round1(baseWeight)} g) :\n`;
             let targets = [3, 6, 9, 12];
             let sims = new Map();
             
@@ -1610,7 +1717,8 @@ function getRecipeText() {
             });
             
             sims.forEach((data, bCount) => {
-                out += `+ ${bCount} boost. (${round1(bCount*10)}ml)\n  > Nic: ~${round1(data.nic)} mg\n  > Arôme: ~${round1(data.aroma)} %\n  > Ratio final: ~${formatRatioStr(data.pg)}\n`;
+                let w = getWeight(bCount * 10, bPg);
+                out += `+ ${bCount} boost. (${round1(bCount*10)}ml - ${round1(w)}g)\n  > Nic: ~${round1(data.nic)} mg\n  > Arôme: ~${round1(data.aroma)} %\n  > Ratio final: ~${formatRatioStr(data.pg)}\n`;
             });
             
             let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
@@ -1622,12 +1730,14 @@ function getRecipeText() {
                 let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
                 let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
                 let finalPgFloor = ((baseVol * (basePg/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100;
-                out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(finalAromaPercFloor)} %\n  > Ratio final: ~${formatRatioStr(finalPgFloor)}\n`;
+                let wFloor = getWeight(floorMax * 10, bPg);
+                out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml - ${round1(wFloor)}g)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(finalAromaPercFloor)} %\n  > Ratio final: ~${formatRatioStr(finalPgFloor)}\n`;
             }
             
             let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
             let maxFinalPg = ((baseVol * (basePg/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100;
-            out += `+ MAX ${roundedMax} boost. (${round1(roundedMax*10)}ml)\n  > Nic: ${nicMax} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
+            let wMax = getWeight(roundedMax * 10, bPg);
+            out += `+ MAX ${roundedMax} boost. (${round1(roundedMax*10)}ml - ${round1(wMax)}g)\n  > Nic: ${nicMax} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
             return out;
         }
 
@@ -1644,7 +1754,8 @@ function getRecipeText() {
             let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100;
             let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
             
-            let customLine = `+ ${customBCount} boost. (${round1(customBCount*10)}ml)\n  > Nic: ~${round1(actualNic)} mg\n  > Arôme: ~${round1(finalAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(customFinalPg)}\n`;
+            let wCustom = getWeight(customBCount * 10, bPg);
+            let customLine = `+ ${customBCount} boost. (${round1(customBCount*10)}ml - ${round1(wCustom)}g)\n  > Nic: ~${round1(actualNic)} mg\n  > Arôme: ~${round1(finalAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(customFinalPg)}\n`;
             
             if (!text.includes(customLine)) {
                 text += `\n💡 GUIDE PERSONNALISÉ RATIO ${formatRatioStr(bPg)}\n(pour ${round1(customPreleveVol)} ml) :\n${customLine}`;
@@ -1680,7 +1791,7 @@ function shareRecipeText() {
 
 // --- GÉNÉRATION DU PDF ---
 
-let generatedSignatures = new Set(); // Pour le système shortfill PDF
+let generatedSignatures = new Set(); 
 
 function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, bPg) {
     let aromaVolInSample = baseVol * (totalAroma / prepVol);
@@ -1723,12 +1834,13 @@ function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, b
 }
 
 function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, basePg, bPg) {
+    let baseWeight = getWeight(baseVol, basePg);
     let data = computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, bPg);
     let html = `
         <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
             <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center gap-2">
                 <span>💡 ${title}</span>
-                <span class="text-[8px] bg-stone-200 px-1.5 py-0.5 rounded">${round1(baseVol)} ml</span>
+                <span class="text-[8px] bg-stone-200 px-1.5 py-0.5 rounded">${round1(baseVol)} ml (${round1(baseWeight)} g)</span>
             </div>
             <table class="w-full text-left font-medium mt-1">
     `;
@@ -1738,10 +1850,11 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
         let warning = (row.nic > nicMax) ? `<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Max dépassé</span>` : '';
         let trClass = isMax ? "text-brand-700 font-bold" : "text-stone-600";
         let prefix = isMax ? "MAX: " : "+ ";
-        let mlText = round1(row.bCount * 10);
+let mlText = round1(row.bCount * 10);
+        let bWeight = getWeight(row.bCount * 10, bPg);
         html += `
             <tr class="${trClass} border-b border-stone-100/50 last:border-0">
-                <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${row.bCount} boost. <span class="text-[8px] opacity-70">(${mlText}ml)</span></td>
+                <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${row.bCount} boost. <span class="text-[8px] opacity-70">(${mlText}ml - ${round1(bWeight)}g)</span></td>
                 <td class="py-1 align-middle whitespace-nowrap pr-2">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</td>
                 <td class="py-1 align-middle text-right">
                     Arôme: ${isMax ? '' : '~'}${round1(row.aroma)}%<br>
@@ -1756,7 +1869,6 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
     return html;
 }
 
-// Modifie temporairement la carte pour que l'export PDF soit parfait
 function prepareCardForExport() {
     let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
     if (!clone) return null;
@@ -1768,7 +1880,6 @@ function prepareCardForExport() {
     let headerDiv = document.createElement('div');
     headerDiv.className = 'export-title text-center mb-3 pb-3 border-b-2 border-stone-200';
 
-    // Injection du titre du site + nom de la recette
     headerDiv.innerHTML = `
         <div class="text-3xl font-black text-stone-800 tracking-tight mb-1">Je-<span class="text-brand-600">DIY</span></div>
         <div class="text-lg font-bold text-stone-500">${name}</div>
@@ -1814,17 +1925,20 @@ function prepareCardForExport() {
                     let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
                     
                     let warning = actualNic > maxNic;
-                    let customMlText = round1(customBCount * 10);
+let customMlText = round1(customBCount * 10);
+                    let customBoostWeight = getWeight(customBCount * 10, bPg);
+                    
+                    let customBaseWeight = getWeight(customPreleveVol, basePg);
                     
                     guidesHtml += `
                     <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
                         <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center gap-2">
                             <span>💡 Personnalisé</span>
-                            <span class="text-[8px] bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded">${round1(customPreleveVol)} ml</span>
+                            <span class="text-[8px] bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded">${round1(customPreleveVol)} ml (${round1(customBaseWeight)} g)</span>
                         </div>
                         <table class="w-full text-left font-medium mt-1">
                             <tr class="border-b border-stone-100/50 last:border-0">
-                                <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${customBCount} boost. <span class="text-[8px] opacity-70">(${customMlText}ml)</span></td>
+                                <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${customBCount} boost. <span class="text-[8px] opacity-70">(${customMlText}ml - ${round1(customBoostWeight)}g)</span></td>
                                 <td class="py-1 align-middle whitespace-nowrap pr-2">-> ~${round1(actualNic)} mg</td>
                                 <td class="py-1 align-middle text-right">
                                     Arôme: ~${round1(finalAromaPerc)}%<br>
@@ -1879,7 +1993,6 @@ function prepareCardForExport() {
     };
 }
 
-// Exécute html2pdf avec la carte préparée
 function exportRecipePDF(action) {
     let ctx = prepareCardForExport();
     if (!ctx) return;
@@ -1889,7 +2002,7 @@ function exportRecipePDF(action) {
     
     setTimeout(() => {
         let opt = {
-            margin:       [5, 5, 5, 5], // Réduction des marges pour gagner de la place
+            margin:       [5, 5, 5, 5], 
             filename:     filename,
             image:        { type: 'jpeg', quality: 0.95 },
             html2canvas:  { 
@@ -1900,7 +2013,7 @@ function exportRecipePDF(action) {
                 windowWidth: document.documentElement.offsetWidth 
             },
             jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak:    { mode: 'avoid' } // Évite autant que possible de couper en plein milieu
+            pagebreak:    { mode: 'avoid' } 
         };
 
         let worker = html2pdf().set(opt).from(ctx.card);
@@ -1927,7 +2040,6 @@ function exportRecipePDF(action) {
     }, 300);
 }
 
-// Partage du lien complet de l'app (Flyer QR Code)
 function shareApp() { document.getElementById('share_flyer_modal').classList.remove('hidden'); }
 function closeShareFlyerModal() { document.getElementById('share_flyer_modal').classList.add('hidden'); }
 
@@ -2000,27 +2112,21 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Vide le cache, le localStorage (sauf le Jedi et le Thème), vire le Service Worker et recharge l'app
 function hardResetApp() {
-    // 1. On met le jedi et le thème à l'abri
     let savedJedi = localStorage.getItem('jediIdentity');
     let savedTheme = localStorage.getItem('theme');
     
-    // 2. On rase tout le stockage local
     localStorage.clear();
     
-    // 3. On restaure nos données précieuses
     if (savedJedi) localStorage.setItem('jediIdentity', savedJedi);
     if (savedTheme) localStorage.setItem('theme', savedTheme);
 
-    // 4. On supprime tout le cache stocké (fichiers PWA)
     if ('caches' in window) {
         caches.keys().then((names) => {
             for (let name of names) caches.delete(name);
         });
     }
     
-    // 5. On désenregistre le Service Worker puis on force le rechargement
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then((registrations) => {
             for (let registration of registrations) {
