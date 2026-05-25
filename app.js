@@ -31,21 +31,21 @@ let wizState = {
 };
 
 /* ========================================== */
-/* EASTER EGG / PRO MODE SOLDAT               */
+/* EASTER EGG / PRO MODE JEDI                 */
 /* ========================================== */
-let soldierIdentity = localStorage.getItem('soldierIdentity') || "";
+let jediIdentity = localStorage.getItem('jediIdentity') || "";
 let logoClicks = 0;
 let firstClickTime = 0;
 let eeInput = "";
 let eeTimer = null;
 
-// Check if pro mode was already activated
-if (soldierIdentity) {
+// Vérifie si le mode pro était déjà activé
+if (jediIdentity) {
     document.getElementById('btn_pro_mode').classList.remove('hidden');
 }
 
 function handleLogoClick() {
-    if (soldierIdentity) return; // Si identité enregistrée, ça ne fait plus rien
+    if (jediIdentity) return; // Si identité enregistrée, ça ne fait plus rien
 
     let now = Date.now();
     if (now - firstClickTime > 2000) {
@@ -87,7 +87,7 @@ function checkEeCode() {
     if (eeInput === "1138") {
         document.getElementById('easter_egg_modal').classList.add('hidden');
         document.getElementById('btn_pro_mode').classList.remove('hidden');
-        openSoldierModal();
+        openJediModal();
     } else {
         startSelfDestruct();
     }
@@ -96,7 +96,7 @@ function checkEeCode() {
 function startSelfDestruct() {
     document.querySelectorAll('.ee-btn').forEach(btn => btn.disabled = true);
     let msgEl = document.getElementById('ee_msg');
-    msgEl.innerText = "Ce terminal va s'auto détruire dans 10 secondes!";
+    msgEl.innerText = "Cet appareil va s'auto détruire dans 10 secondes!";
     msgEl.classList.remove('text-green-500');
     msgEl.classList.add('text-red-500', 'animate-pulse-fast');
     
@@ -115,23 +115,23 @@ function startSelfDestruct() {
     }, 1000);
 }
 
-function openSoldierModal() {
-    document.getElementById('soldier_identity_input').value = soldierIdentity;
-    document.getElementById('soldier_identity_modal').classList.remove('hidden');
+function openJediModal() {
+    document.getElementById('jedi_identity_input').value = jediIdentity;
+    document.getElementById('jedi_identity_modal').classList.remove('hidden');
 }
 
-function closeSoldierModal() {
-    document.getElementById('soldier_identity_modal').classList.add('hidden');
+function closeJediModal() {
+    document.getElementById('jedi_identity_modal').classList.add('hidden');
 }
 
-function saveSoldierIdentity() {
-    soldierIdentity = document.getElementById('soldier_identity_input').value.trim();
-    if (soldierIdentity) {
-        localStorage.setItem('soldierIdentity', soldierIdentity);
+function saveJediIdentity() {
+    jediIdentity = document.getElementById('jedi_identity_input').value.trim();
+    if (jediIdentity) {
+        localStorage.setItem('jediIdentity', jediIdentity);
     } else {
-        localStorage.removeItem('soldierIdentity');
+        localStorage.removeItem('jediIdentity');
     }
-    closeSoldierModal();
+    closeJediModal();
 }
 
 // Blocage agressif du "pull-to-refresh" sur mobile sauf si on scroll
@@ -486,6 +486,7 @@ function wizUpdateView() {
         if(el) { el.classList.add('hidden'); el.classList.remove('block'); }
     });
     
+    // Force le bon thème selon l'étape du wizard
     if (wizState.step < 2) {
         switchTheme('assistant');
     } else {
@@ -1436,8 +1437,8 @@ document.addEventListener('keydown', function(event) {
         let eeModal = document.getElementById('easter_egg_modal');
         if (!eeModal.classList.contains('hidden')) { return; } // On ne ferme pas la self-destruct au pif
         
-        let idModal = document.getElementById('soldier_identity_modal');
-        if (!idModal.classList.contains('hidden')) { closeSoldierModal(); return; }
+        let idModal = document.getElementById('jedi_identity_modal');
+        if (!idModal.classList.contains('hidden')) { closeJediModal(); return; }
 
         let exportModal = document.getElementById('export_prompt_modal');
         if (!exportModal.classList.contains('hidden')) { cancelExport(); return; }
@@ -1652,8 +1653,8 @@ function getRecipeText() {
         }
     }
 
-    if (soldierIdentity) {
-        text += `\nCette recette a été partagée par ${soldierIdentity}\n`;
+    if (jediIdentity) {
+        text += `\nCette recette a été partagée par ${jediIdentity}\n`;
     }
     
     text += `\n-----------------\nL'app Je-DIY :\nhttps://lehcimcramtrebor.github.io/jediy/`;
@@ -1846,8 +1847,8 @@ function prepareCardForExport() {
     let footerDiv = document.createElement('div');
     footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-6 pt-4 border-t-2 border-stone-100';
     
-    let footerText = soldierIdentity 
-        ? `Cette recette a été partagée par <span class="text-brand-600 font-black text-base">${soldierIdentity}</span>`
+    let footerText = jediIdentity 
+        ? `Cette recette a été partagée par <span class="text-brand-600 font-black text-base">${jediIdentity}</span>`
         : `Scanne ce code pour réaliser tes propres calculs<br><span class="text-brand-600 font-black text-base">Je-DIY</span>`;
 
     footerDiv.innerHTML = `
@@ -1932,8 +1933,8 @@ function closeShareFlyerModal() { document.getElementById('share_flyer_modal').c
 
 function executeShare() {
     let shareText = 'Découvre Je-DIY, le calculateur expert de e-liquide super pratique pour la vape !';
-    if (soldierIdentity) {
-        shareText = `Cette application a été partagée par ${soldierIdentity}. ` + shareText;
+    if (jediIdentity) {
+        shareText = `Cette application a été partagée par ${jediIdentity}. ` + shareText;
     }
 
     const shareData = {
@@ -1999,17 +2000,17 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Vide le cache, le localStorage (sauf le Soldat et le Thème), vire le Service Worker et recharge l'app
+// Vide le cache, le localStorage (sauf le Jedi et le Thème), vire le Service Worker et recharge l'app
 function hardResetApp() {
-    // 1. On met le soldat et le thème à l'abri
-    let savedSoldier = localStorage.getItem('soldierIdentity');
+    // 1. On met le jedi et le thème à l'abri
+    let savedJedi = localStorage.getItem('jediIdentity');
     let savedTheme = localStorage.getItem('theme');
     
     // 2. On rase tout le stockage local
     localStorage.clear();
     
     // 3. On restaure nos données précieuses
-    if (savedSoldier) localStorage.setItem('soldierIdentity', savedSoldier);
+    if (savedJedi) localStorage.setItem('jediIdentity', savedJedi);
     if (savedTheme) localStorage.setItem('theme', savedTheme);
 
     // 4. On supprime tout le cache stocké (fichiers PWA)
