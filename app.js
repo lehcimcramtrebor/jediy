@@ -96,7 +96,7 @@ function checkEeCode() {
 function startSelfDestruct() {
     document.querySelectorAll('.ee-btn').forEach(btn => btn.disabled = true);
     let msgEl = document.getElementById('ee_msg');
-    msgEl.innerText = "Cet appareil va s'auto détruire dans 10 secondes!";
+    msgEl.innerText = "Ce terminal va s'auto détruire dans 10 secondes!";
     msgEl.classList.remove('text-green-500');
     msgEl.classList.add('text-red-500', 'animate-pulse-fast');
     
