@@ -1999,18 +1999,18 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Vide le cache, le localStorage (sauf le Soldat), vire le Service Worker et recharge l'app
+// Vide le cache, le localStorage (sauf le Soldat et le Thème), vire le Service Worker et recharge l'app
 function hardResetApp() {
-    // 1. On met le soldat à l'abri
+    // 1. On met le soldat et le thème à l'abri
     let savedSoldier = localStorage.getItem('soldierIdentity');
+    let savedTheme = localStorage.getItem('theme');
     
     // 2. On rase tout le stockage local
     localStorage.clear();
     
-    // 3. On remet le soldat à sa place
-    if (savedSoldier) {
-        localStorage.setItem('soldierIdentity', savedSoldier);
-    }
+    // 3. On restaure nos données précieuses
+    if (savedSoldier) localStorage.setItem('soldierIdentity', savedSoldier);
+    if (savedTheme) localStorage.setItem('theme', savedTheme);
 
     // 4. On supprime tout le cache stocké (fichiers PWA)
     if ('caches' in window) {
