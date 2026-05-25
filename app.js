@@ -488,7 +488,7 @@ function updateAromaPreview(prefix) {
                 let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
                 if(1 - maxNic/bStr > 0) vol = prepVol / (1 - maxNic/bStr);
             }
-            syncInput.value = vol * (perc / 100);
+            syncInput.value = round2(vol * (perc / 100));
         }
     }
     if(prefix === 't1') updateNicPreview('t1');
