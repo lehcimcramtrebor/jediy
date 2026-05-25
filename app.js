@@ -284,9 +284,7 @@ function switchTab(tabId) {
     else if (tabId === 'tab_booster') document.documentElement.dataset.theme = 'shortfill';
     else if (tabId === 'tab_manuel') document.documentElement.dataset.theme = 'manuel';
     else if (tabId === 'tab_assistant') {
-        // Applique le thème assistant si on est au début (step 0), 
-        // sinon on garde le thème du mode sélectionné
-        if (wizState.step === 0) {
+        if (wizState.step < 2) {
             document.documentElement.dataset.theme = 'assistant';
         } else {
              if (wizState.type === 't1') document.documentElement.dataset.theme = 'complet';
@@ -488,6 +486,13 @@ function wizUpdateView() {
         if(el) { el.classList.add('hidden'); el.classList.remove('block'); }
     });
     
+	if (wizState.step < 2) {
+        switchTheme('assistant');
+    } else {
+        if (wizState.type === 't1') switchTheme('complet');
+        else if (wizState.type === 't2') switchTheme('shortfill');
+    }
+	
     let curStepId = wizState.path[wizState.step];
     let curEl = document.getElementById('wiz_' + curStepId);
     if(curEl) { curEl.classList.remove('hidden'); curEl.classList.add('block'); }
@@ -528,7 +533,6 @@ function wizPrev() {
 function wizRestart() {
     wizState.step = 0;
     document.getElementById('wiz_results_container').innerHTML = '';
-    switchTheme('complet');
     wizUpdateView();
 }
 
