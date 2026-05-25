@@ -1420,7 +1420,8 @@ function calcAppend(val) {
 function calcClear() { calcExpr = ""; updateCalcDisplay(); }
 function calcResult() {
     try {
-        let evalExpr = calcExpr.replace(/×/g, '*').replace(/÷/g, '/');
+        // Ajout du remplacement de % par /100
+        let evalExpr = calcExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/%/g, '/100');
         let res = new Function('return ' + evalExpr)();
         if (isNaN(res) || !isFinite(res)) throw new Error("Erreur");
         calcExpr = (Math.round(res * 1000) / 1000).toString();
@@ -1997,4 +1998,27 @@ if ('serviceWorker' in navigator) {
             .then(registration => { console.log('ServiceWorker enregistré avec succès.', registration.scope); })
             .catch(error => { console.log('Erreur d\'enregistrement du ServiceWorker:', error); });
     });
+}
+// Vide le cache, vire le Service Worker et recharge l'app
+function hardResetApp() {
+    // 1. On supprime tout le cache stocké
+    if ('caches' in window) {
+        caches.keys().then((names) => {
+            for (let name of names) caches.delete(name);
+        });
+    }
+    
+    // 2. On désenregistre le Service Worker puis on recharge la page
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (let registration of registrations) {
+                registration.unregister();
+            }
+        }).then(() => {
+            window.location.reload();
+        });
+    } else {
+        // Fallback si pas de SW
+        window.location.reload();
+    }
 }
