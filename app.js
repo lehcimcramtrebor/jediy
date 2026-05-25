@@ -31,21 +31,21 @@ let wizState = {
 };
 
 /* ========================================== */
-/* EASTER EGG / PRO MODE AGENT 007         */
+/* EASTER EGG / PRO MODE SOLDAT               */
 /* ========================================== */
-let agentIdentity = localStorage.getItem('agentIdentity') || "";
+let soldierIdentity = localStorage.getItem('soldierIdentity') || "";
 let logoClicks = 0;
 let firstClickTime = 0;
 let eeInput = "";
 let eeTimer = null;
 
 // Check if pro mode was already activated
-if (agentIdentity) {
+if (soldierIdentity) {
     document.getElementById('btn_pro_mode').classList.remove('hidden');
 }
 
 function handleLogoClick() {
-    if (agentIdentity) return; // Si identité enregistrée, ça ne fait plus rien
+    if (soldierIdentity) return; // Si identité enregistrée, ça ne fait plus rien
 
     let now = Date.now();
     if (now - firstClickTime > 2000) {
@@ -63,7 +63,7 @@ function handleLogoClick() {
 function openEasterEgg() {
     eeInput = "";
     document.getElementById('ee_display').innerText = "";
-    document.getElementById('ee_msg').innerText = "Bienvenue Monsieur Bond, entrez votre code secret !";
+    document.getElementById('ee_msg').innerText = "Entrez votre numéro de cellule THX";
     document.getElementById('ee_msg').classList.remove('text-red-500', 'animate-pulse-fast');
     document.getElementById('ee_msg').classList.add('text-green-500');
     
@@ -74,20 +74,20 @@ function openEasterEgg() {
 }
 
 function eePress(num) {
-    if (eeInput.length >= 3 || eeTimer) return;
+    if (eeInput.length >= 4 || eeTimer) return;
     eeInput += num;
     document.getElementById('ee_display').innerText = '*'.repeat(eeInput.length);
     
-    if (eeInput.length === 3) {
+    if (eeInput.length === 4) {
         setTimeout(checkEeCode, 200);
     }
 }
 
 function checkEeCode() {
-    if (eeInput === "007") {
+    if (eeInput === "1138") {
         document.getElementById('easter_egg_modal').classList.add('hidden');
         document.getElementById('btn_pro_mode').classList.remove('hidden');
-        openIdentityModal();
+        openSoldierModal();
     } else {
         startSelfDestruct();
     }
@@ -115,23 +115,23 @@ function startSelfDestruct() {
     }, 1000);
 }
 
-function openIdentityModal() {
-    document.getElementById('agent_identity_input').value = agentIdentity;
-    document.getElementById('agent_identity_modal').classList.remove('hidden');
+function openSoldierModal() {
+    document.getElementById('soldier_identity_input').value = soldierIdentity;
+    document.getElementById('soldier_identity_modal').classList.remove('hidden');
 }
 
-function closeIdentityModal() {
-    document.getElementById('agent_identity_modal').classList.add('hidden');
+function closeSoldierModal() {
+    document.getElementById('soldier_identity_modal').classList.add('hidden');
 }
 
-function saveIdentity() {
-    agentIdentity = document.getElementById('agent_identity_input').value.trim();
-    if (agentIdentity) {
-        localStorage.setItem('agentIdentity', agentIdentity);
+function saveSoldierIdentity() {
+    soldierIdentity = document.getElementById('soldier_identity_input').value.trim();
+    if (soldierIdentity) {
+        localStorage.setItem('soldierIdentity', soldierIdentity);
     } else {
-        localStorage.removeItem('agentIdentity');
+        localStorage.removeItem('soldierIdentity');
     }
-    closeIdentityModal();
+    closeSoldierModal();
 }
 
 // Blocage agressif du "pull-to-refresh" sur mobile sauf si on scroll
@@ -486,13 +486,13 @@ function wizUpdateView() {
         if(el) { el.classList.add('hidden'); el.classList.remove('block'); }
     });
     
-	if (wizState.step < 2) {
+    if (wizState.step < 2) {
         switchTheme('assistant');
     } else {
         if (wizState.type === 't1') switchTheme('complet');
         else if (wizState.type === 't2') switchTheme('shortfill');
     }
-	
+
     let curStepId = wizState.path[wizState.step];
     let curEl = document.getElementById('wiz_' + curStepId);
     if(curEl) { curEl.classList.remove('hidden'); curEl.classList.add('block'); }
@@ -1420,7 +1420,6 @@ function calcAppend(val) {
 function calcClear() { calcExpr = ""; updateCalcDisplay(); }
 function calcResult() {
     try {
-        // Ajout du remplacement de % par /100
         let evalExpr = calcExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/%/g, '/100');
         let res = new Function('return ' + evalExpr)();
         if (isNaN(res) || !isFinite(res)) throw new Error("Erreur");
@@ -1437,8 +1436,8 @@ document.addEventListener('keydown', function(event) {
         let eeModal = document.getElementById('easter_egg_modal');
         if (!eeModal.classList.contains('hidden')) { return; } // On ne ferme pas la self-destruct au pif
         
-        let idModal = document.getElementById('agent_identity_modal');
-        if (!idModal.classList.contains('hidden')) { closeIdentityModal(); return; }
+        let idModal = document.getElementById('soldier_identity_modal');
+        if (!idModal.classList.contains('hidden')) { closeSoldierModal(); return; }
 
         let exportModal = document.getElementById('export_prompt_modal');
         if (!exportModal.classList.contains('hidden')) { cancelExport(); return; }
@@ -1653,8 +1652,8 @@ function getRecipeText() {
         }
     }
 
-    if (agentIdentity) {
-        text += `\nCette recette a été partagée par ${agentIdentity}\n`;
+    if (soldierIdentity) {
+        text += `\nCette recette a été partagée par ${soldierIdentity}\n`;
     }
     
     text += `\n-----------------\nL'app Je-DIY :\nhttps://lehcimcramtrebor.github.io/jediy/`;
@@ -1847,8 +1846,8 @@ function prepareCardForExport() {
     let footerDiv = document.createElement('div');
     footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-6 pt-4 border-t-2 border-stone-100';
     
-    let footerText = agentIdentity 
-        ? `Cette recette a été partagée par <span class="text-brand-600 font-black text-base">${agentIdentity}</span>`
+    let footerText = soldierIdentity 
+        ? `Cette recette a été partagée par <span class="text-brand-600 font-black text-base">${soldierIdentity}</span>`
         : `Scanne ce code pour réaliser tes propres calculs<br><span class="text-brand-600 font-black text-base">Je-DIY</span>`;
 
     footerDiv.innerHTML = `
@@ -1933,8 +1932,8 @@ function closeShareFlyerModal() { document.getElementById('share_flyer_modal').c
 
 function executeShare() {
     let shareText = 'Découvre Je-DIY, le calculateur expert de e-liquide super pratique pour la vape !';
-    if (agentIdentity) {
-        shareText = `Cette application a été partagée par ${agentIdentity}. ` + shareText;
+    if (soldierIdentity) {
+        shareText = `Cette application a été partagée par ${soldierIdentity}. ` + shareText;
     }
 
     const shareData = {
@@ -1999,26 +1998,37 @@ if ('serviceWorker' in navigator) {
             .catch(error => { console.log('Erreur d\'enregistrement du ServiceWorker:', error); });
     });
 }
-// Vide le cache, vire le Service Worker et recharge l'app
+
+// Vide le cache, le localStorage (sauf le Soldat), vire le Service Worker et recharge l'app
 function hardResetApp() {
-    // 1. On supprime tout le cache stocké
+    // 1. On met le soldat à l'abri
+    let savedSoldier = localStorage.getItem('soldierIdentity');
+    
+    // 2. On rase tout le stockage local
+    localStorage.clear();
+    
+    // 3. On remet le soldat à sa place
+    if (savedSoldier) {
+        localStorage.setItem('soldierIdentity', savedSoldier);
+    }
+
+    // 4. On supprime tout le cache stocké (fichiers PWA)
     if ('caches' in window) {
         caches.keys().then((names) => {
             for (let name of names) caches.delete(name);
         });
     }
     
-    // 2. On désenregistre le Service Worker puis on recharge la page
+    // 5. On désenregistre le Service Worker puis on force le rechargement
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then((registrations) => {
             for (let registration of registrations) {
                 registration.unregister();
             }
         }).then(() => {
-            window.location.reload();
+            window.location.reload(true);
         });
     } else {
-        // Fallback si pas de SW
-        window.location.reload();
+        window.location.reload(true);
     }
 }

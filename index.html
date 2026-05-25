@@ -138,9 +138,9 @@
         </div>
 
         <div class="absolute top-0 right-0 sm:right-2 md:right-4 flex gap-2 z-10">
-            <button onclick="openIdentityModal()" id="btn_pro_mode" class="hidden w-12 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 rounded-full text-white shadow-md border border-red-800 transition-all animate-fade-in" title="Mode Agent 007">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
-            </button>
+			<button onclick="openSoldierModal()" id="btn_pro_mode" class="hidden w-12 h-12 flex items-center justify-center bg-red-600 hover:bg-red-700 rounded-full text-white shadow-md border border-red-800 transition-all animate-fade-in" title="Mode Soldat">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+			</button>
             <button onclick="openCalcModal()" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Calculatrice Rapide">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="16" y1="18" x2="16" y2="18.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line></svg>
             </button>
@@ -836,22 +836,22 @@
         </div>
     </div>
 
-    <div id="agent_identity_modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
-        <div class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm cursor-pointer" onclick="closeIdentityModal()"></div>
-        <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
-            <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
-                Mode Agent
-            </h3>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mb-4">Bienvenue Agent 007, entrez votre nouvelle identité.</p>
-            <input type="text" id="agent_identity_input" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-xl p-3 mb-5 text-stone-800 dark:text-stone-100 font-bold focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors" placeholder="Nom de l'agent">
-            
-            <div class="flex justify-end gap-3">
-                <button onclick="closeIdentityModal()" class="px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors">Annuler</button>
-                <button onclick="saveIdentity()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-colors shadow-sm">Enregistrer</button>
-            </div>
-        </div>
-    </div>
+	<div id="soldier_identity_modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+		<div class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm cursor-pointer" onclick="closeSoldierModal()"></div>
+		<div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
+			<h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+				<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="text-red-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle><line x1="12" y1="2" x2="12" y2="22"></line><line x1="2" y1="12" x2="22" y2="12"></line></svg>
+				Mode Soldat
+			</h3>
+			<p class="text-sm text-stone-500 dark:text-stone-400 mb-4">Bienvenue Soldat, déclinez votre identité.</p>
+			<input type="text" id="soldier_identity_input" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-xl p-3 mb-5 text-stone-800 dark:text-stone-100 font-bold focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors" placeholder="Nom du soldat">
+
+			<div class="flex justify-end gap-3">
+				<button onclick="closeSoldierModal()" class="px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors">Annuler</button>
+				<button onclick="saveSoldierIdentity()" class="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-sm rounded-xl transition-colors shadow-sm">Enregistrer</button>
+			</div>
+		</div>
+	</div>
 
     <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
         <div class="modal-backdrop absolute inset-0 bg-stone-900/80 backdrop-blur-md cursor-pointer" onclick="closeHelpModal()"></div>
