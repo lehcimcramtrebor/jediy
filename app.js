@@ -259,9 +259,9 @@ function syncBoostSimple(source) {
     let countEl = document.getElementById('tab_boost_count');
     let mlEl = document.getElementById('tab_boost_ml');
     if (source === 'boosters') {
-        mlEl.value = round1((parseFloat(countEl.value) || 0) * 10);
+        mlEl.value = (parseFloat(countEl.value) || 0) * 10;
     } else {
-        countEl.value = round2((parseFloat(mlEl.value) || 0) / 10);
+        countEl.value = (parseFloat(mlEl.value) || 0) / 10;
     }
     triggerCalc();
 }
@@ -488,7 +488,7 @@ function updateAromaPreview(prefix) {
                 let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
                 if(1 - maxNic/bStr > 0) vol = prepVol / (1 - maxNic/bStr);
             }
-            syncInput.value = round2(vol * (perc / 100));
+            syncInput.value = vol * (perc / 100);
         }
     }
     if(prefix === 't1') updateNicPreview('t1');
@@ -516,8 +516,8 @@ function syncAromaFromMl(prefix) {
         if(perc < min) perc = min;
         if(perc > max) perc = max;
         
-        percInput.value = round1(perc);
-        document.getElementById(`${prefix}_aroma_perc_disp`).innerText = `${percInput.value}%`;
+        percInput.value = perc;
+        document.getElementById(`${prefix}_aroma_perc_disp`).innerText = `${round1(perc)}%`;
         triggerCalc();
     }
 }
@@ -792,9 +792,11 @@ function calcBoostSimple(prefix, containerId) {
     let hiddenCardHtml = "";
     let btnHtml = "";
 
+    let finalPgRatio = 50;
+
     if (advChecked) {
         let totalPgMl = (vol * (pg / 100)) + (bVol * (bPg / 100));
-        let finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 50;
+        finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 50;
         
         ratioHtml = `
             <div class="bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center transition-colors">
@@ -804,7 +806,7 @@ function calcBoostSimple(prefix, containerId) {
 
         hiddenCardHtml = `
         <div id="t_boost_hidden_card" class="hidden">
-            <div data-type="boost" data-ratio="${formatRatioStr(finalPgRatio, true)}" data-aroma-perc="Inconnu" data-nic-mg="${round1(finalNic)}" class="recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20 rounded-3xl flex flex-col transition-all w-full">
+            <div data-type="boost" data-ratio="${finalPgRatio}" data-aroma-perc="Inconnu" data-nic-mg="${finalNic}" class="recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20 rounded-3xl flex flex-col transition-all w-full">
                 <div class="flex-1">
                     <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700">
                         <div>
@@ -1089,7 +1091,7 @@ function calcTab3() {
 
     let hiddenCardHtml = `
     <div id="t3_hidden_card" class="hidden">
-        <div data-type="t1" data-ratio="${formatRatioStr(pgRatio, true)}" data-aroma-perc="${round1(aRatio)}" data-nic-mg="${round1(finalNic)}" class="recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20 rounded-3xl flex flex-col transition-all w-full">
+        <div data-type="t1" data-ratio="${pgRatio}" data-aroma-perc="${aRatio}" data-nic-mg="${finalNic}" class="recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700/50 bg-brand-50 dark:bg-brand-900/20 rounded-3xl flex flex-col transition-all w-full">
             <div class="flex-1">
                 <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700 transition-colors">
                     <div>
@@ -1253,16 +1255,16 @@ function buildCard(r, prefix, isAlt) {
     let aromaWeight = getWeight(r.aroma, actualAromaPg);
     let totalWeight = aromaWeight;
 
-    let dataAttrs = `data-type="${prefix}" data-ratio="${formatRatioStr(r.realPgRatio, true)}" data-base-pg="${r.realPgRatio}" `;
+    let dataAttrs = `data-type="${prefix}" data-ratio="${r.realPgRatio}" data-base-pg="${r.realPgRatio}" `;
     if (prefix === 't1') {
         let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
         let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
         let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
-        dataAttrs += `data-aroma-perc="${round1(finalAroma)}" data-nic-mg="${round1(finalNic)}" `;
+        dataAttrs += `data-aroma-perc="${finalAroma}" data-nic-mg="${finalNic}" `;
     } else if (prefix === 't2') {
         let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
         let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
-        dataAttrs += `data-aroma-perc="${round1(finalAroma)}" data-aroma-vol="${r.aroma}" data-nic-max="${r.nicMax}" data-prep-vol="${round1(r.prepVol)}" data-booster-str="${bStr}" `;
+        dataAttrs += `data-aroma-perc="${finalAroma}" data-aroma-vol="${r.aroma}" data-nic-max="${r.nicMax}" data-prep-vol="${r.prepVol}" data-booster-str="${bStr}" `;
     }
 
     let html = `<div ${dataAttrs} class="animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">`;
@@ -1340,7 +1342,7 @@ function buildCard(r, prefix, isAlt) {
         <div class="mt-auto border-t border-stone-200/50 dark:border-stone-700 pt-2 mb-2 text-right transition-colors">
             <span class="text-xs font-bold text-brand-600 dark:text-brand-400">Poids total estimé : ${round1(totalWeight)} g</span>
         </div>
-        <div class="sim-container mt-1 p-3 bg-white dark:bg-stone-900/80 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-200 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${round1(r.prepVol)}" data-aroma-vol="${round1(r.aroma)}" data-max-nic="${round1(r.nicMax)}" data-bstr="${round1(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${round1(r.realPgRatio)}">
+        <div class="sim-container mt-1 p-3 bg-white dark:bg-stone-900/80 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-200 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${r.prepVol}" data-aroma-vol="${r.aroma}" data-max-nic="${r.nicMax}" data-bstr="${parseFloat(document.getElementById('t2_booster_str').value)||20}" data-base-pg="${r.realPgRatio}">
             <div class="flex items-center justify-center gap-2 mb-2 text-stone-500 dark:text-stone-400 font-bold text-[10px] uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors">
                 <span>🧪 Simulation d'ajout de boosters</span>
             </div>
@@ -1354,7 +1356,7 @@ function buildCard(r, prefix, isAlt) {
         });
 
         html += `
-                    <option value="${round1(r.prepVol)}">Total (${round1(r.prepVol)}ml)</option>
+                    <option value="${r.prepVol}">Total (${round1(r.prepVol)}ml)</option>
                     <option value="custom">Manuel...</option>
                 </select>
                 <div class="sim-custom-wrapper hidden items-center bg-stone-50 dark:bg-stone-800 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors">
@@ -1456,10 +1458,10 @@ function syncSimInputs(inputEl, source) {
     
     if (source === 'boosters') {
         let count = parseFloat(bInput.value) || 0;
-        mlInput.value = round1(count * 10);
+        mlInput.value = count * 10;
     } else {
         let ml = parseFloat(mlInput.value) || 0;
-        bInput.value = round1(ml / 10);
+        bInput.value = ml / 10;
     }
     updateSim(inputEl);
 }
@@ -1532,7 +1534,7 @@ function calcResult() {
         let evalExpr = calcExpr.replace(/×/g, '*').replace(/÷/g, '/').replace(/%/g, '/100');
         let res = new Function('return ' + evalExpr)();
         if (isNaN(res) || !isFinite(res)) throw new Error("Erreur");
-        calcExpr = (Math.round(res * 1000) / 1000).toString();
+        calcExpr = res.toString();
         updateCalcDisplay();
     } catch(e) {
         calcExpr = "Erreur"; updateCalcDisplay(); setTimeout(calcClear, 1000);
@@ -1657,12 +1659,12 @@ function getRecipeText() {
     let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
     let type = clone.getAttribute('data-type');
     let ratio = clone.getAttribute('data-ratio');
-    let aromaPerc = clone.getAttribute('data-aroma-perc');
+    let aromaPerc = parseFloat(clone.getAttribute('data-aroma-perc')) || 0;
     let basePg = parseFloat(clone.getAttribute('data-base-pg')) || 50;
     
     let titleEl = clone.querySelector('.font-extrabold.text-lg');
     if(titleEl) text += `${titleEl.innerText.replace(/\n/g, ' ')}\n`;
-    if (ratio) text += `⚖️ Ratio : ${ratio}\n`;
+    if (ratio) text += `⚖️ Ratio : ${formatRatioStr(ratio, true)}\n`;
     
     text += `\n📝 INGRÉDIENTS :\n`;
     
@@ -1677,20 +1679,20 @@ function getRecipeText() {
     });
     
     if (type === 't1' || type === 'boost') {
-        let aromaStr = type === 'boost' ? 'Inconnu' : `${aromaPerc}%`;
+        let aromaStr = type === 'boost' ? 'Inconnu' : `${round1(aromaPerc)}%`;
         text += `\n🎯 RÉSULTAT :\n- Arôme : ${aromaStr}\n`;
-        let nicMg = clone.getAttribute('data-nic-mg');
-        text += `- Nicotine : ${nicMg} mg/ml\n`;
+        let nicMg = parseFloat(clone.getAttribute('data-nic-mg')) || 0;
+        text += `- Nicotine : ${round1(nicMg)} mg/ml\n`;
     } else if (type === 't2') {
-        let nicMax = parseFloat(clone.getAttribute('data-nic-max'));
-        let prepVol = parseFloat(clone.getAttribute('data-prep-vol'));
-        let bStr = parseFloat(clone.getAttribute('data-booster-str'));
+        let nicMax = parseFloat(clone.getAttribute('data-nic-max')) || 0;
+        let prepVol = parseFloat(clone.getAttribute('data-prep-vol')) || 0;
+        let bStr = parseFloat(clone.getAttribute('data-booster-str')) || 20;
         let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
         
-        let aromaBeforeBoost = prepVol > 0 ? round1((totalAroma / prepVol) * 100) : 0;
+        let aromaBeforeBoost = prepVol > 0 ? (totalAroma / prepVol) * 100 : 0;
         
-        text += `\n🎯 RÉSULTAT (Avant boost) :\n- Arôme surdosé : ${aromaBeforeBoost}%\n`;
-        text += `- Cibles après boost : ${aromaPerc}% d'arôme | ${nicMax} mg/ml max\n`;
+        text += `\n🎯 RÉSULTAT (Avant boost) :\n- Arôme surdosé : ${round1(aromaBeforeBoost)}%\n`;
+        text += `- Cibles après boost : ${round1(aromaPerc)}% d'arôme | ${round1(nicMax)} mg/ml max\n`;
         
         let bRatioSel = clone.querySelector('.sim-b-ratio');
         let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
@@ -1723,10 +1725,9 @@ function getRecipeText() {
             
             let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
             let maxBCount = exactMaxBVol / 10;
-            let roundedMax = round1(maxBCount);
             let floorMax = Math.floor(maxBCount);
             
-            if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
+            if (floorMax > 0 && floorMax < maxBCount && !sims.has(floorMax)) {
                 let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
                 let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
                 let finalPgFloor = ((baseVol * (basePg/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100;
@@ -1736,8 +1737,8 @@ function getRecipeText() {
             
             let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
             let maxFinalPg = ((baseVol * (basePg/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100;
-            let wMax = getWeight(roundedMax * 10, bPg);
-            out += `+ MAX ${roundedMax} boost. (${round1(roundedMax*10)}ml - ${round1(wMax)}g)\n  > Nic: ${nicMax} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
+            let wMax = getWeight(maxBCount * 10, bPg);
+            out += `+ MAX ${round1(maxBCount)} boost. (${round1(maxBCount*10)}ml - ${round1(wMax)}g)\n  > Nic: ${round1(nicMax)} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
             return out;
         }
 
@@ -1755,7 +1756,7 @@ function getRecipeText() {
             let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
             
             let wCustom = getWeight(customBCount * 10, bPg);
-            let customLine = `+ ${customBCount} boost. (${round1(customBCount*10)}ml - ${round1(wCustom)}g)\n  > Nic: ~${round1(actualNic)} mg\n  > Arôme: ~${round1(finalAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(customFinalPg)}\n`;
+            let customLine = `+ ${round1(customBCount)} boost. (${round1(customBCount*10)}ml - ${round1(wCustom)}g)\n  > Nic: ~${round1(actualNic)} mg\n  > Arôme: ~${round1(finalAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(customFinalPg)}\n`;
             
             if (!text.includes(customLine)) {
                 text += `\n💡 GUIDE PERSONNALISÉ RATIO ${formatRatioStr(bPg)}\n(pour ${round1(customPreleveVol)} ml) :\n${customLine}`;
@@ -1814,10 +1815,9 @@ function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, b
     
     let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax);
     let maxBCount = exactMaxBVol / 10;
-    let roundedMax = round1(maxBCount);
     let floorMax = Math.floor(maxBCount);
     
-    if (floorMax > 0 && floorMax < roundedMax && !sims.has(floorMax)) {
+    if (floorMax > 0 && floorMax < maxBCount && !sims.has(floorMax)) {
         let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10);
         let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100;
         let finalPgFloor = ((baseVol * (basePg/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100;
@@ -1826,7 +1826,7 @@ function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, b
     
     let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100;
     let maxFinalPg = ((baseVol * (basePg/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100;
-    sims.set(roundedMax, { nic: nicMax, aroma: maxAromaPerc, pg: maxFinalPg, isMax: true });
+    sims.set(maxBCount, { nic: nicMax, aroma: maxAromaPerc, pg: maxFinalPg, isMax: true });
     
     let results = Array.from(sims, ([bCount, data]) => ({ bCount, ...data }));
     results.sort((a, b) => a.bCount - b.bCount);
@@ -1850,11 +1850,11 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
         let warning = (row.nic > nicMax) ? `<span class="text-red-500 font-bold text-[8px] ml-1">⚠️ Max dépassé</span>` : '';
         let trClass = isMax ? "text-brand-700 font-bold" : "text-stone-600";
         let prefix = isMax ? "MAX: " : "+ ";
-let mlText = round1(row.bCount * 10);
+        let mlText = round1(row.bCount * 10);
         let bWeight = getWeight(row.bCount * 10, bPg);
         html += `
             <tr class="${trClass} border-b border-stone-100/50 last:border-0">
-                <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${row.bCount} boost. <span class="text-[8px] opacity-70">(${mlText}ml - ${round1(bWeight)}g)</span></td>
+                <td class="py-1 align-middle whitespace-nowrap pr-2">${prefix}${round1(row.bCount)} boost. <span class="text-[8px] opacity-70">(${mlText}ml - ${round1(bWeight)}g)</span></td>
                 <td class="py-1 align-middle whitespace-nowrap pr-2">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</td>
                 <td class="py-1 align-middle text-right">
                     Arôme: ${isMax ? '' : '~'}${round1(row.aroma)}%<br>
@@ -1925,7 +1925,7 @@ function prepareCardForExport() {
                     let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
                     
                     let warning = actualNic > maxNic;
-let customMlText = round1(customBCount * 10);
+                    let customMlText = round1(customBCount * 10);
                     let customBoostWeight = getWeight(customBCount * 10, bPg);
                     
                     let customBaseWeight = getWeight(customPreleveVol, basePg);
@@ -1938,7 +1938,7 @@ let customMlText = round1(customBCount * 10);
                         </div>
                         <table class="w-full text-left font-medium mt-1">
                             <tr class="border-b border-stone-100/50 last:border-0">
-                                <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${customBCount} boost. <span class="text-[8px] opacity-70">(${customMlText}ml - ${round1(customBoostWeight)}g)</span></td>
+                                <td class="py-1 align-middle whitespace-nowrap pr-2">+ ${round1(customBCount)} boost. <span class="text-[8px] opacity-70">(${customMlText}ml - ${round1(customBoostWeight)}g)</span></td>
                                 <td class="py-1 align-middle whitespace-nowrap pr-2">-> ~${round1(actualNic)} mg</td>
                                 <td class="py-1 align-middle text-right">
                                     Arôme: ~${round1(finalAromaPerc)}%<br>
