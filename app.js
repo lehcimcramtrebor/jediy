@@ -1446,7 +1446,19 @@ function closeSettingsModal() { document.getElementById('settings_modal').classL
 function openResetConfirm() { closeSettingsModal(); document.getElementById('reset_confirm_modal').classList.remove('hidden'); }
 function closeResetConfirm() { document.getElementById('reset_confirm_modal').classList.add('hidden'); }
 function showAlert(msg) { let m = document.getElementById('alert_modal'); document.getElementById('alert_text').innerText = msg; m.classList.remove('hidden'); setTimeout(() => m.classList.add('hidden'), 2500); }
+function openHtmlConfirm(msg, callback) {
+    document.getElementById('html_confirm_msg').innerText = msg;
+    let btnOk = document.getElementById('html_confirm_btn_ok');
+    btnOk.onclick = () => {
+        closeHtmlConfirm();
+        if (callback) callback();
+    };
+    document.getElementById('html_confirm_modal').classList.remove('hidden');
+}
 
+function closeHtmlConfirm() {
+    document.getElementById('html_confirm_modal').classList.add('hidden');
+}
 function toggleSaveMixBtn() { 
     let val = document.getElementById('mix_name_input').value.trim(); 
     let isValid = val.length >= 2;
@@ -1643,7 +1655,13 @@ function editMix(id) {
     triggerCalc(); window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
-function deleteMix(id) { savedMixes = savedMixes.filter(x => x.id !== id); localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes)); renderMesMixes(); }
+function deleteMix(id) {
+    openHtmlConfirm("Supprimer ce mix ?", () => {
+        savedMixes = savedMixes.filter(x => x.id !== id); 
+        localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes)); 
+        renderMesMixes(); 
+    });
+}
 function deleteCompo(id) { 
     openHtmlConfirm("Supprimer cette composition ?", () => {
         savedCompos = savedCompos.filter(x => x.id !== id); localStorage.setItem('jediy_compos', JSON.stringify(savedCompos)); syncCompoSelects(); renderMesCompos(); 
