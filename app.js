@@ -488,11 +488,31 @@ function editCompo(id) {
 
 function closeCompoEditModal() { document.getElementById('compo_edit_modal').classList.add('hidden'); currentEditCompoId = null; }
 
+function createNewCompo() {
+    currentEditCompoId = null;
+    state.edit_compo.multi = [];
+    document.getElementById('edit_compo_name').value = '';
+    document.getElementById('compo_edit_modal').classList.remove('hidden');
+    renderMultiList('edit_compo');
+}
+
 function saveEditedCompo() {
-    if(!currentEditCompoId) return;
     let name = document.getElementById('edit_compo_name').value.trim();
     if(name.length < 2 || state.edit_compo.multi.length === 0) { showAlert("Nom requis et au moins 1 ingrédient."); return; }
     
+    // Mode CREATION
+    if (!currentEditCompoId) {
+        let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+        if (existingIdx >= 0) {
+            openHtmlConfirm("Ce nom existe déjà. Écraser l'autre composition ?", () => {
+                savedCompos.splice(existingIdx, 1);
+                _finalizeNewCompoSave(name);
+            });
+        } else { _finalizeNewCompoSave(name); }
+        return;
+    }
+
+    // Mode EDITION
     let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== currentEditCompoId);
     if (existingIdx >= 0) {
         openHtmlConfirm("Ce nom existe déjà. Écraser l'autre composition ?", () => {
@@ -500,6 +520,15 @@ function saveEditedCompo() {
             _finalizeEditCompoSave(name);
         });
     } else { _finalizeEditCompoSave(name); }
+}
+
+function _finalizeNewCompoSave(name) {
+    savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
+    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    syncCompoSelects(); 
+    setNeedsExport(true); 
+    showAlert("Composition créée !"); 
+    closeCompoEditModal();
 }
 
 function _finalizeEditCompoSave(name) {
@@ -1468,16 +1497,19 @@ function toggleGroupMixes() {
 }
 
 function switchDataTab(tab) {
+    let btnCreate = document.getElementById('btn_create_compo');
     if(tab === 'mixes') {
         document.getElementById('mes_mixes_list').classList.remove('hidden'); document.getElementById('mes_compos_list').classList.add('hidden');
         document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
         document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
         document.getElementById('btn_import_compo').classList.add('hidden');
+        if(btnCreate) btnCreate.classList.add('hidden');
     } else {
         document.getElementById('mes_compos_list').classList.remove('hidden'); document.getElementById('mes_mixes_list').classList.add('hidden');
         document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
         document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
         document.getElementById('btn_import_compo').classList.remove('hidden');
+        if(btnCreate) btnCreate.classList.remove('hidden');
     }
 }
 
