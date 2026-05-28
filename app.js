@@ -714,22 +714,25 @@ function exportCompoPDF(action) {
     document.body.appendChild(wrapper); document.body.classList.add('exporting');
     let safeName = data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     
-    let opt = {
-        margin: 5, filename: `Compo_${safeName}.pdf`, image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    };
-    let worker = html2pdf().set(opt).from(wrapper);
+    // ON AJOUTE LE SETTIMEOUT ICI POUR LAISSER LE DOM ET L'IMAGE CHARGER
+    setTimeout(() => {
+        let opt = {
+            margin: 5, filename: `Compo_${safeName}.pdf`, image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        let worker = html2pdf().set(opt).from(wrapper);
 
-    worker.output('blob').then(pdfBlob => {
-        if (action === 'download') worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); });
-        else {
-            let file = new File([pdfBlob], `Compo_${safeName}.pdf`, { type: 'application/pdf' });
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({ files: [file], title: data.name, text: 'Ma compo Je-DIY' }).then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }).catch(()=>{wrapper.remove(); document.body.classList.remove('exporting');});
-            } else { worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }); }
-        }
-    });
+        worker.output('blob').then(pdfBlob => {
+            if (action === 'download') worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); });
+            else {
+                let file = new File([pdfBlob], `Compo_${safeName}.pdf`, { type: 'application/pdf' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({ files: [file], title: data.name, text: 'Ma compo Je-DIY' }).then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }).catch(()=>{wrapper.remove(); document.body.classList.remove('exporting');});
+                } else { worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }); }
+            }
+        });
+    }, 500); // 300ms d'attente
 }
 
 
