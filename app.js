@@ -67,7 +67,9 @@ function init() {
     updateRatioDisp('t1'); updateRatioDisp('t2'); 
     updateAromaPreview('t1'); updateAromaPreview('t2');
     syncCompoSelects();
-    triggerCalc(); wizUpdateView();
+    triggerCalc(); 
+    wizUpdateView();
+    updateSettingsBadge();
 }
 window.onload = () => { init(); };
 
@@ -428,7 +430,9 @@ function saveCompo(prefix) {
 function _doSaveCompo(name, prefix) {
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state[prefix].multi)) });
     localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
-    syncCompoSelects(); showAlert("Composition sauvegardée !");
+    syncCompoSelects(); 
+    setNeedsExport(true);
+    showAlert("Composition sauvegardée !");
 }
 
 function syncCompoSelects() {
@@ -502,7 +506,10 @@ function _finalizeEditCompoSave(name) {
     let c = savedCompos.find(x => x.id === currentEditCompoId);
     if(c) { c.name = name; c.items = JSON.parse(JSON.stringify(state.edit_compo.multi)); }
     localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
-    syncCompoSelects(); showAlert("Composition mise à jour !"); closeCompoEditModal();
+    syncCompoSelects(); 
+    setNeedsExport(true);
+    showAlert("Composition mise à jour !"); 
+    closeCompoEditModal();
 }
 
 function saveAsNewCompo() {
@@ -510,7 +517,10 @@ function saveAsNewCompo() {
     if(state.edit_compo.multi.length === 0) return;
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
     localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
-    syncCompoSelects(); showAlert("Copie sauvegardée !"); closeCompoEditModal();
+    syncCompoSelects(); 
+    setNeedsExport(true);
+    showAlert("Copie sauvegardée !"); 
+    closeCompoEditModal();
 }
 
 function openExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.remove('hidden'); }
@@ -1366,12 +1376,29 @@ document.addEventListener('keydown', function(event) {
 /* ========================================== */
 
 function updateSettingsBadge() {
+    let needsExport = localStorage.getItem('jediy_needs_export') === 'true';
     let gearBadge = document.getElementById('gear_badge');
-    if(gearBadge) { if(deferredPrompt || unreadNotification) gearBadge.classList.remove('hidden'); else gearBadge.classList.add('hidden'); }
+    let exportBadge = document.getElementById('export_json_badge');
+    
+    if(gearBadge) { 
+        if(deferredPrompt || unreadNotification || needsExport) gearBadge.classList.remove('hidden'); 
+        else gearBadge.classList.add('hidden'); 
+    }
+    if(exportBadge) {
+        if(needsExport) exportBadge.classList.remove('hidden');
+        else exportBadge.classList.add('hidden');
+    }
+}
+
+function setNeedsExport(state) {
+    if (state) localStorage.setItem('jediy_needs_export', 'true');
+    else localStorage.removeItem('jediy_needs_export');
+    updateSettingsBadge();
 }
 
 function openSettingsModal() { 
-    unreadNotification = false; updateSettingsBadge();
+    unreadNotification = false; 
+    updateSettingsBadge();
     document.getElementById('settings_modal').classList.remove('hidden'); 
 }
 function closeSettingsModal() { document.getElementById('settings_modal').classList.add('hidden'); }
@@ -1416,7 +1443,7 @@ function saveCurrentMix() {
     if(name.length < 2) return;
     savedMixes.push({ id: Date.now(), name: name, config: cfg });
     localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes));
-    unreadNotification = true; updateSettingsBadge();
+    setNeedsExport(true);
     showAlert("Mix sauvegardé !"); cancelExport();
     if(document.getElementById('tab_mes_donnees').classList.contains('active')) renderMesMixes();
 }
@@ -1591,9 +1618,19 @@ async function exportSettingsJson() {
     try {
         if(window.showSaveFilePicker) {
             const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'JSON', accept: {'application/json': ['.json']} }] });
-            const writable = await handle.createWritable(); await writable.write(jsonStr); await writable.close(); showAlert("Fichier sauvegardé !");
-        } else fallbackDownload(jsonStr, filename);
-    } catch(err) { if(err.name !== 'AbortError') fallbackDownload(jsonStr, filename); }
+            const writable = await handle.createWritable(); await writable.write(jsonStr); await writable.close(); 
+            setNeedsExport(false);
+            showAlert("Fichier sauvegardé !");
+        } else {
+            fallbackDownload(jsonStr, filename);
+            setNeedsExport(false);
+        }
+    } catch(err) { 
+        if(err.name !== 'AbortError') {
+            fallbackDownload(jsonStr, filename);
+            setNeedsExport(false);
+        } 
+    }
 }
 
 function fallbackDownload(jsonStr, filename) {
