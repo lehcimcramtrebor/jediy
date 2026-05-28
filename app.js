@@ -655,20 +655,22 @@ function exportCompoPDF(action) {
     let html = `<div class="export-title mb-5 border-b border-stone-200 pb-4 flex justify-between items-start">
         <div class="flex-1 pr-4"><div class="text-2xl font-black text-stone-800 tracking-tight leading-none mb-1.5">${data.name}</div><div class="inline-block text-[9px] font-bold text-stone-500 uppercase tracking-widest bg-stone-100 px-2 py-0.5 rounded">Je-DIY • Composition Recipe</div></div>
         <div class="flex gap-3 items-center"><div class="text-right text-xs"><span class="block text-brand-600 font-black text-base bg-stone-100 px-2 py-1 rounded-lg">${round1(tPerc)}% Total</span></div><img src="jediy.png" alt="QR" class="w-14 h-14 rounded-xl shadow-sm border border-stone-200"></div>
-    </div><div class="space-y-2">`;
+    </div><div class="grid grid-cols-3 gap-2">`;
     
     data.items.forEach(i => {
         let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : 'Densité 1.0');
         let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
-        html += `<div class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-200 text-sm">
-            <span class="font-bold text-stone-700">${icon} ${i.name} <span class="text-[10px] text-stone-500 ml-1 bg-stone-200 px-1 rounded">${details}</span></span>
+        
+        // Structure compacte adaptée pour s'afficher en grille de 3
+        html += `<div class="flex flex-col items-center justify-center bg-stone-50 p-2 rounded-xl border border-stone-200 text-xs text-center">
+            <span class="font-bold text-stone-700 truncate w-full" title="${i.name}">${icon} ${i.name}</span>
+            <span class="text-[9px] text-stone-500 bg-stone-200 px-1 rounded my-0.5">${details}</span>
             <span class="font-black text-brand-600">${i.perc}%</span>
         </div>`;
     });
     
     let footerText = jediIdentity ? `Composition partagée par <strong class="text-brand-600">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
-    html += `</div><div class="export-footer mt-6 text-center border-t border-stone-200 pt-3"><span class="text-[9px] text-stone-500 uppercase tracking-widest font-bold">${footerText}</span></div>`;
-    container.innerHTML = html;
+    html += `</div><div class="export-footer mt-6 text-center border-t border-stone-200 pt-3"><span class="text-[9px] text-stone-500 uppercase tracking-widest font-bold">${footerText}</span></div>`;    container.innerHTML = html;
     wrapper.appendChild(container);
     
     document.body.appendChild(wrapper); document.body.classList.add('exporting');
@@ -1960,6 +1962,13 @@ function prepareCardForExport() {
     clone.style.width = '600px';
     clone.style.margin = '0 auto';
     clone.style.backgroundColor = '#ffffff';
+
+    // Force 3 colonnes en supprimant les classes responsives liées à la taille de l'écran
+    let aromaGrids = clone.querySelectorAll('.grid-cols-1.sm\\:grid-cols-2');
+    aromaGrids.forEach(g => {
+        g.classList.remove('grid-cols-1', 'sm:grid-cols-2');
+        g.classList.add('grid-cols-3');
+    });
 
     let name = document.getElementById('mix_name_input').value.trim() || "Mix";
     let cfgStr = clone.getAttribute('data-config'); let c = JSON.parse(decodeURIComponent(cfgStr));
