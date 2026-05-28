@@ -926,11 +926,11 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h2 class="text-xl font-extrabold flex items-center gap-2 text-stone-800 dark:text-stone-100">💾 Historique</h2>
                 
-                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+				<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                     <button id="btn_create_compo" onclick="createNewCompo()" class="hidden px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2">
-					✨ Nouvelle Compo
-				</button>
-					<button id="btn_import_compo" onclick="document.getElementById('json_compo_import_input').click()" class="hidden px-4 py-2 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 hover:bg-brand-200 dark:hover:bg-brand-900/50 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 border border-brand-200 dark:border-brand-800">
+                        ✨ Nouvelle Compo
+                    </button>
+                    <button id="btn_import_compo" onclick="document.getElementById('json_compo_import_input').click()" class="hidden px-4 py-2 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 hover:bg-brand-200 dark:hover:bg-brand-900/50 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 border border-brand-200 dark:border-brand-800">
                         📥 Importer Composition
                     </button>
                     <input type="file" id="json_compo_import_input" accept=".json" class="hidden" onchange="importCompoJson(event)">

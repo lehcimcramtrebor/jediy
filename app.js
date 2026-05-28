@@ -338,10 +338,26 @@ function setAromaMode(prefix, mode) {
     updateAromaPreview(prefix); triggerCalc();
 }
 
+function checkMultiAddButtons(prefix) {
+    let isValid = true;
+    // Vérifie si un ingrédient a un nom de moins de 2 caractères
+    state[prefix].multi.forEach(item => {
+        if (item.name.trim().length < 2) isValid = false;
+    });
+    
+    // Cible et grise automatiquement les 3 boutons d'ajout concernés
+    let btns = document.querySelectorAll(`button[onclick^="addMultiLine('${prefix}'"]`);
+    btns.forEach(btn => {
+        btn.disabled = !isValid;
+        if (!isValid) btn.classList.add('opacity-50', 'cursor-not-allowed');
+        else btn.classList.remove('opacity-50', 'cursor-not-allowed');
+    });
+}
+
 function addMultiLine(prefix, type) {
     let id = Date.now() + Math.floor(Math.random() * 1000);
-    let name = type === 'aroma' ? `Arôme 0${state[prefix].multi.filter(x=>x.type==='aroma').length + 1}` : (type === 'water' ? 'Eau' : 'Alcool');
-    // On force la valeur perc à 0
+    // Nom vide pour l'arôme, pré-rempli pour Eau et Alcool
+    let name = type === 'aroma' ? '' : (type === 'water' ? 'Eau' : 'Alcool');
     state[prefix].multi.push({ id, type, name, pg: 100, degree: 40, perc: 0 });
     renderMultiList(prefix); 
     if(prefix !== 'edit_compo') { updateAromaPreview(prefix); triggerCalc(); }
@@ -358,7 +374,15 @@ function updateMulti(prefix, id, field, val) {
     if(field === 'perc') { val = parseFloat(val); if(isNaN(val) || val < 0) val = 0; }
     if(field === 'pg' || field === 'degree') val = parseFloat(val) || 0;
     item[field] = val;
-    if(field === 'perc') { renderMultiList(prefix); if(prefix !== 'edit_compo'){ updateAromaPreview(prefix); triggerCalc(); } }
+    
+    if(field === 'perc') { 
+        renderMultiList(prefix); 
+        if(prefix !== 'edit_compo'){ updateAromaPreview(prefix); triggerCalc(); } 
+    }
+    if(field === 'name') { 
+        checkMultiAddButtons(prefix); 
+        if(prefix !== 'edit_compo') checkCompoSave(prefix); 
+    }
 }
 
 function updateMultiPerc(prefix, id, step) {
@@ -385,10 +409,13 @@ function renderMultiList(prefix) {
             selectHtml = `<div class="text-[10px] text-stone-500 font-bold mt-2 px-1">Densité: 1.0</div>`;
         }
 
+        // Le texte inactif quand la case est vide
+        let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
+
         html += `
         <div class="flex items-center p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm relative h-[104px]">
             <div class="flex-1 flex flex-col justify-between h-full pr-2">
-                <input type="text" value="${item.name}" oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+                <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
                 ${selectHtml}
             </div>
             <div class="flex flex-col items-end justify-center w-28 pl-2 border-l border-stone-100 dark:border-stone-700 h-full">
@@ -407,16 +434,22 @@ function renderMultiList(prefix) {
     if(percEl) percEl.innerText = `${round1(total)}%`;
     if(prefix !== 'edit_compo') checkCompoSave(prefix);
     if(prefix === 't3') syncT3MultiVol(document.getElementById('t3_aroma_vol_multi').value);
+    
+    checkMultiAddButtons(prefix); // Grise les boutons d'ajout si un nom est manquant
 }
 
 function checkCompoSave(prefix) {
     let inp = document.getElementById(`${prefix}_compo_name`); let btn = document.getElementById(`${prefix}_btn_save_compo`);
-    if(inp && btn) { btn.disabled = inp.value.trim().length < 2 || state[prefix].multi.length === 0; }
+    if(inp && btn) { 
+        let itemsValid = state[prefix].multi.every(item => item.name.trim().length >= 2);
+        btn.disabled = inp.value.trim().length < 2 || state[prefix].multi.length === 0 || !itemsValid; 
+    }
 }
 
 function saveCompo(prefix) {
     let name = document.getElementById(`${prefix}_compo_name`).value.trim();
-    if(name.length < 2 || state[prefix].multi.length === 0) return;
+    let itemsValid = state[prefix].multi.every(item => item.name.trim().length >= 2);
+    if(name.length < 2 || state[prefix].multi.length === 0 || !itemsValid) return;
     
     let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
     if (existingIdx >= 0) {
@@ -430,9 +463,7 @@ function saveCompo(prefix) {
 function _doSaveCompo(name, prefix) {
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state[prefix].multi)) });
     localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
-    syncCompoSelects(); 
-    setNeedsExport(true);
-    showAlert("Composition sauvegardée !");
+    syncCompoSelects(); setNeedsExport(true); showAlert("Composition sauvegardée !");
 }
 
 function syncCompoSelects() {
@@ -457,24 +488,15 @@ function loadCompo(prefix, idStr) {
     }
 }
 
-/* ========================================== */
-/* 5. GESTION DES MODALES SPECIFIQUES         */
-/* ========================================== */
+// --- CREATION ET EDITION VIA MODALE ---
 
-let htmlConfirmCallback = null;
-function openHtmlConfirm(msg, callback) {
-    document.getElementById('html_confirm_msg').innerText = msg;
-    htmlConfirmCallback = callback;
-    document.getElementById('html_confirm_modal').classList.remove('hidden');
+function createNewCompo() {
+    currentEditCompoId = null;
+    state.edit_compo.multi = [];
+    document.getElementById('edit_compo_name').value = '';
+    document.getElementById('compo_edit_modal').classList.remove('hidden');
+    renderMultiList('edit_compo');
 }
-function closeHtmlConfirm() {
-    document.getElementById('html_confirm_modal').classList.add('hidden');
-    htmlConfirmCallback = null;
-}
-document.getElementById('html_confirm_btn_ok').addEventListener('click', () => {
-    if(htmlConfirmCallback) htmlConfirmCallback();
-    closeHtmlConfirm();
-});
 
 function editCompo(id) {
     currentEditCompoId = id;
@@ -488,19 +510,15 @@ function editCompo(id) {
 
 function closeCompoEditModal() { document.getElementById('compo_edit_modal').classList.add('hidden'); currentEditCompoId = null; }
 
-function createNewCompo() {
-    currentEditCompoId = null;
-    state.edit_compo.multi = [];
-    document.getElementById('edit_compo_name').value = '';
-    document.getElementById('compo_edit_modal').classList.remove('hidden');
-    renderMultiList('edit_compo');
-}
-
 function saveEditedCompo() {
     let name = document.getElementById('edit_compo_name').value.trim();
-    if(name.length < 2 || state.edit_compo.multi.length === 0) { showAlert("Nom requis et au moins 1 ingrédient."); return; }
+    let itemsValid = state.edit_compo.multi.every(item => item.name.trim().length >= 2);
     
-    // Mode CREATION
+    if(name.length < 2 || state.edit_compo.multi.length === 0 || !itemsValid) { 
+        showAlert("Nom de compo et ingrédients valides requis (min 2 lettres)."); 
+        return; 
+    }
+    
     if (!currentEditCompoId) {
         let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
         if (existingIdx >= 0) {
@@ -512,7 +530,6 @@ function saveEditedCompo() {
         return;
     }
 
-    // Mode EDITION
     let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== currentEditCompoId);
     if (existingIdx >= 0) {
         openHtmlConfirm("Ce nom existe déjà. Écraser l'autre composition ?", () => {
@@ -525,31 +542,26 @@ function saveEditedCompo() {
 function _finalizeNewCompoSave(name) {
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
     localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
-    syncCompoSelects(); 
-    setNeedsExport(true); 
-    showAlert("Composition créée !"); 
-    closeCompoEditModal();
+    syncCompoSelects(); setNeedsExport(true); showAlert("Composition créée !"); closeCompoEditModal();
 }
 
 function _finalizeEditCompoSave(name) {
     let c = savedCompos.find(x => x.id === currentEditCompoId);
     if(c) { c.name = name; c.items = JSON.parse(JSON.stringify(state.edit_compo.multi)); }
     localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
-    syncCompoSelects(); 
-    setNeedsExport(true);
-    showAlert("Composition mise à jour !"); 
-    closeCompoEditModal();
+    syncCompoSelects(); setNeedsExport(true); showAlert("Composition mise à jour !"); closeCompoEditModal();
 }
 
 function saveAsNewCompo() {
     let name = document.getElementById('edit_compo_name').value.trim() + " (Copie)";
-    if(state.edit_compo.multi.length === 0) return;
+    let itemsValid = state.edit_compo.multi.every(item => item.name.trim().length >= 2);
+    if(state.edit_compo.multi.length === 0 || !itemsValid) { 
+        showAlert("Ingrédients valides requis."); 
+        return; 
+    }
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
     localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
-    syncCompoSelects(); 
-    setNeedsExport(true);
-    showAlert("Copie sauvegardée !"); 
-    closeCompoEditModal();
+    syncCompoSelects(); setNeedsExport(true); showAlert("Copie sauvegardée !"); closeCompoEditModal();
 }
 
 function openExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.remove('hidden'); }
