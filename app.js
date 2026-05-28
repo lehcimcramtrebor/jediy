@@ -1479,7 +1479,7 @@ function generateSavedCompoHtml(c) {
                 <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg">${c.name}</div>
                 <div class="text-xs font-bold text-brand-600 mt-1">${c.items.length} ingrédient(s) | ${round1(totalPerc)}% Total</div>
             </div>
-            <button onclick="deleteCompo(${c.id})" class="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 rounded-lg shadow-sm border border-red-200 transition-colors">🗑️</button>
+            <button onclick="deleteCompo(${c.id})" class="w-8 h-8 flex items-center justify-center bg-red-500 dark:bg-red-600 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-red-600 transition-colors" title="Supprimer">🗑️</button>
         </div>
         <div class="space-y-2 mb-4">`;
     c.items.forEach(i => {
