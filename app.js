@@ -787,6 +787,15 @@ function runWizCalculation() {
 
     if (prefix === 't1') calcTab1(); else calcTab2();
     document.getElementById('wiz_results_container').innerHTML = document.getElementById(prefix + '_results_container').innerHTML;
+    
+    let header = document.getElementById('wiz_results_header');
+    let container = document.getElementById('wiz_results_container');
+    if(container.querySelector('.bg-red-50') || container.innerHTML.includes('Aucun Mix possible')) {
+        if(header) { header.classList.add('hidden'); header.classList.remove('flex'); }
+    } else if (container.innerHTML.trim() !== '') {
+        if(header) { header.classList.remove('hidden'); header.classList.add('flex'); }
+    }
+
     document.getElementById('wiz_s7_title').innerText = "Et voilà le travail ! 🎉"; document.getElementById('wiz_s7_desc').innerText = "J'ai calculé les meilleures combinaisons avec ton matériel.";
     document.getElementById('wiz_res_tab_name').innerText = prefix === 't1' ? "Liquide Complet" : "Créer Shortfill"; document.getElementById('wiz_s7_info_block').classList.remove('hidden');
 }
@@ -855,10 +864,12 @@ function calcTab1() {
         state.t1.multi.forEach(item => { if (item.type === 'aroma') aromaPgMl += (finalVol * (item.perc/100)) * (item.pg/100); });
     } else { aromaPgMl = aromaVol * (aromaPg / 100); }
 
-    let exactRecipes = []; let altRecipes = [];
+let exactRecipes = []; let altRecipes = [];
     let multiData = isMulti ? JSON.parse(JSON.stringify(state.t1.multi)) : null;
     let compoName = isMulti ? document.getElementById('t1_compo_name').value.trim() : null;
-    let globalNameObj = document.getElementById('t1_global_name');
+    
+    let isWiz = document.getElementById('tab_assistant').classList.contains('active');
+    let globalNameObj = isWiz ? document.getElementById('wiz_global_name') : document.getElementById('t1_global_name');
     let globalName = globalNameObj && globalNameObj.value.trim() !== "" ? globalNameObj.value.trim() : null;
 
     for(let bPg of boostsAvail) {
@@ -910,10 +921,12 @@ function calcTab2() {
     let basesAvail = getChecked('t2_base_chk');
     if(basesAvail.length === 0) { renderMixes('t2', [], [{err: "Cochez au moins une base."}]); return; }
 
-    let exactRecipes = []; let altRecipes = [];
+let exactRecipes = []; let altRecipes = [];
     let multiData = isMulti ? JSON.parse(JSON.stringify(state.t2.multi)) : null;
     let compoName = isMulti ? document.getElementById('t2_compo_name').value.trim() : null;
-    let globalNameObj = document.getElementById('t2_global_name');
+
+    let isWiz = document.getElementById('tab_assistant').classList.contains('active');
+    let globalNameObj = isWiz ? document.getElementById('wiz_global_name') : document.getElementById('t2_global_name');
     let globalName = globalNameObj && globalNameObj.value.trim() !== "" ? globalNameObj.value.trim() : null;
 
     let mixes = findBaseMixes(baseVol, remainingPgNeededInBase, basesAvail);
@@ -1083,10 +1096,21 @@ function toggleCheckBtn(input) {
 
 function renderMixes(prefix, exact, alt) {
     let container = document.getElementById(`${prefix}_results_container`); container.innerHTML = '';
-    if(alt.length > 0 && alt[0].err) { container.innerHTML = `<div class="animate-fade-in col-span-full p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-2xl font-bold text-sm text-center shadow-inner">${alt[0].err}</div>`; return; }
+    let header = document.getElementById(`${prefix}_results_header`);
+
+    if(alt.length > 0 && alt[0].err) { 
+        if(header) { header.classList.add('hidden'); header.classList.remove('flex'); }
+        container.innerHTML = `<div class="animate-fade-in col-span-full p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-2xl font-bold text-sm text-center shadow-inner">${alt[0].err}</div>`; 
+        return; 
+    }
 
     let allHtml = '';
-    if (exact.length > 0 || alt.length > 0) { allHtml += `<div class="animate-fade-in col-span-full mb-2 p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors"><span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p></div>`; }
+    if (exact.length > 0 || alt.length > 0) { 
+        if(header) { header.classList.remove('hidden'); header.classList.add('flex'); }
+    } else {
+        if(header) { header.classList.add('hidden'); header.classList.remove('flex'); }
+    }
+
     if(exact.length > 0) { allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-brand-600 dark:text-brand-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-brand-500"></span> ${exact.length} Mix(es) Parfait(s)</div>`; exact.forEach(r => allHtml += buildCard(r, prefix, false, false, false)); }
     if(exact.length === 0 && alt.length > 0) { allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-amber-500 dark:text-amber-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Alternatives Proches</div>`; alt.slice(0,3).forEach(r => allHtml += buildCard(r, prefix, true, false, false)); }
     if(exact.length === 0 && alt.length === 0) { allHtml = `<div class="animate-fade-in col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucun Mix possible.</div>`; }

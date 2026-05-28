@@ -371,6 +371,16 @@
                 <h2 class="text-2xl font-black text-brand-600 dark:text-brand-400 mb-2 text-center" id="wiz_s7_title">Et voilà le travail ! 🎉</h2>
                 <p class="text-sm text-stone-500 dark:text-stone-400 mb-6 text-center" id="wiz_s7_desc">J'ai calculé les meilleures combinaisons avec ton matériel.</p>
                 
+                <div id="wiz_results_header" class="hidden flex-col w-full mb-4">
+                    <div class="animate-fade-in p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors mb-3 text-left">
+                        <span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p>
+                    </div>
+                    <div class="flex gap-2 w-full">
+                        <input type="text" id="wiz_global_name" placeholder="Nommer l'ensemble des recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') runWizCalculation()">
+                        <button onclick="runWizCalculation()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
+                    </div>
+                </div>
+
                 <div id="wiz_results_container" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full pb-4"></div>
 
                 <div id="wiz_s7_info_block" class="mt-4 p-4 bg-brand-50/50 dark:bg-stone-800 rounded-2xl border border-brand-200 dark:border-stone-700 text-center text-sm text-stone-600 dark:text-stone-400 transition-colors">
@@ -629,9 +639,14 @@
                 </div>
             </div>
 
-            <div class="max-w-3xl mx-auto w-full mt-2 mb-2 flex gap-2">
-                <input type="text" id="t1_global_name" placeholder="Nommer l'ensemble des recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
-                <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
+            <div id="t1_results_header" class="hidden flex-col w-full max-w-3xl mx-auto mt-4 mb-2">
+                <div class="animate-fade-in p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors mb-3">
+                    <span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p>
+                </div>
+                <div class="flex gap-2 w-full">
+                    <input type="text" id="t1_global_name" placeholder="Nommer l'ensemble des recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
+                    <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
+                </div>
             </div>
             <div id="t1_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-2"></div>
         </div>
@@ -780,9 +795,14 @@
                 </div>
             </div>
 
-            <div class="max-w-3xl mx-auto w-full mt-2 mb-2 flex gap-2">
-                <input type="text" id="t2_global_name" placeholder="Nommer ces recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
-                <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
+            <div id="t2_results_header" class="hidden flex-col w-full max-w-3xl mx-auto mt-4 mb-2">
+                <div class="animate-fade-in p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors mb-3">
+                    <span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p>
+                </div>
+                <div class="flex gap-2 w-full">
+                    <input type="text" id="t2_global_name" placeholder="Nommer l'ensemble des recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
+                    <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
+                </div>
             </div>
             <div id="t2_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-2"></div>
         </div>
