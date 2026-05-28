@@ -413,13 +413,15 @@ function renderMultiList(prefix) {
         let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
 
         html += `
-        <div class="flex items-center p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm relative h-[104px]">
+        <div class="flex items-center p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm relative h-[104px] gap-2">
+            <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-6 h-6 shrink-0 flex items-center justify-center transition-colors">✕</button>
+            
             <div class="flex-1 flex flex-col justify-between h-full pr-2">
                 <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
                 ${selectHtml}
             </div>
+            
             <div class="flex flex-col items-end justify-center w-28 pl-2 border-l border-stone-100 dark:border-stone-700 h-full">
-                <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-6 h-6 flex items-center justify-center transition-colors mb-2">✕</button>
                 <div class="text-[10px] text-stone-400 font-bold mb-1">Dosage (%)</div>
                 <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full">
                     <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-8 flex items-center justify-center text-brand-600 font-bold hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">-</button>
