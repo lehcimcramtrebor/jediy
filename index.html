@@ -53,7 +53,6 @@
                 --brand-600: 220 38 38; --brand-700: 185 28 28; --brand-800: 153 27 27; --brand-900: 127 29 29;
             }
 			[data-theme="assistant"] {
-				/* Nuance Gris Ambré Chaud */
 				--brand-50: 248 245 238; --brand-100: 242 238 225; --brand-200: 230 224 205;
 				--brand-300: 210 203 185; --brand-400: 184 176 156; --brand-500: 156 148 130;
 				--brand-600: 133 125 108; --brand-700: 105 98 84; --brand-800: 79 74 64; --brand-900: 59 55 48;
@@ -98,7 +97,7 @@
         /* --- STYLES D'EXPORTATION (PDF) --- */
         body.exporting { background-color: #ffffff !important; height: auto !important; overflow: visible !important; }
         body.exporting * { transition: none !important; animation: none !important; }
-        body.exporting #main_app_container, body.exporting #help_modal, body.exporting #calc_modal, body.exporting #jedi_identity_modal, body.exporting #settings_modal { display: none !important; }
+        body.exporting #main_app_container, body.exporting #help_modal, body.exporting #calc_modal, body.exporting #jedi_identity_modal, body.exporting #settings_modal, body.exporting #compo_edit_modal { display: none !important; }
         body.exporting #recipe_modal {
             position: static !important; display: block !important; padding: 0 !important;
             background-color: #ffffff !important; height: auto !important; overflow: visible !important; z-index: auto !important;
@@ -115,6 +114,10 @@
         body.exporting .p-3 { padding: 4px !important; }
         body.exporting .space-y-2 { gap: 4px !important; }
         body.exporting .pdf-guides { gap: 2px !important; }
+        
+        /* Grille Shortfill sur le PDF */
+        body.exporting .export-guides-grid { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px !important; align-items: start !important; }
+        body.exporting .export-guides-full { grid-column: span 2 / span 2 !important; }
 
         @media print, .exporting {
             .print\:hidden { display: none !important; }
@@ -254,15 +257,27 @@
                     </div>
 
                     <div class="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
-                        <div class="flex justify-between items-center mb-2">
-                            <label id="wiz_aroma_perc_label" class="text-sm font-bold text-stone-700 dark:text-stone-300">À quel pourcentage tu doses ?</label>
-                            <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="wiz_aroma_perc_disp">15%</span>
+                        <div class="mb-4 pb-4 border-b border-stone-200 dark:border-stone-700">
+                            <label class="flex items-center gap-2 cursor-pointer mb-3">
+                                <input type="checkbox" id="wiz_use_compo" onchange="toggleWizCompo()" class="rounded text-brand-600 focus:ring-brand-500 dark:bg-stone-700 dark:border-stone-600">
+                                <span class="text-sm font-bold text-stone-700 dark:text-stone-300">Utiliser une composition sauvegardée</span>
+                            </label>
+                            <select id="wiz_compo_select" class="hidden w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold focus:outline-none" onchange="wizUpdateCompo()">
+                                <option value="">-- Choisir une composition --</option>
+                            </select>
                         </div>
-                        <input type="range" id="wiz_aroma_perc" min="1" max="30" step="0.5" value="15" oninput="document.getElementById('wiz_aroma_perc_disp').innerText = this.value + '%'">
-                        <p id="wiz_aroma_perc_help" class="text-[10px] text-brand-600/80 dark:text-brand-400/80 mt-3 leading-tight hidden">Le pourcentage idéal que tu vises (une fois que les boosters seront ajoutés).</p>
+
+                        <div id="wiz_aroma_perc_container">
+                            <div class="flex justify-between items-center mb-2">
+                                <label id="wiz_aroma_perc_label" class="text-sm font-bold text-stone-700 dark:text-stone-300">À quel pourcentage tu doses ?</label>
+                                <span class="text-xl font-bold text-brand-600 dark:text-brand-400" id="wiz_aroma_perc_disp">15%</span>
+                            </div>
+                            <input type="range" id="wiz_aroma_perc" min="1" max="30" step="0.5" value="15" oninput="document.getElementById('wiz_aroma_perc_disp').innerText = this.value + '%'">
+                            <p id="wiz_aroma_perc_help" class="text-[10px] text-brand-600/80 dark:text-brand-400/80 mt-3 leading-tight hidden">Le pourcentage idéal que tu vises (une fois que les boosters seront ajoutés).</p>
+                        </div>
                     </div>
 
-                    <div class="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
+                    <div id="wiz_adv_aroma_container" class="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <div class="flex justify-between items-center">
                             <label class="text-sm font-bold text-stone-800 dark:text-stone-200">Ratio de l'arôme</label>
                             <div class="flex items-center gap-2">
@@ -480,42 +495,77 @@
                     </div>
                 </div>
 
-                <div class="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 mb-8 transition-colors">
-                    <div class="flex justify-between items-center mb-4">
-                        <label class="text-sm font-bold text-stone-800 dark:text-stone-200">Concentration de l'arôme</label>
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="t1_adv_aroma" class="rounded text-brand-600 focus:ring-brand-500 dark:bg-stone-700 dark:border-stone-600" onchange="toggleAdvAroma('t1'); triggerCalc()">
-                            <label for="t1_adv_aroma" class="text-xs text-stone-500 dark:text-stone-400 cursor-pointer">Arôme non full PG</label>
-                        </div>
-                    </div>
+                <div class="bg-brand-50/50 dark:bg-brand-900/20 p-5 rounded-2xl border border-brand-100 dark:border-brand-800/50 mb-8 transition-colors w-full">
                     
-                    <div id="t1_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-700 rounded-xl border border-stone-200 dark:border-stone-600 transition-colors animate-fade-in">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG de l'arôme :</span>
-                            <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t1_aroma_pg_val">100% PG</span>
-                        </div>
-                        <input type="range" id="t1_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t1_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
-                        <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                    <div class="flex bg-white dark:bg-stone-900 p-1 rounded-xl mb-5 border border-brand-100 dark:border-brand-800/50">
+                        <button id="t1_aroma_mode_mono" onclick="setAromaMode('t1', 'mono')" class="flex-1 py-1.5 rounded-lg text-sm font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all">Concentré</button>
+                        <button id="t1_aroma_mode_multi" onclick="setAromaMode('t1', 'multi')" class="flex-1 py-1.5 rounded-lg text-sm font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">Multi-Arômes</button>
                     </div>
 
-                    <div id="t1_aroma_perc_panel" class="animate-fade-in">
-                        <div class="flex justify-between mb-2">
-                            <span class="text-xs text-stone-500 dark:text-stone-400">Dosage</span>
-                            <span class="text-lg font-bold text-brand-600 dark:text-brand-400" id="t1_aroma_perc_disp">15%</span>
-                        </div>
-                        <input type="range" id="t1_aroma_perc" min="0.5" max="40" step="0.5" value="15" oninput="updateAromaPreview('t1'); triggerCalc()">
-                        
-                        <div id="t1_aroma_sync_wrapper" class="flex items-center justify-between mt-4 p-2 bg-white dark:bg-stone-700 rounded-xl border border-stone-200 dark:border-stone-600 shadow-sm transition-all">
-                            <span class="text-xs font-bold text-stone-500 dark:text-stone-400 ml-2">Quantité requise :</span>
+                    <div id="t1_aroma_mono_panel" class="animate-fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <label class="text-sm font-bold text-stone-800 dark:text-stone-200">Concentration de l'arôme</label>
                             <div class="flex items-center gap-2">
-                                <input type="number" id="t1_aroma_sync_ml" value="30" class="w-20 h-8 text-center bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg font-bold text-brand-600 dark:text-brand-400 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none hide-arrows transition-colors" oninput="syncAromaFromMl('t1')">
-                                <span class="text-xs font-bold text-stone-400 mr-2">ml</span>
+                                <input type="checkbox" id="t1_adv_aroma" class="rounded text-brand-600 focus:ring-brand-500 dark:bg-stone-700 dark:border-stone-600" onchange="toggleAdvAroma('t1'); triggerCalc()">
+                                <label for="t1_adv_aroma" class="text-xs text-stone-500 dark:text-stone-400 cursor-pointer">Arôme non full PG</label>
                             </div>
                         </div>
+                        
+                        <div id="t1_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-700 rounded-xl border border-stone-200 dark:border-stone-600 transition-colors animate-fade-in">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG de l'arôme :</span>
+                                <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t1_aroma_pg_val">100% PG</span>
+                            </div>
+                            <input type="range" id="t1_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t1_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                            <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                        </div>
 
-                        <div id="t1_vol_preview_container" class="hidden mt-4 p-4 bg-brand-50 dark:bg-brand-900 rounded-xl border border-brand-200 dark:border-brand-700 text-center shadow-inner transition-all animate-fade-in">
-                            <div class="text-[10px] font-black text-brand-600 dark:text-brand-500 uppercase tracking-widest mb-1">Volume final estimé</div>
-                            <div class="text-2xl font-black text-stone-800 dark:text-stone-100" id="t1_vol_preview">0 ml</div>
+                        <div id="t1_aroma_perc_panel" class="animate-fade-in">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-xs text-stone-500 dark:text-stone-400">Dosage</span>
+                                <span class="text-lg font-bold text-brand-600 dark:text-brand-400" id="t1_aroma_perc_disp">15%</span>
+                            </div>
+                            <input type="range" id="t1_aroma_perc" min="0.5" max="40" step="0.5" value="15" oninput="updateAromaPreview('t1'); triggerCalc()">
+                            
+                            <div id="t1_aroma_sync_wrapper" class="flex items-center justify-between mt-4 p-2 bg-white dark:bg-stone-700 rounded-xl border border-stone-200 dark:border-stone-600 shadow-sm transition-all">
+                                <span class="text-xs font-bold text-stone-500 dark:text-stone-400 ml-2">Quantité requise :</span>
+                                <div class="flex items-center gap-2">
+                                    <input type="number" id="t1_aroma_sync_ml" value="30" class="w-20 h-8 text-center bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg font-bold text-brand-600 dark:text-brand-400 text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none hide-arrows transition-colors" oninput="syncAromaFromMl('t1')">
+                                    <span class="text-xs font-bold text-stone-400 mr-2">ml</span>
+                                </div>
+                            </div>
+
+                            <div id="t1_vol_preview_container" class="hidden mt-4 p-4 bg-brand-50 dark:bg-brand-900 rounded-xl border border-brand-200 dark:border-brand-700 text-center shadow-inner transition-all animate-fade-in">
+                                <div class="text-[10px] font-black text-brand-600 dark:text-brand-500 uppercase tracking-widest mb-1">Volume final estimé</div>
+                                <div class="text-2xl font-black text-stone-800 dark:text-stone-100" id="t1_vol_preview">0 ml</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="t1_aroma_multi_panel" class="hidden animate-fade-in w-full">
+                        <div class="mb-4">
+                            <select id="t1_compo_select" class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-700 rounded-xl p-3 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" onchange="loadCompo('t1', this.value)">
+                                <option value="">-- Charger une composition sauvegardée --</option>
+                            </select>
+                        </div>
+                        
+                        <div id="t1_multi_list" class="space-y-2 mb-4 w-full">
+                            </div>
+
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button onclick="addMultiLine('t1', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                            <button onclick="addMultiLine('t1', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                            <button onclick="addMultiLine('t1', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                        </div>
+
+                        <div class="flex justify-between items-center p-3 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4">
+                            <span class="text-sm font-bold text-brand-700 dark:text-brand-300">Concentration de la composition :</span>
+                            <span id="t1_multi_total_perc" class="text-lg font-black text-brand-600 dark:text-brand-400">0%</span>
+                        </div>
+
+                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700">
+                            <input type="text" id="t1_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t1')">
+                            <button id="t1_btn_save_compo" disabled onclick="saveCompo('t1')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
                         </div>
                     </div>
                 </div>
@@ -579,7 +629,11 @@
                 </div>
             </div>
 
-            <div id="t1_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4"></div>
+            <div class="max-w-3xl mx-auto w-full mt-2 mb-2 flex gap-2">
+                <input type="text" id="t1_global_name" placeholder="Nommer ces recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
+                <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
+            </div>
+            <div id="t1_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-2"></div>
         </div>
     </div>
 
@@ -615,26 +669,7 @@
                     </div>
                 </div>
 
-                <div class="bg-stone-50 dark:bg-stone-800 p-5 rounded-2xl border border-stone-100 dark:border-stone-700 mb-8 transition-colors">
-                    <div class="flex justify-between items-center mb-4">
-                        <label class="text-sm font-bold text-stone-800 dark:text-stone-200">Concentration de l'arôme</label>
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="t2_adv_aroma" class="rounded text-brand-600 focus:ring-brand-500 dark:bg-stone-700 dark:border-stone-600" onchange="toggleAdvAroma('t2'); triggerCalc()">
-                            <label for="t2_adv_aroma" class="text-xs text-stone-500 dark:text-stone-400 cursor-pointer">Arôme non full PG</label>
-                        </div>
-                    </div>
-                    
-                    <div id="t2_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-700 rounded-xl border border-stone-200 dark:border-stone-600 transition-colors animate-fade-in">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG de l'arôme :</span>
-                            <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t2_aroma_pg_val">100% PG</span>
-                        </div>
-                        <input type="range" id="t2_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t2_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
-                        <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="mb-6">
                     <div class="bg-stone-50 dark:bg-stone-800 p-4 rounded-2xl border border-stone-100 dark:border-stone-700 transition-colors">
                         <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">Taux Nicotine Max visé</label>
                         <div class="flex items-center gap-2 mb-2">
@@ -648,8 +683,32 @@
                             <input type="number" id="t2_booster_str" value="20" class="w-12 text-center bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded text-xs py-0.5 text-stone-800 dark:text-stone-200 transition-colors" oninput="updateAromaPreview('t2'); triggerCalc()">
                         </div>
                     </div>
+                </div>
 
-                    <div class="bg-brand-50 dark:bg-brand-900/50 p-4 rounded-2xl border border-brand-100 dark:border-brand-800 transition-colors">
+                <div class="bg-brand-50/50 dark:bg-brand-900/20 p-5 rounded-2xl border border-brand-100 dark:border-brand-800/50 transition-colors mb-8 w-full">
+                    
+                    <div class="flex bg-white dark:bg-stone-900 p-1 rounded-xl mb-5 border border-brand-100 dark:border-brand-800/50">
+                        <button id="t2_aroma_mode_mono" onclick="setAromaMode('t2', 'mono')" class="flex-1 py-1.5 rounded-lg text-sm font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all">Concentré</button>
+                        <button id="t2_aroma_mode_multi" onclick="setAromaMode('t2', 'multi')" class="flex-1 py-1.5 rounded-lg text-sm font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">Multi-Arômes</button>
+                    </div>
+
+                    <div id="t2_aroma_mono_panel" class="animate-fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <label class="text-xs font-bold text-brand-600 dark:text-brand-400">Concentration de l'arôme</label>
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="t2_adv_aroma" class="rounded text-brand-600 focus:ring-brand-500 dark:bg-stone-700 dark:border-stone-600" onchange="toggleAdvAroma('t2'); triggerCalc()">
+                                <label for="t2_adv_aroma" class="text-xs text-brand-600/70 dark:text-brand-400/70 cursor-pointer">Pas 100% PG ?</label>
+                            </div>
+                        </div>
+                        
+                        <div id="t2_aroma_pg_panel" class="hidden mb-4 p-3 bg-white dark:bg-stone-800 rounded-xl border border-brand-200 dark:border-stone-600 transition-colors animate-fade-in">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
+                                <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t2_aroma_pg_val">100% PG</span>
+                            </div>
+                            <input type="range" id="t2_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t2_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                        </div>
+
                         <label class="block text-xs font-bold text-brand-600 dark:text-brand-400 mb-2">Dosage Arôme IDÉAL</label>
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xl font-black text-brand-700 dark:text-brand-400" id="t2_aroma_perc_disp">15%</span>
@@ -665,6 +724,33 @@
                         </div>
 
                         <p class="text-[10px] text-brand-600/70 dark:text-brand-400/70 mt-3 leading-tight">Le % souhaité une fois le liquide complètement boosté.</p>
+                    </div>
+
+                    <div id="t2_aroma_multi_panel" class="hidden animate-fade-in w-full">
+                        <div class="mb-4">
+                            <select id="t2_compo_select" class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-700 rounded-xl p-3 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" onchange="loadCompo('t2', this.value)">
+                                <option value="">-- Charger une composition sauvegardée --</option>
+                            </select>
+                        </div>
+                        
+                        <div id="t2_multi_list" class="space-y-2 mb-4 w-full">
+                            </div>
+
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button onclick="addMultiLine('t2', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                            <button onclick="addMultiLine('t2', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                            <button onclick="addMultiLine('t2', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                        </div>
+
+                        <div class="flex justify-between items-center p-3 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4">
+                            <span class="text-sm font-bold text-brand-700 dark:text-brand-300">Concentration de la composition :</span>
+                            <span id="t2_multi_total_perc" class="text-lg font-black text-brand-600 dark:text-brand-400">0%</span>
+                        </div>
+
+                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700">
+                            <input type="text" id="t2_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t2')">
+                            <button id="t2_btn_save_compo" disabled onclick="saveCompo('t2')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
+                        </div>
                     </div>
                 </div>
 
@@ -694,7 +780,11 @@
                 </div>
             </div>
 
-            <div id="t2_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-4"></div>
+            <div class="max-w-3xl mx-auto w-full mt-2 mb-2 flex gap-2">
+                <input type="text" id="t2_global_name" placeholder="Nommer ces recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
+                <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
+            </div>
+            <div id="t2_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-2"></div>
         </div>
     </div>
 
@@ -703,27 +793,72 @@
             <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                 <span class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 flex items-center justify-center text-lg">🧮</span> Mélange Manuel
             </h2>
-            <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Entrez les volumes exacts que vous avez mélangé pour connaître le résultat final.</p>
+            <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Entre les volumes exacts que tu as mélangé pour connaître le résultat final.</p>
 
             <div class="space-y-6 mb-8">
-                <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
-                    <div class="flex justify-between items-center">
-                        <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Arôme (ml)</label>
+                
+                <div class="bg-brand-50/50 dark:bg-brand-900/20 p-4 rounded-xl border border-brand-100 dark:border-brand-800/50 transition-colors w-full">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="block text-sm font-bold text-brand-800 dark:text-brand-300">Arôme / Composition</label>
                         <span id="t3_aroma_w" class="text-sm text-brand-600 dark:text-brand-400 font-black">0 g</span>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="adjustVal('t3_aroma_vol', -5)" class="btn-adjust">-</button>
-                        <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                        <button onclick="adjustVal('t3_aroma_vol', 5)" class="btn-adjust">+</button>
+
+                    <div class="flex bg-white dark:bg-stone-900 p-1 rounded-xl mb-4 border border-brand-100 dark:border-brand-800/50">
+                        <button id="t3_aroma_mode_mono" onclick="setAromaMode('t3', 'mono')" class="flex-1 py-1.5 rounded-lg text-sm font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all">Concentré</button>
+                        <button id="t3_aroma_mode_multi" onclick="setAromaMode('t3', 'multi')" class="flex-1 py-1.5 rounded-lg text-sm font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">Multi-Arômes</button>
                     </div>
-                    <div class="mt-2">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
-                            <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t3_aroma_pg_val">100% PG</span>
+
+                    <div id="t3_aroma_mono_panel" class="animate-fade-in">
+                        <div class="flex items-center gap-3 mb-3">
+                            <button onclick="adjustVal('t3_aroma_vol', -5)" class="btn-adjust">-</button>
+                            <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_aroma_vol', 5)" class="btn-adjust">+</button>
+                            <span class="text-sm font-bold text-stone-500">ml</span>
                         </div>
-                        <input type="range" id="t3_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t3_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
-                        <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                        <div id="t3_aroma_pg_wrapper" class="animate-fade-in">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs font-bold text-stone-500 dark:text-stone-400">Ratio PG/VG :</span>
+                                <span class="text-xs font-bold text-brand-600 dark:text-brand-400" id="t3_aroma_pg_val">100% PG</span>
+                            </div>
+                            <input type="range" id="t3_aroma_pg" min="0" max="100" step="5" value="0" class="w-full" oninput="document.getElementById('t3_aroma_pg_val').innerText = formatRatioStr(100 - this.value, false); triggerCalc()">
+                            <div class="flex justify-between text-[10px] text-stone-400 dark:text-stone-500 mt-1"><span>100% PG</span><span>100% VG</span></div>
+                        </div>
                     </div>
+
+                    <div id="t3_aroma_multi_panel" class="hidden animate-fade-in w-full">
+                        <div class="mb-4">
+                            <select id="t3_compo_select" class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-700 rounded-xl p-3 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" onchange="loadCompo('t3', this.value)">
+                                <option value="">-- Charger une composition sauvegardée --</option>
+                            </select>
+                        </div>
+                        
+                        <div id="t3_multi_list" class="space-y-2 mb-4 w-full"></div>
+
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button onclick="addMultiLine('t3', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                            <button onclick="addMultiLine('t3', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                            <button onclick="addMultiLine('t3', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                        </div>
+
+                        <div class="flex items-center gap-3 mb-4 pt-4 border-t border-brand-200/50 dark:border-brand-800/50">
+                            <div class="text-xs font-bold text-brand-800 dark:text-brand-300 w-1/3">Volume versé (ml) :</div>
+                            <button onclick="adjustVal('t3_aroma_vol_multi', -5)" class="btn-adjust-sm">-</button>
+                            <input type="number" id="t3_aroma_vol_multi" value="30" class="hide-arrows flex-1 w-full h-10 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-lg text-center font-bold text-lg text-stone-800 dark:text-stone-100 focus:outline-none transition-colors" oninput="syncT3MultiVol(this.value); triggerCalc()">
+                            <button onclick="adjustVal('t3_aroma_vol_multi', 5)" class="btn-adjust-sm">+</button>
+                        </div>
+
+                        <div class="flex justify-between items-center p-3 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4">
+                            <span class="text-sm font-bold text-brand-700 dark:text-brand-300">Concentration de la composition :</span>
+                            <span id="t3_multi_total_perc" class="text-lg font-black text-brand-600 dark:text-brand-400">0%</span>
+                        </div>
+
+                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700">
+                            <input type="text" id="t3_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t3')">
+                            <button id="t3_btn_save_compo" disabled onclick="saveCompo('t3')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
+                        </div>
+                    </div>
+                    
+                    <div id="t3_compo_breakdown" class="hidden mt-3 grid grid-cols-2 gap-2 text-[10px] animate-fade-in"></div>
                 </div>
 
                 <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
@@ -784,14 +919,19 @@
         <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl max-w-5xl mx-auto w-full border border-stone-100 dark:border-stone-800 transition-colors">
             
             <div class="flex gap-4 border-b border-stone-200 dark:border-stone-700 mb-6 overflow-x-auto hide-scrollbar">
-                <button class="pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap">Mes Mixes</button>
-                <button class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap cursor-not-allowed opacity-50">Prochainement...</button>
+                <button id="tab_btn_mes_mixes" onclick="switchDataTab('mixes')" class="pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors">Mes Mixes</button>
+                <button id="tab_btn_mes_compos" onclick="switchDataTab('compos')" class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors">Mes Compos</button>
             </div>
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h2 class="text-xl font-extrabold flex items-center gap-2 text-stone-800 dark:text-stone-100">💾 Historique</h2>
                 
                 <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <button id="btn_import_compo" onclick="document.getElementById('json_compo_import_input').click()" class="hidden px-4 py-2 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 hover:bg-brand-200 dark:hover:bg-brand-900/50 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 border border-brand-200 dark:border-brand-800">
+                        📥 Importer Composition
+                    </button>
+                    <input type="file" id="json_compo_import_input" accept=".json" class="hidden" onchange="importCompoJson(event)">
+
                     <button id="btn_group_mixes" onclick="toggleGroupMixes()" class="px-4 py-2 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                         Regrouper
@@ -807,9 +947,76 @@
                 </div>
             </div>
 
-            <div id="mes_mixes_list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
-                </div>
+            <div id="mes_mixes_list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start"></div>
+            <div id="mes_compos_list" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start"></div>
         </div>
+    </div>
+</div>
+
+<div id="html_confirm_modal" class="fixed inset-0 z-[120] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+    <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeHtmlConfirm()"></div>
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-200 dark:border-stone-700 flex flex-col text-center">
+        <h3 id="html_confirm_title" class="text-xl font-black text-stone-800 dark:text-stone-100 mb-2">Attention</h3>
+        <p id="html_confirm_msg" class="text-sm text-stone-600 dark:text-stone-300 mb-6 font-medium"></p>
+        <div class="flex gap-3">
+            <button onclick="closeHtmlConfirm()" class="flex-1 py-3 bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 font-bold rounded-xl hover:bg-stone-300 dark:hover:bg-stone-600 transition-colors">Annuler</button>
+            <button id="html_confirm_btn_ok" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-colors">Confirmer</button>
+        </div>
+    </div>
+</div>
+
+<div id="compo_edit_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+    <div class="modal-backdrop absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-md cursor-pointer" onclick="closeCompoEditModal()"></div>
+    <div class="relative w-full max-w-lg z-10 bg-white dark:bg-stone-800 rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
+        <div class="p-5 border-b border-stone-200 dark:border-stone-700 flex justify-between items-center gap-3">
+            <input type="text" id="edit_compo_name" class="font-extrabold text-stone-800 dark:text-stone-100 text-xl bg-transparent border-none outline-none focus:ring-0 w-full" placeholder="Nom de la composition">
+            <div class="flex gap-2 shrink-0">
+                <button onclick="openExportCompoPrompt()" class="w-10 h-10 flex items-center justify-center bg-stone-100 dark:bg-stone-700 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors text-brand-600 dark:text-brand-400 shadow-sm" title="Exporter">📤</button>
+                <button onclick="closeCompoEditModal()" class="w-10 h-10 flex items-center justify-center bg-stone-100 dark:bg-stone-700 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors text-stone-600 dark:text-stone-300 shadow-sm" title="Fermer">✕</button>
+            </div>
+        </div>
+        
+        <div class="p-5 overflow-y-auto hide-scrollbar flex-1 bg-brand-50/30 dark:bg-brand-900/10 transition-colors">
+            <div id="edit_compo_multi_list" class="space-y-2 mb-4 w-full"></div>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <button onclick="addMultiLine('edit_compo', 'aroma')" class="py-2 bg-white dark:bg-stone-900 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors hover:bg-brand-50 dark:hover:bg-brand-900/30">+ Arôme</button>
+                <button onclick="addMultiLine('edit_compo', 'water')" class="py-2 bg-white dark:bg-stone-900 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/30">+ Eau</button>
+                <button onclick="addMultiLine('edit_compo', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors hover:bg-purple-50 dark:hover:bg-purple-900/30">+ Alcool</button>
+            </div>
+            <div class="flex justify-between items-center p-3 bg-white dark:bg-stone-900 rounded-xl border border-stone-200 dark:border-stone-700 mb-4 transition-colors">
+                <span class="text-sm font-bold text-stone-600 dark:text-stone-300">Concentration de la composition :</span>
+                <span id="edit_compo_multi_total_perc" class="text-lg font-black text-brand-600 dark:text-brand-400">0%</span>
+            </div>
+        </div>
+        
+        <div class="p-5 border-t border-stone-200 dark:border-stone-700 flex gap-3 transition-colors">
+            <button onclick="saveEditedCompo()" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-all">Enregistrer</button>
+            <button onclick="saveAsNewCompo()" class="py-3 px-4 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-300 font-bold rounded-xl transition-all shadow-sm" title="Dupliquer">📝 Copie</button>
+        </div>
+    </div>
+</div>
+
+<div id="export_compo_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+    <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeExportCompoPrompt()"></div>
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
+        <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2">Options d'export</h3>
+        <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Exporter cette composition pour la sauvegarder ou la partager.</p>
+        
+        <div class="grid grid-cols-2 gap-3 mb-5">
+            <button onclick="exportCompoJson()" class="flex flex-col items-center justify-center py-4 bg-stone-50 dark:bg-stone-700/50 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl transition-all border border-stone-200 dark:border-stone-600 shadow-sm">
+                <span class="text-2xl mb-1">📥</span><span class="text-[10px] font-bold">Fichier JSON</span>
+            </button>
+            <button onclick="exportCompoText()" class="flex flex-col items-center justify-center py-4 bg-stone-50 dark:bg-stone-700/50 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl transition-all border border-stone-200 dark:border-stone-600 shadow-sm">
+                <span class="text-2xl mb-1">📋</span><span class="text-[10px] font-bold">Copier Texte</span>
+            </button>
+            <button onclick="exportCompoPDF('download')" class="flex flex-col items-center justify-center py-4 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 text-brand-700 dark:text-brand-300 rounded-xl transition-all border border-brand-200 dark:border-brand-700 shadow-sm">
+                <span class="text-2xl mb-1">📄</span><span class="text-[10px] font-bold">Sauver PDF</span>
+            </button>
+            <button onclick="exportCompoPDF('share')" class="flex flex-col items-center justify-center py-4 bg-brand-50 dark:bg-brand-900/30 hover:bg-brand-100 dark:hover:bg-brand-800/50 text-brand-700 dark:text-brand-300 rounded-xl transition-all border border-brand-200 dark:border-brand-700 shadow-sm">
+                <span class="text-2xl mb-1">🔗</span><span class="text-[10px] font-bold">Partager PDF</span>
+            </button>
+        </div>
+        <button onclick="closeExportCompoPrompt()" class="w-full px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors">Fermer</button>
     </div>
 </div>
 
@@ -948,7 +1155,16 @@
                     <span>🪄</span> Le Mode Assistant
                 </h3>
                 <p class="text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-                    Tu ne sais pas par où commencer ? <strong>Laisse-toi guider !</strong> L'assistant te pose une série de questions simples, prend note de ce que tu as dans tes placards, et configure tout le calculateur à ta place. C'est tellement facile que même ta belle-mère pourrait se faire du liquide sans faire sauter la cuisine !
+                    Tu ne sais pas par où commencer ? <strong>Laisse-toi guider !</strong> L'assistant te pose une série de questions simples, prend note de ce que tu as dans tes placards, et configure tout le calculateur à ta place.
+                </p>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+                    <span class="text-purple-600 dark:text-purple-400">🎨</span> Compositions (Multi-Arômes)
+                </h3>
+                <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
+                    Tu aimes faire tes propres recettes avec plusieurs arômes, de l'eau ou de l'alcool ? Le mode <strong>Multi-Arômes</strong> est fait pour ça. Sauvegarde tes recettes et réutilise-les n'importe quand !
                 </p>
             </div>
 
@@ -957,7 +1173,7 @@
                     <span class="text-stone-600 dark:text-stone-400">💾</span> Sauvegardes & Données
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Tes meilleures recettes méritent d'être conservées. Dans l'onglet "Données", tu retrouveras tous tes mixes sauvegardés. Tu peux exporter tout ton historique dans un fichier JSON via la roue crantée, histoire de ne jamais rien perdre, même si tu changes de téléphone ou nettoies ton navigateur. Un import et paf, tout revient !
+                    Dans l'onglet "Données", tu retrouveras tous tes mixes ET tes compositions sauvegardées. Tu peux exporter tout ton historique dans un fichier JSON via la roue crantée.
                 </p>
             </div>
 
@@ -966,7 +1182,7 @@
                     <span class="text-emerald-600 dark:text-emerald-400">🚀</span> Boost Simple
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Le mode parfait quand tu achètes un liquide prêt à vaper du commerce (50ml, 100ml...). Tu indiques le volume, le nombre de boosters que tu vas vider dedans, et je te donne le résultat. Super basique.
+                    Le mode parfait quand tu achètes un liquide prêt à vaper du commerce. Tu indiques le volume, le nombre de boosters que tu vas vider dedans, et je te donne le résultat.
                 </p>
             </div>
 
@@ -975,7 +1191,7 @@
                     <span class="text-brand-600 dark:text-brand-400">🎯</span> Liquide Complet
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Pour faire ton jus prêt à vaper de A à Z. Tu rentres la quantité voulue, ton ratio cible et ton taux de nicotine. Le calculateur mouline et te sort la combinaison exacte avec tes bases et boosters.
+                    Pour faire ton jus prêt à vaper de A à Z. Tu rentres la quantité voulue, ton ratio cible et ton taux de nicotine.
                 </p>
             </div>
 
@@ -984,7 +1200,7 @@
                     <span class="text-indigo-600 dark:text-indigo-400">🧪</span> Créer Shortfill
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Le mode des gros consommateurs. L'idée est de préparer une grosse fiole surdosée en arôme (le shortfill). Tu auras ainsi une base prête dans laquelle tu viendras juste ajouter tes boosters de nicotine plus tard au fur et à mesure.
+                    Le mode des gros consommateurs. L'idée est de préparer une grosse fiole surdosée en arôme (le shortfill).
                 </p>
             </div>
 
@@ -993,7 +1209,7 @@
                     <span class="text-stone-600 dark:text-stone-400">🧮</span> Mode Manuel
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Tu as joué au savant fou en mélangeant tes restes ? Rentre les volumes que tu as mis dans ta fiole, et l'outil te dira exactement sur quel ratio et quel taux de nicotine tu es retombé.
+                    Rentre les volumes que tu as mis dans ta fiole, et l'outil te dira exactement sur quel ratio et quel taux de nicotine tu es retombé.
                 </p>
             </div>
 
@@ -1002,7 +1218,7 @@
                     <span class="text-brand-600 dark:text-brand-400">🥷</span> L'I.D. Jedi
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Cachée dans les paramètres (la roue crantée), cette option te permet de renseigner ton pseudo. Résultat ? Chaque fois que tu partages un mix avec un pote (PDF, texte), ta signature apparaît dessus. La classe.
+                    Cachée dans les paramètres (la roue crantée), cette option te permet de renseigner ton pseudo qui apparaîtra sur tes partages.
                 </p>
             </div>
 
@@ -1012,15 +1228,14 @@
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
                     Si tu mixes à la balance, les poids indiqués en grammes (g) sont calculés avec les densités réelles des composants :<br>
-                    <strong>1 ml de PG pèse 1.036 g</strong> et <strong>1 ml de VG pèse 1.261 g</strong>.<br>
-                    Le calculateur s'occupe de faire le ratio exact pour chaque base, arôme ou booster. Bref, c'est de la physique, c'est ultra précis, tu peux y aller les yeux fermés !
+                    <strong>1 ml de PG pèse 1.036 g</strong> et <strong>1 ml de VG pèse 1.261 g</strong>.
                 </p>
             </div>
         </div>
 
         <div class="mt-8 pt-6 border-t border-stone-200 dark:border-stone-700 text-center">
             <h3 class="text-sm font-extrabold text-stone-800 dark:text-stone-200 mb-2">Une idée ? Un bug ?</h3>
-            <p class="text-xs text-stone-600 dark:text-stone-400 mb-3">N'hésite pas à me contacter (Helmicretro) si tu as des suggestions pour améliorer l'outil.</p>
+            <p class="text-xs text-stone-600 dark:text-stone-400 mb-3">N'hésite pas à me contacter si tu as des suggestions pour améliorer l'outil.</p>
             <a href="mailto:lehcimcramtrebor.ztriw@gmail.com?subject=Je-Diy" class="inline-flex items-center gap-2 px-4 py-2 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-lg text-sm font-bold transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                 lehcimcramtrebor.ztriw@gmail.com

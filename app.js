@@ -6,7 +6,19 @@ const RATIOS = [100, 90, 80, 70, 60, 50, 40, 30, 20, 10, 0];
 const DENSITY_PG = 1.036;
 const DENSITY_VG = 1.261;
 
-let state = { t1: { vol_mode: 'defined', nic_mode: 'mg' }, t2: { vol_mode: 'defined' } };
+function getLiquidWeight(type, vol, pgRatio = 100, degree = 40) {
+    if (vol <= 0) return 0;
+    if (type === 'water') return vol * 1.0;
+    if (type === 'alcohol') return vol * (1.0 - (degree * 0.00211)); 
+    return (vol * (pgRatio / 100) * DENSITY_PG) + (vol * ((100 - pgRatio) / 100) * DENSITY_VG);
+}
+
+let state = { 
+    t1: { vol_mode: 'defined', nic_mode: 'mg', aroma_mode: 'mono', multi: [] }, 
+    t2: { vol_mode: 'defined', aroma_mode: 'mono', multi: [] },
+    t3: { aroma_mode: 'mono', multi: [] },
+    edit_compo: { multi: [] }
+};
 let calcExpr = ""; let pendingNewMix = false; 
 
 const WIZ_PATH_MAIN = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7'];
@@ -14,7 +26,9 @@ const ALL_WIZ_STEPS = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7'];
 let wizState = { step: 0, path: WIZ_PATH_MAIN, type: 't1', volMode: 'defined' };
 
 let savedMixes = JSON.parse(localStorage.getItem('jediy_mixes') || '[]');
+let savedCompos = JSON.parse(localStorage.getItem('jediy_compos') || '[]');
 let currentMixCard = null;
+let currentEditCompoId = null;
 let groupMixes = false;
 let unreadNotification = false;
 
@@ -50,7 +64,9 @@ function init() {
     applyTheme();
     generateCheckboxes('t1'); generateCheckboxes('t2'); generateCheckboxes('wiz'); 
     document.getElementById('t1_aroma_pg_val').innerText = document.getElementById('t1_aroma_pg').value + '%';
-    updateRatioDisp('t1'); updateRatioDisp('t2'); updateAromaPreview('t1'); updateAromaPreview('t2');
+    updateRatioDisp('t1'); updateRatioDisp('t2'); 
+    updateAromaPreview('t1'); updateAromaPreview('t2');
+    syncCompoSelects();
     triggerCalc(); wizUpdateView();
 }
 window.onload = () => { init(); };
@@ -59,10 +75,7 @@ window.onload = () => { init(); };
 /* 2. FONCTIONS UTILITAIRES DE CALCUL         */
 /* ========================================== */
 
-function getWeight(vol, pgRatio) {
-    if (vol <= 0) return 0;
-    return (vol * (pgRatio / 100) * DENSITY_PG) + (vol * ((100 - pgRatio) / 100) * DENSITY_VG);
-}
+function getWeight(vol, pgRatio) { return getLiquidWeight('aroma', vol, pgRatio); }
 function formatRatioStr(pg, labels = false) {
     let p = Math.round(pg);
     if (p === 100) return labels ? "Full PG" : "100% PG";
@@ -71,14 +84,18 @@ function formatRatioStr(pg, labels = false) {
 }
 function round1(num) { return Math.round(num * 10) / 10; }
 function round2(num) { return Math.round(num * 100) / 100; }
-function getTheme(prefix) { return prefix === 't1' ? 'complet' : (prefix === 't2' ? 'shortfill' : (prefix === 'boost' ? 'boost' : 'manuel')); }
+function getTheme(prefix) { return prefix === 't1' ? 'complet' : (prefix === 't2' ? 'shortfill' : (prefix === 'boost' ? 'boost' : (prefix === 'compo' ? 'assistant' : 'manuel'))); }
 
 function adjustVal(id, step) {
     let el = document.getElementById(id); if(!el) return;
     let val = parseFloat(el.value) || 0;
     el.value = Math.max(0, val + step);
     let prefix = id.substring(0, 2); 
-    if (prefix === 't1' || prefix === 't2') { updateAromaPreview(prefix); triggerCalc(); } 
+    if (prefix === 't1' || prefix === 't2' || prefix === 't3') { 
+        if(id === 't3_aroma_vol_multi') syncT3MultiVol(el.value);
+        if(prefix !== 't3') updateAromaPreview(prefix); 
+        triggerCalc(); 
+    } 
     else if (prefix === 'wi') { if(['wiz_vol','wiz_aroma_avail','wiz_nic_mg','wiz_max_nic'].includes(id)) updateWizPreview(); } 
     else triggerCalc();
 }
@@ -154,7 +171,9 @@ function switchTab(tabId) {
     });
     document.getElementById(tabId).classList.add('active');
     
-    if (tabId === 'tab_mes_donnees') renderMesMixes(); else triggerCalc();
+    if (tabId === 'tab_mes_donnees') {
+        renderMesMixes(); renderMesCompos();
+    } else triggerCalc();
 }
 
 function toggleVolMode(prefix, mode) {
@@ -165,11 +184,15 @@ function toggleVolMode(prefix, mode) {
     if(mode === 'defined') {
         btnDef.className = activeClass; btnMax.className = inactiveClass;
         document.getElementById(`${prefix}_vol_panel`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_avail_panel`).classList.add('hidden');
-        document.getElementById(`${prefix}_vol_preview_container`).classList.add('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.add('flex');
+        if(document.getElementById(`${prefix}_vol_preview_container`)) {
+            document.getElementById(`${prefix}_vol_preview_container`).classList.add('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.add('flex');
+        }
     } else {
         btnMax.className = activeClass; btnDef.className = inactiveClass;
         document.getElementById(`${prefix}_vol_panel`).classList.add('hidden'); document.getElementById(`${prefix}_aroma_avail_panel`).classList.remove('hidden');
-        document.getElementById(`${prefix}_vol_preview_container`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.add('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.remove('flex');
+        if(document.getElementById(`${prefix}_vol_preview_container`)) {
+            document.getElementById(`${prefix}_vol_preview_container`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.add('hidden'); document.getElementById(`${prefix}_aroma_sync_wrapper`).classList.remove('flex');
+        }
     }
     updateAromaPreview(prefix); triggerCalc();
 }
@@ -200,7 +223,11 @@ function updateNicPreview(prefix) {
     if (prefix !== 't1') return;
     let finalVol = 0;
     if(state.t1.vol_mode === 'defined') finalVol = parseFloat(document.getElementById('t1_vol').value) || 0;
-    else { let avail = parseFloat(document.getElementById('t1_aroma_avail').value) || 0; let perc = parseFloat(document.getElementById('t1_aroma_perc').value) || 0; if(perc > 0) finalVol = avail / (perc / 100); }
+    else { 
+        let avail = parseFloat(document.getElementById('t1_aroma_avail').value) || 0; 
+        let perc = state.t1.aroma_mode === 'multi' ? state.t1.multi.reduce((acc, v)=>acc+v.perc, 0) : (parseFloat(document.getElementById('t1_aroma_perc').value) || 0); 
+        if(perc > 0) finalVol = avail / (perc / 100); 
+    }
     let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
 
     if (state.t1.nic_mode === 'mg') {
@@ -217,10 +244,16 @@ function updateNicPreview(prefix) {
 function updateRatioDisp(prefix) { let sliderVal = document.getElementById(`${prefix}_ratio_pg`).value; document.getElementById(`${prefix}_ratio_disp`).innerText = formatRatioStr(100 - sliderVal, true); }
 
 function updateAromaPreview(prefix) {
-    let percEl = document.getElementById(`${prefix}_aroma_perc`);
-    if(percEl) document.getElementById(`${prefix}_aroma_perc_disp`).innerText = `${percEl.value}%`;
+    if(prefix === 't3') return;
+    let isMulti = state[prefix].aroma_mode === 'multi';
+    let perc = isMulti ? state[prefix].multi.reduce((acc, v)=>acc+v.perc, 0) : (parseFloat(document.getElementById(`${prefix}_aroma_perc`)?.value) || 0);
+    
+    if(!isMulti && document.getElementById(`${prefix}_aroma_perc_disp`)) {
+        document.getElementById(`${prefix}_aroma_perc_disp`).innerText = `${perc}%`;
+    }
+
     if(state[prefix].vol_mode === 'max_aroma') {
-        let avail = parseFloat(document.getElementById(`${prefix}_aroma_avail`).value) || 0; let perc = parseFloat(document.getElementById(`${prefix}_aroma_perc`).value) || 0;
+        let avail = parseFloat(document.getElementById(`${prefix}_aroma_avail`).value) || 0; 
         if(perc > 0) {
             if(prefix === 't1') { let finalVol = avail / (perc / 100); document.getElementById('t1_vol_preview').innerText = `${round1(finalVol)} ml`; } 
             else if(prefix === 't2') {
@@ -228,11 +261,13 @@ function updateAromaPreview(prefix) {
                 let prepVol = finalVol - ((finalVol * maxNic) / bStr);
                 document.getElementById('t2_vol_preview').innerText = `${round1(finalVol)} ml total`; document.getElementById('t2_vol_preview_sub').innerText = `soit ${round1(prepVol)} ml à préparer (avant boost)`;
             }
-        } else document.getElementById(`${prefix}_vol_preview`).innerText = `Erreur %`;
-    } else if (state[prefix].vol_mode === 'defined') {
+        } else {
+            let pEl = document.getElementById(`${prefix}_vol_preview`); if(pEl) pEl.innerText = `Erreur %`;
+        }
+    } else if (state[prefix].vol_mode === 'defined' && !isMulti) {
         let syncInput = document.getElementById(`${prefix}_aroma_sync_ml`);
         if(syncInput) {
-            let perc = parseFloat(percEl.value) || 0; let vol = 0;
+            let vol = 0;
             if(prefix === 't1') vol = parseFloat(document.getElementById('t1_vol').value) || 0;
             else if(prefix === 't2') {
                 let prepVol = parseFloat(document.getElementById('t2_vol').value) || 0; let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0; let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
@@ -245,6 +280,7 @@ function updateAromaPreview(prefix) {
 }
 
 function syncAromaFromMl(prefix) {
+    if (state[prefix].aroma_mode === 'multi' || prefix === 't3') return;
     let syncInput = document.getElementById(`${prefix}_aroma_sync_ml`); let percInput = document.getElementById(`${prefix}_aroma_perc`);
     let ml = parseFloat(syncInput.value) || 0; let vol = 0;
     if(prefix === 't1') vol = parseFloat(document.getElementById('t1_vol').value) || 0;
@@ -259,9 +295,372 @@ function syncAromaFromMl(prefix) {
     }
 }
 
+function syncT3MultiVol(val) {
+    let aVol = parseFloat(val) || 0;
+    let compoBreakdown = document.getElementById('t3_compo_breakdown');
+    if(state.t3.aroma_mode === 'multi' && state.t3.multi.length > 0) {
+        let totalPerc = state.t3.multi.reduce((acc, v)=>acc+v.perc, 0);
+        if (totalPerc > 0) {
+            let html = '';
+            state.t3.multi.forEach(item => {
+                let v_i = aVol * (item.perc / totalPerc);
+                html += `<div class="bg-stone-100 dark:bg-stone-700 p-1.5 rounded text-center"><span class="block font-bold text-stone-700 dark:text-stone-200 truncate">${item.name}</span><span class="text-brand-600 dark:text-brand-400 font-black">${round1(v_i)}ml</span></div>`;
+            });
+            compoBreakdown.innerHTML = html;
+        } else {
+            compoBreakdown.innerHTML = '<div class="col-span-2 text-stone-500 text-center">Dosage de la compo à 0%</div>';
+        }
+    }
+}
+
 /* ========================================== */
-/* 4. MODE ASSISTANT (WIZARD)                 */
+/* 4. GESTION MULTI AROMES                    */
 /* ========================================== */
+
+function setAromaMode(prefix, mode) {
+    state[prefix].aroma_mode = mode;
+    let btnMono = document.getElementById(`${prefix}_aroma_mode_mono`); let btnMulti = document.getElementById(`${prefix}_aroma_mode_multi`);
+    let activeClass = "flex-1 py-1.5 rounded-lg text-sm font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all";
+    let inactiveClass = "flex-1 py-1.5 rounded-lg text-sm font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all";
+    
+    if(mode === 'mono') {
+        btnMono.className = activeClass; btnMulti.className = inactiveClass;
+        document.getElementById(`${prefix}_aroma_mono_panel`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_multi_panel`).classList.add('hidden');
+        if(prefix === 't3') document.getElementById('t3_compo_breakdown').classList.add('hidden');
+    } else {
+        btnMulti.className = activeClass; btnMono.className = inactiveClass;
+        document.getElementById(`${prefix}_aroma_multi_panel`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_mono_panel`).classList.add('hidden');
+        if(prefix === 't3') document.getElementById('t3_compo_breakdown').classList.remove('hidden');
+        renderMultiList(prefix);
+    }
+    updateAromaPreview(prefix); triggerCalc();
+}
+
+function addMultiLine(prefix, type) {
+    let id = Date.now() + Math.floor(Math.random() * 1000);
+    let name = type === 'aroma' ? `Arôme 0${state[prefix].multi.filter(x=>x.type==='aroma').length + 1}` : (type === 'water' ? 'Eau' : 'Alcool');
+    // On force la valeur perc à 0
+    state[prefix].multi.push({ id, type, name, pg: 100, degree: 40, perc: 0 });
+    renderMultiList(prefix); 
+    if(prefix !== 'edit_compo') { updateAromaPreview(prefix); triggerCalc(); }
+}
+
+function removeMultiLine(prefix, id) {
+    state[prefix].multi = state[prefix].multi.filter(x => x.id !== id);
+    renderMultiList(prefix); 
+    if(prefix !== 'edit_compo') { updateAromaPreview(prefix); triggerCalc(); }
+}
+
+function updateMulti(prefix, id, field, val) {
+    let item = state[prefix].multi.find(x => x.id === id); if(!item) return;
+    if(field === 'perc') { val = parseFloat(val); if(isNaN(val) || val < 0) val = 0; }
+    if(field === 'pg' || field === 'degree') val = parseFloat(val) || 0;
+    item[field] = val;
+    if(field === 'perc') { renderMultiList(prefix); if(prefix !== 'edit_compo'){ updateAromaPreview(prefix); triggerCalc(); } }
+}
+
+function updateMultiPerc(prefix, id, step) {
+    let item = state[prefix].multi.find(x => x.id === id); if(!item) return;
+    item.perc = Math.max(0, round1(item.perc + step));
+    renderMultiList(prefix); if(prefix !== 'edit_compo'){ updateAromaPreview(prefix); triggerCalc(); }
+}
+
+function renderMultiList(prefix) {
+    let container = document.getElementById(`${prefix}_multi_list`); if(!container) return;
+    let html = ''; let total = 0;
+    state[prefix].multi.forEach(item => {
+        total += item.perc;
+        let selectHtml = '';
+        if (item.type === 'aroma') {
+            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'pg', this.value)" class="mt-2 w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1 text-[10px] font-bold focus:outline-none transition-colors">`;
+            RATIOS.forEach(r => selectHtml += `<option value="${r}" ${item.pg === r ? 'selected' : ''}>${formatRatioStr(r, true)}</option>`);
+            selectHtml += `</select>`;
+        } else if (item.type === 'alcohol') {
+            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'degree', this.value)" class="mt-2 w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1 text-[10px] font-bold focus:outline-none transition-colors">`;
+            for(let d=10; d<=90; d++) selectHtml += `<option value="${d}" ${item.degree === d ? 'selected' : ''}>${d}°</option>`;
+            selectHtml += `</select>`;
+        } else if (item.type === 'water') {
+            selectHtml = `<div class="text-[10px] text-stone-500 font-bold mt-2 px-1">Densité: 1.0</div>`;
+        }
+
+        html += `
+        <div class="flex items-center p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm relative h-[104px]">
+            <div class="flex-1 flex flex-col justify-between h-full pr-2">
+                <input type="text" value="${item.name}" oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+                ${selectHtml}
+            </div>
+            <div class="flex flex-col items-end justify-center w-28 pl-2 border-l border-stone-100 dark:border-stone-700 h-full">
+                <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-6 h-6 flex items-center justify-center transition-colors mb-2">✕</button>
+                <div class="text-[10px] text-stone-400 font-bold mb-1">Dosage (%)</div>
+                <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full">
+                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-8 flex items-center justify-center text-brand-600 font-bold hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">-</button>
+                    <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-sm text-stone-800 dark:text-stone-100 hide-arrows">
+                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-8 flex items-center justify-center text-brand-600 font-bold hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">+</button>
+                </div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+    let percEl = document.getElementById(`${prefix}_multi_total_perc`);
+    if(percEl) percEl.innerText = `${round1(total)}%`;
+    if(prefix !== 'edit_compo') checkCompoSave(prefix);
+    if(prefix === 't3') syncT3MultiVol(document.getElementById('t3_aroma_vol_multi').value);
+}
+
+function checkCompoSave(prefix) {
+    let inp = document.getElementById(`${prefix}_compo_name`); let btn = document.getElementById(`${prefix}_btn_save_compo`);
+    if(inp && btn) { btn.disabled = inp.value.trim().length < 2 || state[prefix].multi.length === 0; }
+}
+
+function saveCompo(prefix) {
+    let name = document.getElementById(`${prefix}_compo_name`).value.trim();
+    if(name.length < 2 || state[prefix].multi.length === 0) return;
+    
+    let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === name.toLowerCase());
+    if (existingIdx >= 0) {
+        openHtmlConfirm(`Une composition nommée "${name}" existe déjà. Écraser ?`, () => {
+            savedCompos.splice(existingIdx, 1);
+            _doSaveCompo(name, prefix);
+        });
+    } else { _doSaveCompo(name, prefix); }
+}
+
+function _doSaveCompo(name, prefix) {
+    savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state[prefix].multi)) });
+    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    syncCompoSelects(); showAlert("Composition sauvegardée !");
+}
+
+function syncCompoSelects() {
+    let options = `<option value="">-- Choisir une composition --</option>`;
+    savedCompos.forEach(c => options += `<option value="${c.id}">${c.name}</option>`);
+    ['t1', 't2', 't3', 'wiz'].forEach(p => {
+        let sel = document.getElementById(`${p}_compo_select`);
+        if(sel) { let val = sel.value; sel.innerHTML = options; sel.value = val; }
+    });
+    if(document.getElementById('tab_mes_donnees').classList.contains('active')) renderMesCompos();
+}
+
+function loadCompo(prefix, idStr) {
+    if(!idStr) return;
+    let id = parseInt(idStr); let compo = savedCompos.find(c => c.id === id);
+    if(compo) {
+        state[prefix].multi = JSON.parse(JSON.stringify(compo.items));
+        state[prefix].multi.forEach(i => i.id = Date.now() + Math.floor(Math.random()*10000));
+        let nameInp = document.getElementById(`${prefix}_compo_name`);
+        if(nameInp) nameInp.value = compo.name;
+        renderMultiList(prefix); if(prefix !== 't3') updateAromaPreview(prefix); triggerCalc();
+    }
+}
+
+/* ========================================== */
+/* 5. GESTION DES MODALES SPECIFIQUES         */
+/* ========================================== */
+
+let htmlConfirmCallback = null;
+function openHtmlConfirm(msg, callback) {
+    document.getElementById('html_confirm_msg').innerText = msg;
+    htmlConfirmCallback = callback;
+    document.getElementById('html_confirm_modal').classList.remove('hidden');
+}
+function closeHtmlConfirm() {
+    document.getElementById('html_confirm_modal').classList.add('hidden');
+    htmlConfirmCallback = null;
+}
+document.getElementById('html_confirm_btn_ok').addEventListener('click', () => {
+    if(htmlConfirmCallback) htmlConfirmCallback();
+    closeHtmlConfirm();
+});
+
+function editCompo(id) {
+    currentEditCompoId = id;
+    let c = savedCompos.find(x => x.id === id);
+    if (!c) return;
+    state.edit_compo.multi = JSON.parse(JSON.stringify(c.items));
+    document.getElementById('edit_compo_name').value = c.name;
+    document.getElementById('compo_edit_modal').classList.remove('hidden');
+    renderMultiList('edit_compo');
+}
+
+function closeCompoEditModal() { document.getElementById('compo_edit_modal').classList.add('hidden'); currentEditCompoId = null; }
+
+function saveEditedCompo() {
+    if(!currentEditCompoId) return;
+    let name = document.getElementById('edit_compo_name').value.trim();
+    if(name.length < 2 || state.edit_compo.multi.length === 0) { showAlert("Nom requis et au moins 1 ingrédient."); return; }
+    
+    let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === name.toLowerCase() && c.id !== currentEditCompoId);
+    if (existingIdx >= 0) {
+        openHtmlConfirm("Ce nom existe déjà. Écraser l'autre composition ?", () => {
+            savedCompos.splice(existingIdx, 1);
+            _finalizeEditCompoSave(name);
+        });
+    } else { _finalizeEditCompoSave(name); }
+}
+
+function _finalizeEditCompoSave(name) {
+    let c = savedCompos.find(x => x.id === currentEditCompoId);
+    if(c) { c.name = name; c.items = JSON.parse(JSON.stringify(state.edit_compo.multi)); }
+    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    syncCompoSelects(); showAlert("Composition mise à jour !"); closeCompoEditModal();
+}
+
+function saveAsNewCompo() {
+    let name = document.getElementById('edit_compo_name').value.trim() + " (Copie)";
+    if(state.edit_compo.multi.length === 0) return;
+    savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
+    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    syncCompoSelects(); showAlert("Copie sauvegardée !"); closeCompoEditModal();
+}
+
+function openExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.remove('hidden'); }
+function closeExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.add('hidden'); }
+
+function getCompoExportData() {
+    let name = document.getElementById('edit_compo_name').value.trim() || "Composition";
+    let c = savedCompos.find(x => x.id === currentEditCompoId);
+    let items = c ? c.items : state.edit_compo.multi;
+    return { name, items };
+}
+
+function exportCompoJson() {
+    let dataObj = getCompoExportData();
+    let data = { is_jediy_compo: true, jedi: jediIdentity, data: { id: Date.now(), name: dataObj.name, items: dataObj.items } };
+    let jsonStr = JSON.stringify(data, null, 2);
+    let safeName = dataObj.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    let safeJedi = jediIdentity.replace(/[^a-z0-9]/gi, '_').toLowerCase() || "anonyme";
+    let filename = `Composition_${safeName}_jediy_${safeJedi}.json`;
+    fallbackDownload(jsonStr, filename);
+    closeExportCompoPrompt();
+}
+
+function importCompoJson(e) {
+    let file = e.target.files[0]; if(!file) return;
+    let reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            let json = JSON.parse(ev.target.result);
+            if(!json.is_jediy_compo) { openHtmlConfirm("Fichier non reconnu comme composition Je-DIY !"); return; }
+            let compo = json.data;
+            compo.id = Date.now(); 
+            let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === compo.name.toLowerCase());
+            if (existingIdx >= 0) {
+                openHtmlConfirm(`La composition "${compo.name}" existe déjà. Importer comme copie ?`, () => {
+                    compo.name += " (Import)";
+                    savedCompos.push(compo); localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+                    syncCompoSelects(); showAlert("Composition importée !");
+                });
+            } else {
+                savedCompos.push(compo); localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+                syncCompoSelects(); showAlert("Composition importée !");
+            }
+        } catch(err) { openHtmlConfirm("Erreur de lecture du fichier JSON."); }
+    };
+    reader.readAsText(file); e.target.value = '';
+}
+
+function generateCompoText() {
+    let data = getCompoExportData();
+    let tPerc = data.items.reduce((acc, v)=>acc+v.perc, 0);
+    let text = `🎨 COMPOSITION : ${data.name}\n-----------------\n`;
+    text += `Concentration globale: ${round1(tPerc)}%\n\n📝 INGRÉDIENTS :\n`;
+    data.items.forEach(i => {
+        let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : '1.0');
+        let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+        text += `${icon} ${i.name} (${i.perc}%) [${details}]\n`;
+    });
+    if (jediIdentity) text += `\nProposée par ${jediIdentity}\n`;
+    text += `\n-----------------\nL'app Je-DIY :\nhttps://lehcimcramtrebor.github.io/jediy/`;
+    return text;
+}
+
+function exportCompoText() {
+    let text = generateCompoText();
+    if (navigator.share) navigator.share({ title: 'Composition Je-DIY', text: text }).catch(()=>copyToClipboard(text));
+    else copyToClipboard(text);
+    closeExportCompoPrompt();
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => showAlert("Copié !")).catch(err => console.error(err));
+}
+
+function exportCompoPDF(action) {
+    let data = getCompoExportData();
+    
+    // Wrapper centré forçant la largeur
+    let wrapper = document.createElement('div');
+    wrapper.id = "temp_compo_pdf_wrapper";
+    wrapper.style.width = "600px";
+    wrapper.style.margin = "0 auto";
+    wrapper.style.padding = "10px";
+    wrapper.style.backgroundColor = "#ffffff";
+    
+    // Contenu interne format "Carte"
+    let container = document.createElement('div');
+    container.className = 'export-card p-6 bg-white w-full border-2 border-stone-200 rounded-3xl shadow-sm';
+    let tPerc = data.items.reduce((acc, v)=>acc+v.perc, 0);
+    
+    let html = `<div class="export-title mb-5 border-b border-stone-200 pb-4 flex justify-between items-start">
+        <div class="flex-1 pr-4"><div class="text-2xl font-black text-stone-800 tracking-tight leading-none mb-1.5">${data.name}</div><div class="inline-block text-[9px] font-bold text-stone-500 uppercase tracking-widest bg-stone-100 px-2 py-0.5 rounded">Je-DIY • Composition Recipe</div></div>
+        <div class="flex gap-3 items-center"><div class="text-right text-xs"><span class="block text-brand-600 font-black text-base bg-stone-100 px-2 py-1 rounded-lg">${round1(tPerc)}% Total</span></div><img src="jediy.png" alt="QR" class="w-14 h-14 rounded-xl shadow-sm border border-stone-200"></div>
+    </div><div class="space-y-2">`;
+    
+    data.items.forEach(i => {
+        let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : 'Densité 1.0');
+        let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+        html += `<div class="flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-200 text-sm">
+            <span class="font-bold text-stone-700">${icon} ${i.name} <span class="text-[10px] text-stone-500 ml-1 bg-stone-200 px-1 rounded">${details}</span></span>
+            <span class="font-black text-brand-600">${i.perc}%</span>
+        </div>`;
+    });
+    
+    let footerText = jediIdentity ? `Composition partagée par <strong class="text-brand-600">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
+    html += `</div><div class="export-footer mt-6 text-center border-t border-stone-200 pt-3"><span class="text-[9px] text-stone-500 uppercase tracking-widest font-bold">${footerText}</span></div>`;
+    container.innerHTML = html;
+    wrapper.appendChild(container);
+    
+    document.body.appendChild(wrapper); document.body.classList.add('exporting');
+    let safeName = data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    
+    let opt = {
+        margin: 5, filename: `Compo_${safeName}.pdf`, image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    let worker = html2pdf().set(opt).from(wrapper);
+
+    worker.output('blob').then(pdfBlob => {
+        if (action === 'download') worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); });
+        else {
+            let file = new File([pdfBlob], `Compo_${safeName}.pdf`, { type: 'application/pdf' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({ files: [file], title: data.name, text: 'Ma compo Je-DIY' }).then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }).catch(()=>{wrapper.remove(); document.body.classList.remove('exporting');});
+            } else { worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }); }
+        }
+    });
+}
+
+
+/* ========================================== */
+/* 6. MODE ASSISTANT (WIZARD)                 */
+/* ========================================== */
+
+function toggleWizCompo() {
+    let use = document.getElementById('wiz_use_compo').checked;
+    document.getElementById('wiz_compo_select').classList.toggle('hidden', !use);
+    document.getElementById('wiz_aroma_perc_container').classList.toggle('hidden', use);
+    document.getElementById('wiz_adv_aroma_container').classList.toggle('hidden', use);
+}
+
+function wizUpdateCompo() {
+    let id = parseInt(document.getElementById('wiz_compo_select').value);
+    let compo = savedCompos.find(c => c.id === id);
+    if (compo) {
+        let total = compo.items.reduce((acc, v)=>acc+v.perc, 0);
+        document.getElementById('wiz_aroma_perc_disp').innerText = round1(total) + '% (Compo)';
+    } else { document.getElementById('wiz_aroma_perc_disp').innerText = document.getElementById('wiz_aroma_perc').value + '%'; }
+}
 
 function wizUpdateView() {
     ALL_WIZ_STEPS.forEach(id => { let el = document.getElementById('wiz_' + id); if(el) { el.classList.add('hidden'); el.classList.remove('block'); } });
@@ -301,20 +700,27 @@ function wizSetVolMode(mode) {
     wizNext();
 }
 
-function updateWizPreview() { document.getElementById('wiz_aroma_perc_disp').innerText = document.getElementById('wiz_aroma_perc').value + '%'; }
+function updateWizPreview() { if(!document.getElementById('wiz_use_compo').checked) document.getElementById('wiz_aroma_perc_disp').innerText = document.getElementById('wiz_aroma_perc').value + '%'; }
 
 function runWizCalculation() {
     let prefix = wizState.type; toggleVolMode(prefix, wizState.volMode);
     if (wizState.volMode === 'defined') document.getElementById(prefix + '_vol').value = document.getElementById('wiz_vol').value;
     else document.getElementById(prefix + '_aroma_avail').value = document.getElementById('wiz_aroma_avail').value;
-    document.getElementById(prefix + '_aroma_perc').value = document.getElementById('wiz_aroma_perc').value;
-
-    let isAdvAroma = document.getElementById('wiz_adv_aroma').checked; let aromaPgVal = document.getElementById('wiz_aroma_pg').value;
-    let tabAdvChk = document.getElementById(prefix + '_adv_aroma');
-    if (tabAdvChk) {
-        tabAdvChk.checked = isAdvAroma; toggleAdvAroma(prefix); 
-        if (isAdvAroma) { document.getElementById(prefix + '_aroma_pg').value = aromaPgVal; document.getElementById(prefix + '_aroma_pg_val').innerText = formatRatioStr(100 - aromaPgVal, false); } 
-        else { document.getElementById(prefix + '_aroma_pg').value = 0; document.getElementById(prefix + '_aroma_pg_val').innerText = '100% PG'; }
+    
+    let useCompo = document.getElementById('wiz_use_compo').checked;
+    if (useCompo) {
+        let cid = document.getElementById('wiz_compo_select').value;
+        if(cid) { setAromaMode(prefix, 'multi'); loadCompo(prefix, cid); }
+    } else {
+        setAromaMode(prefix, 'mono');
+        document.getElementById(prefix + '_aroma_perc').value = document.getElementById('wiz_aroma_perc').value;
+        let isAdvAroma = document.getElementById('wiz_adv_aroma').checked; let aromaPgVal = document.getElementById('wiz_aroma_pg').value;
+        let tabAdvChk = document.getElementById(prefix + '_adv_aroma');
+        if (tabAdvChk) {
+            tabAdvChk.checked = isAdvAroma; toggleAdvAroma(prefix); 
+            if (isAdvAroma) { document.getElementById(prefix + '_aroma_pg').value = aromaPgVal; document.getElementById(prefix + '_aroma_pg_val').innerText = formatRatioStr(100 - aromaPgVal, false); } 
+            else { document.getElementById(prefix + '_aroma_pg').value = 0; document.getElementById(prefix + '_aroma_pg_val').innerText = '100% PG'; }
+        }
     }
 
     document.getElementById(prefix + '_ratio_pg').value = document.getElementById('wiz_ratio_pg').value; updateRatioDisp(prefix);
@@ -336,7 +742,7 @@ function runWizCalculation() {
 
 
 /* ========================================== */
-/* 5. MOTEUR DE CALCUL CENTRAL                */
+/* 7. MOTEUR DE CALCUL CENTRAL                */
 /* ========================================== */
 
 function triggerCalc() {
@@ -362,46 +768,176 @@ function findBaseMixes(targetVol, targetPgMl, basesObj) {
     return results.length > 0 ? results : null;
 }
 
-function buildBoostCardHtml(c, noBtn = false, isCompact = false) {
-    let jWeight = getWeight(c.vol, c.pg); let bWeight = getWeight(c.bVol, c.bPg); let totalWeight = jWeight + bWeight;
-    let finalVol = c.vol + c.bVol; let finalNic = finalVol > 0 ? (c.bVol * c.bStr) / finalVol : 0; let finalPgRatio = 50;
-    if (c.advChecked) { let totalPgMl = (c.vol * (c.pg / 100)) + (c.bVol * (c.bPg / 100)); finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 50; }
-    
-    let cfgStr = encodeURIComponent(JSON.stringify(c)); let theme = 'boost'; let compactClass = isCompact ? "compact-card" : "";
-    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
+function calcTab1() {
+    let finalVol, aromaVol; 
+    let isMulti = state.t1.aroma_mode === 'multi';
+    let aromaPgVal = parseInt(document.getElementById('t1_aroma_pg').value); 
+    let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
+    let p = isMulti ? state.t1.multi.reduce((acc, v) => acc + v.perc, 0) : (parseFloat(document.getElementById('t1_aroma_perc').value) || 0);
 
-    let html = `<div data-theme="${theme}" data-config="${cfgStr}" data-type="boost" data-ratio="${finalPgRatio}" data-aroma-perc="Inconnu" data-nic-mg="${finalNic}" class="${compactClass} recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900 rounded-3xl flex flex-col transition-all w-full h-full">
-        <div class="flex-1">
-            <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700">
-                <div>
-                    <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg">Mélange Boosté <span class="text-brand-600">${round1(finalVol)} ml</span></div>
-                    <div class="mt-1.5"><span class="text-xs font-bold text-brand-700 dark:text-brand-300 px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm">${formatRatioStr(finalPgRatio, true)}</span></div>
-                </div>
-                ${btnHtml}
-            </div>
-            <div class="card-body space-y-2 mb-4">`;
-    if(c.vol > 0) {
-        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
-                    <span class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Jus <span class="text-xs font-bold bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded">${formatRatioStr(c.pg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.vol)} ml</span><span class="block text-xs font-bold text-brand-600 mt-0.5">${round1(jWeight)} g</span></div>
-                </div>`;
+    if(state.t1.vol_mode === 'defined') {
+        finalVol = parseFloat(document.getElementById('t1_vol').value) || 0; aromaVol = finalVol * (p/100);
+    } else {
+        aromaVol = parseFloat(document.getElementById('t1_aroma_avail').value) || 0; 
+        if(p <= 0) { renderMixes('t1', [], [{err: "Le pourcentage d'arôme doit être > 0."}]); return; }
+        finalVol = aromaVol / (p/100);
     }
-    if(c.bVol > 0) {
-        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Booster <span class="text-xs font-bold bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded">${formatRatioStr(c.bPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml <span class="text-[10px] text-stone-500 font-bold">(${round2(c.bVol/10)} u.)</span></span><span class="block text-xs font-bold text-brand-600 mt-0.5">${round1(bWeight)} g</span></div>
-                </div>`;
+
+    if(finalVol <= 0 || aromaVol > finalVol) { renderMixes('t1', [], [{err: "Volumes incohérents."}]); return; }
+
+    let targetPgRatio = 100 - parseInt(document.getElementById('t1_ratio_pg').value);
+    let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
+    
+    let nicVol = 0;
+    if(state.t1.nic_mode === 'mg') { let mg = parseFloat(document.getElementById('t1_nic_mg').value) || 0; nicVol = (finalVol * mg) / bStr; } 
+    else { let bCount = parseFloat(document.getElementById('t1_nic_boost').value) || 0; nicVol = bCount * 10; }
+
+    let baseVol = finalVol - aromaVol - nicVol; if (Math.abs(baseVol) < 1e-6) baseVol = 0; 
+    if(baseVol < 0) { renderMixes('t1', [], [{err: "Pas de place pour la base ! Réduisez l'arôme ou la nicotine."}]); return; }
+
+    let basesAvail = getChecked('t1_base_chk'); let boostsAvail = getChecked('t1_boost_chk');
+    if(basesAvail.length === 0 || boostsAvail.length === 0) { renderMixes('t1', [], [{err: "Cochez au moins une base et un booster."}]); return; }
+
+    let targetPgMl = finalVol * (targetPgRatio / 100); 
+    let aromaPgMl = 0;
+    if (isMulti) {
+        state.t1.multi.forEach(item => { if (item.type === 'aroma') aromaPgMl += (finalVol * (item.perc/100)) * (item.pg/100); });
+    } else { aromaPgMl = aromaVol * (aromaPg / 100); }
+
+    let exactRecipes = []; let altRecipes = [];
+    let multiData = isMulti ? JSON.parse(JSON.stringify(state.t1.multi)) : null;
+    let compoName = isMulti ? document.getElementById('t1_compo_name').value.trim() : null;
+    let globalNameObj = document.getElementById('t1_global_name');
+    let globalName = globalNameObj && globalNameObj.value.trim() !== "" ? globalNameObj.value.trim() : null;
+
+    for(let bPg of boostsAvail) {
+        let boostPgMl = nicVol * (bPg / 100); let remainingPgNeeded = targetPgMl - aromaPgMl - boostPgMl;
+        let mixes = findBaseMixes(baseVol, remainingPgNeeded, basesAvail);
+        
+        if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: mix, finalVol: finalVol, realPgRatio: targetPgRatio, bStr, multi: multiData, compoName, globalName }); } 
+        else {
+            let bestBase = basesAvail[0]; let minDiff = 9999;
+            for(let bp of basesAvail) { let testPg = aromaPgMl + boostPgMl + (baseVol * (bp/100)); let diff = Math.abs(testPg - targetPgMl); if(diff < minDiff) { minDiff = diff; bestBase = bp; } }
+            let realPg = ((aromaPgMl + boostPgMl + (baseVol * (bestBase/100))) / finalVol) * 100;
+            altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: [{pgRatio: bestBase, vol: baseVol}], finalVol: finalVol, realPgRatio: realPg, isAlt: true, bStr, multi: multiData, compoName, globalName });
+        }
     }
-    html += `</div></div>
-        <div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-stone-500 uppercase">Taux finaux</span>
-                <div class="text-right"><span class="text-lg font-black text-brand-700 dark:text-brand-400">${round1(finalNic)} mg/ml</span></div>
+    renderMixes('t1', deduplicateMixes(exactRecipes), deduplicateMixes(altRecipes).sort((a,b) => Math.abs(a.realPgRatio - targetPgRatio) - Math.abs(b.realPgRatio - targetPgRatio)));
+}
+
+function calcTab2() {
+    let finalVolAfterBoost, prepVol, aromaVol;
+    let isMulti = state.t2.aroma_mode === 'multi';
+    let targetAromaPerc = isMulti ? state.t2.multi.reduce((acc, v)=>acc+v.perc, 0) : (parseFloat(document.getElementById('t2_aroma_perc').value) || 15);
+    let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
+    let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+
+    if(state.t2.vol_mode === 'defined') {
+        prepVol = parseFloat(document.getElementById('t2_vol').value) || 0;
+        if(1 - maxNic/bStr <= 0) { renderMixes('t2', [], [{err: "Taux max nicotine impossible."}]); return; }
+        finalVolAfterBoost = prepVol / (1 - maxNic/bStr); aromaVol = finalVolAfterBoost * (targetAromaPerc / 100);
+    } else {
+        aromaVol = parseFloat(document.getElementById('t2_aroma_avail').value) || 0;
+        if(targetAromaPerc <= 0) { renderMixes('t2', [], [{err: "Pourcentage d'arôme > 0 requis."}]); return; }
+        finalVolAfterBoost = aromaVol / (targetAromaPerc / 100);
+        let boosterMaxVol = (finalVolAfterBoost * maxNic) / bStr; prepVol = finalVolAfterBoost - boosterMaxVol;
+    }
+
+    if(prepVol <= 0 || aromaVol > prepVol) { renderMixes('t2', [], [{err: "La concentration ne laisse pas de place pour la base !"}]); return; }
+
+    let baseVol = prepVol - aromaVol; if (Math.abs(baseVol) < 1e-6) baseVol = 0; 
+    let shortfillTargetPgRatio = 100 - parseInt(document.getElementById('t2_ratio_pg').value);
+    let aromaPgVal = parseInt(document.getElementById('t2_aroma_pg').value); let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
+    let shortfillTargetPgMl = prepVol * (shortfillTargetPgRatio / 100); 
+    
+    let aromaPgMl = 0;
+    if (isMulti) {
+        state.t2.multi.forEach(item => { if (item.type === 'aroma') aromaPgMl += (finalVolAfterBoost * (item.perc/100)) * (item.pg/100); });
+    } else { aromaPgMl = aromaVol * (aromaPg / 100); }
+
+    let remainingPgNeededInBase = shortfillTargetPgMl - aromaPgMl;
+    let basesAvail = getChecked('t2_base_chk');
+    if(basesAvail.length === 0) { renderMixes('t2', [], [{err: "Cochez au moins une base."}]); return; }
+
+    let exactRecipes = []; let altRecipes = [];
+    let multiData = isMulti ? JSON.parse(JSON.stringify(state.t2.multi)) : null;
+    let compoName = isMulti ? document.getElementById('t2_compo_name').value.trim() : null;
+    let globalNameObj = document.getElementById('t2_global_name');
+    let globalName = globalNameObj && globalNameObj.value.trim() !== "" ? globalNameObj.value.trim() : null;
+
+    let mixes = findBaseMixes(baseVol, remainingPgNeededInBase, basesAvail);
+    if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: shortfillTargetPgRatio, nicMax: maxNic, bStr, multi: multiData, compoName, globalName }); } 
+    else {
+        let bestBase = basesAvail[0]; let minDiff = 9999;
+        for(let bp of basesAvail) { let testPg = aromaPgMl + (baseVol * (bp/100)); let diff = Math.abs(testPg - shortfillTargetPgMl); if(diff < minDiff) { minDiff = diff; bestBase = bp; } }
+        let realPg = ((aromaPgMl + (baseVol * (bestBase/100))) / prepVol) * 100;
+        altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: [{pgRatio: bestBase, vol: baseVol}], prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic, bStr, multi: multiData, compoName, globalName });
+    }
+    renderMixes('t2', deduplicateMixes(exactRecipes), deduplicateMixes(altRecipes).sort((a,b) => Math.abs(a.realPgRatio - shortfillTargetPgRatio) - Math.abs(b.realPgRatio - shortfillTargetPgRatio)));
+}
+
+function calcTab3() {
+    let isMulti = state.t3.aroma_mode === 'multi';
+    let aVol = isMulti ? (parseFloat(document.getElementById('t3_aroma_vol_multi').value)||0) : (parseFloat(document.getElementById('t3_aroma_vol').value)||0); 
+    
+    let aPgVal = parseFloat(document.getElementById('t3_aroma_pg').value); 
+    let aPg = isNaN(aPgVal) ? 100 : (100 - aPgVal);
+    
+    let aWeight = 0; let totalAromaPgMl = 0;
+    
+    if (isMulti) {
+        if (state.t3.multi.length > 0) {
+            let totalPerc = state.t3.multi.reduce((acc, v) => acc + v.perc, 0);
+            if (totalPerc > 0) {
+                state.t3.multi.forEach(item => {
+                    let vol_i = aVol * (item.perc / totalPerc);
+                    let w_i = getLiquidWeight(item.type, vol_i, item.pg, item.degree);
+                    aWeight += w_i;
+                    if(item.type === 'aroma') totalAromaPgMl += vol_i * (item.pg/100);
+                });
+                aPg = aVol > 0 ? (totalAromaPgMl / aVol) * 100 : 0;
+            } else {
+                aWeight = getWeight(aVol, aPg);
+            }
+        }
+    } else {
+        aWeight = getWeight(aVol, aPg);
+    }
+
+    let bVol = parseFloat(document.getElementById('t3_base_vol').value)||0; let bPgVal = parseFloat(document.getElementById('t3_base_pg').value); let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
+    let nVol = parseFloat(document.getElementById('t3_boost_vol').value)||0; let nPgVal = parseFloat(document.getElementById('t3_boost_pg').value); let nPg = isNaN(nPgVal) ? 50 : (100 - nPgVal);
+    let strVal = parseFloat(document.getElementById('t3_boost_str').value); let str = isNaN(strVal) ? 20 : strVal;
+
+    let bWeight = getWeight(bVol, bPg); let nWeight = getWeight(nVol, nPg);
+    document.getElementById('t3_aroma_w').innerText = `${round1(aWeight)} g`; document.getElementById('t3_base_w').innerText = `${round1(bWeight)} g`; document.getElementById('t3_boost_w').innerText = `${round1(nWeight)} g`;
+    let tVol = aVol + bVol + nVol; let tWeight = aWeight + bWeight + nWeight;
+
+    if(tVol === 0) { document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in">Aucun volume.</div>`; return; }
+
+    let totalPg = isMulti ? (totalAromaPgMl + (bVol*(bPg/100)) + (nVol*(nPg/100))) : ((aVol*(aPg/100)) + (bVol*(bPg/100)) + (nVol*(nPg/100)));
+    let pgRatio = (totalPg / tVol) * 100; let aRatio = (aVol / tVol) * 100; let finalNic = (nVol * str) / tVol;
+    
+    let c = { 
+        type: 't3', aVol, aPg, bVol, bPg, nVol, nPg, str, 
+        multi: isMulti ? JSON.parse(JSON.stringify(state.t3.multi)) : null, 
+        compoName: isMulti ? document.getElementById('t3_compo_name').value.trim() : null 
+    };
+    let hiddenCardHtml = `<div id="t3_hidden_card" class="hidden">${buildT3CardHtml(c, false, false)}</div>`;
+
+    document.getElementById('t3_results').innerHTML = `
+        <div class="animate-fade-in">
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml <span class="text-base text-brand-600 dark:text-brand-400 font-black">(${round1(tWeight)} g)</span></span></div>
+            <div class="grid grid-cols-3 gap-2 mt-4 text-left">
+                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio)}</span></div>
+                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600 dark:text-brand-400">${round1(aRatio)} %</span></div>
+                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Nicotine</span><span class="font-bold text-stone-800 dark:text-stone-200">${round1(finalNic)} mg</span></div>
             </div>
-            <div class="text-right text-xs font-bold text-brand-600 dark:text-brand-400 mt-1">Poids total estimé : ${round1(totalWeight)} g</div>
+            <button onclick="openModalFromCard(document.querySelector('#t3_hidden_card .recipe-card-wrapper'))" class="mt-5 w-full py-3 bg-white dark:bg-stone-700 hover:bg-brand-50 dark:hover:bg-stone-600 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-stone-600 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Voir la fiche Mix
+            </button>
+            ${hiddenCardHtml}
         </div>
-    </div>`;
-    return html;
+    `;
 }
 
 function calcBoostSimple(prefix, containerId) {
@@ -462,175 +998,8 @@ function calcBoostSimple(prefix, containerId) {
     document.getElementById(containerId).innerHTML = html;
 }
 
-function calcTab1() {
-    let finalVol, aromaVol; let aromaPgVal = parseInt(document.getElementById('t1_aroma_pg').value); let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
-    if(state.t1.vol_mode === 'defined') {
-        finalVol = parseFloat(document.getElementById('t1_vol').value) || 0; let p = parseFloat(document.getElementById('t1_aroma_perc').value) || 0; aromaVol = finalVol * (p/100);
-    } else {
-        aromaVol = parseFloat(document.getElementById('t1_aroma_avail').value) || 0; let p = parseFloat(document.getElementById('t1_aroma_perc').value) || 0;
-        if(p <= 0) { renderMixes('t1', [], [{err: "Le pourcentage d'arôme doit être supérieur à 0."}]); return; }
-        finalVol = aromaVol / (p/100);
-    }
-
-    if(finalVol <= 0 || aromaVol > finalVol) { renderMixes('t1', [], [{err: "Volumes incohérents."}]); return; }
-
-    let targetPgRatio = 100 - parseInt(document.getElementById('t1_ratio_pg').value);
-    let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
-    
-    let nicVol = 0;
-    if(state.t1.nic_mode === 'mg') { let mg = parseFloat(document.getElementById('t1_nic_mg').value) || 0; nicVol = (finalVol * mg) / bStr; } 
-    else { let bCount = parseFloat(document.getElementById('t1_nic_boost').value) || 0; nicVol = bCount * 10; }
-
-    let baseVol = finalVol - aromaVol - nicVol; if (Math.abs(baseVol) < 1e-6) baseVol = 0; 
-    if(baseVol < 0) { renderMixes('t1', [], [{err: "Pas de place pour la base ! Réduisez l'arôme ou la nicotine."}]); return; }
-
-    let basesAvail = getChecked('t1_base_chk'); let boostsAvail = getChecked('t1_boost_chk');
-    if(basesAvail.length === 0 || boostsAvail.length === 0) { renderMixes('t1', [], [{err: "Cochez au moins une base et un booster."}]); return; }
-
-    let targetPgMl = finalVol * (targetPgRatio / 100); let aromaPgMl = aromaVol * (aromaPg / 100);
-    let exactRecipes = []; let altRecipes = [];
-
-    for(let bPg of boostsAvail) {
-        let boostPgMl = nicVol * (bPg / 100); let remainingPgNeeded = targetPgMl - aromaPgMl - boostPgMl;
-        let mixes = findBaseMixes(baseVol, remainingPgNeeded, basesAvail);
-        
-        if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: mix, finalVol: finalVol, realPgRatio: targetPgRatio, bStr }); } 
-        else {
-            let bestBase = basesAvail[0]; let minDiff = 9999;
-            for(let bp of basesAvail) { let testPg = aromaPgMl + boostPgMl + (baseVol * (bp/100)); let diff = Math.abs(testPg - targetPgMl); if(diff < minDiff) { minDiff = diff; bestBase = bp; } }
-            let realPg = ((aromaPgMl + boostPgMl + (baseVol * (bestBase/100))) / finalVol) * 100;
-            altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: [{pgRatio: bestBase, vol: baseVol}], finalVol: finalVol, realPgRatio: realPg, isAlt: true, bStr });
-        }
-    }
-    renderMixes('t1', deduplicateMixes(exactRecipes), deduplicateMixes(altRecipes).sort((a,b) => Math.abs(a.realPgRatio - targetPgRatio) - Math.abs(b.realPgRatio - targetPgRatio)));
-}
-
-function calcTab2() {
-    let finalVolAfterBoost, prepVol, aromaVol;
-    let targetAromaPerc = parseFloat(document.getElementById('t2_aroma_perc').value) || 15;
-    let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
-    let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
-
-    if(state.t2.vol_mode === 'defined') {
-        prepVol = parseFloat(document.getElementById('t2_vol').value) || 0;
-        if(1 - maxNic/bStr <= 0) { renderMixes('t2', [], [{err: "Taux max nicotine impossible avec ce booster."}]); return; }
-        finalVolAfterBoost = prepVol / (1 - maxNic/bStr); aromaVol = finalVolAfterBoost * (targetAromaPerc / 100);
-    } else {
-        aromaVol = parseFloat(document.getElementById('t2_aroma_avail').value) || 0;
-        if(targetAromaPerc <= 0) { renderMixes('t2', [], [{err: "Pourcentage d'arôme > 0 requis."}]); return; }
-        finalVolAfterBoost = aromaVol / (targetAromaPerc / 100);
-        let boosterMaxVol = (finalVolAfterBoost * maxNic) / bStr; prepVol = finalVolAfterBoost - boosterMaxVol;
-    }
-
-    if(prepVol <= 0 || aromaVol > prepVol) { renderMixes('t2', [], [{err: "La concentration demandée ne laisse pas de place pour la base neutre !"}]); return; }
-
-    let baseVol = prepVol - aromaVol; if (Math.abs(baseVol) < 1e-6) baseVol = 0; 
-    let shortfillTargetPgRatio = 100 - parseInt(document.getElementById('t2_ratio_pg').value);
-    let aromaPgVal = parseInt(document.getElementById('t2_aroma_pg').value); let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
-    let shortfillTargetPgMl = prepVol * (shortfillTargetPgRatio / 100); let aromaPgMl = aromaVol * (aromaPg / 100);
-    let remainingPgNeededInBase = shortfillTargetPgMl - aromaPgMl;
-    let basesAvail = getChecked('t2_base_chk');
-    if(basesAvail.length === 0) { renderMixes('t2', [], [{err: "Cochez au moins une base."}]); return; }
-
-    let exactRecipes = []; let altRecipes = [];
-    let mixes = findBaseMixes(baseVol, remainingPgNeededInBase, basesAvail);
-    
-    if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: shortfillTargetPgRatio, nicMax: maxNic, bStr }); } 
-    else {
-        let bestBase = basesAvail[0]; let minDiff = 9999;
-        for(let bp of basesAvail) { let testPg = aromaPgMl + (baseVol * (bp/100)); let diff = Math.abs(testPg - shortfillTargetPgMl); if(diff < minDiff) { minDiff = diff; bestBase = bp; } }
-        let realPg = ((aromaPgMl + (baseVol * (bestBase/100))) / prepVol) * 100;
-        altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: [{pgRatio: bestBase, vol: baseVol}], prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic, bStr });
-    }
-    renderMixes('t2', deduplicateMixes(exactRecipes), deduplicateMixes(altRecipes).sort((a,b) => Math.abs(a.realPgRatio - shortfillTargetPgRatio) - Math.abs(b.realPgRatio - shortfillTargetPgRatio)));
-}
-
-function buildT3CardHtml(c, noBtn = false, isCompact = false) {
-    let aWeight = getWeight(c.aVol, c.aPg); let bWeight = getWeight(c.bVol, c.bPg); let nWeight = getWeight(c.nVol, c.nPg);
-    let tVol = c.aVol + c.bVol + c.nVol; let tWeight = aWeight + bWeight + nWeight;
-    let pgRatio = 50; let aRatio = 0; let finalNic = 0;
-    if(tVol > 0) {
-        let totalPg = (c.aVol*(c.aPg/100)) + (c.bVol*(c.bPg/100)) + (c.nVol*(c.nPg/100));
-        pgRatio = (totalPg / tVol) * 100; aRatio = (c.aVol / tVol) * 100; finalNic = (c.nVol * c.str) / tVol;
-    }
-    let cfgStr = encodeURIComponent(JSON.stringify(c)); let theme = 'manuel'; let compactClass = isCompact ? "compact-card" : "";
-    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
-    
-    let html = `<div data-theme="${theme}" data-config="${cfgStr}" data-type="t3" data-ratio="${pgRatio}" data-aroma-perc="${aRatio}" data-nic-mg="${finalNic}" class="${compactClass} recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900 rounded-3xl flex flex-col transition-all w-full h-full hover:shadow-xl hover:-translate-y-1 duration-300">
-        <div class="flex-1">
-            <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700 transition-colors">
-                <div>
-                    <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg leading-tight">Mélange Manuel <span class="text-brand-600 dark:text-brand-400">${round1(tVol)} ml</span></div>
-                    <div class="mt-1.5"><span class="text-xs font-bold text-brand-700 dark:text-brand-300 px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm transition-colors">${formatRatioStr(pgRatio, true)}</span></div>
-                </div>
-                ${btnHtml}
-            </div>
-            <div class="card-body space-y-2 mb-4">`;
-    if (c.aVol > 0) {
-        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(c.aPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.aVol)} ml</span><span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(aWeight)} g</span></div>
-                </div>`;
-    }
-    if (c.bVol > 0) {
-        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(c.bPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml</span><span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(bWeight)} g</span></div>
-                </div>`;
-    }
-    if (c.nVol > 0) {
-        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(c.nPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.nVol)} ml <span class="text-[10px] text-stone-500 font-bold">(${round2(c.nVol/10)} u.)</span></span><span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(nWeight)} g</span></div>
-                </div>`;
-    }
-    html += `</div></div>
-        <div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700 transition-colors">
-            <div class="flex justify-between items-center">
-                <span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span>
-                <div class="text-right"><span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(aRatio)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span> <span class="mx-1 text-stone-300 dark:text-stone-600">|</span> <span class="text-lg font-black text-brand-700 dark:text-brand-400">${round1(finalNic)} mg/ml</span></div>
-            </div>
-            <div class="text-right text-xs font-bold text-brand-600 dark:text-brand-400 mt-1">Poids total estimé : ${round1(tWeight)} g</div>
-        </div>
-    </div>`;
-    return html;
-}
-
-function calcTab3() {
-    let aVol = parseFloat(document.getElementById('t3_aroma_vol').value)||0; let aPgVal = parseFloat(document.getElementById('t3_aroma_pg').value); let aPg = isNaN(aPgVal) ? 100 : (100 - aPgVal);
-    let bVol = parseFloat(document.getElementById('t3_base_vol').value)||0; let bPgVal = parseFloat(document.getElementById('t3_base_pg').value); let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
-    let nVol = parseFloat(document.getElementById('t3_boost_vol').value)||0; let nPgVal = parseFloat(document.getElementById('t3_boost_pg').value); let nPg = isNaN(nPgVal) ? 50 : (100 - nPgVal);
-    let strVal = parseFloat(document.getElementById('t3_boost_str').value); let str = isNaN(strVal) ? 20 : strVal;
-
-    let aWeight = getWeight(aVol, aPg); let bWeight = getWeight(bVol, bPg); let nWeight = getWeight(nVol, nPg);
-    document.getElementById('t3_aroma_w').innerText = `${round1(aWeight)} g`; document.getElementById('t3_base_w').innerText = `${round1(bWeight)} g`; document.getElementById('t3_boost_w').innerText = `${round1(nWeight)} g`;
-    let tVol = aVol + bVol + nVol; let tWeight = aWeight + bWeight + nWeight;
-
-    if(tVol === 0) { document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in">Aucun volume.</div>`; return; }
-
-    let totalPg = (aVol*(aPg/100)) + (bVol*(bPg/100)) + (nVol*(nPg/100));
-    let pgRatio = (totalPg / tVol) * 100; let aRatio = (aVol / tVol) * 100; let finalNic = (nVol * str) / tVol;
-    let c = { type: 't3', aVol, aPg, bVol, bPg, nVol, nPg, str };
-    let hiddenCardHtml = `<div id="t3_hidden_card" class="hidden">${buildT3CardHtml(c, false, false)}</div>`;
-
-    document.getElementById('t3_results').innerHTML = `
-        <div class="animate-fade-in">
-            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml <span class="text-base text-brand-600 dark:text-brand-400 font-black">(${round1(tWeight)} g)</span></span></div>
-            <div class="grid grid-cols-3 gap-2 mt-4 text-left">
-                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio)}</span></div>
-                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600 dark:text-brand-400">${round1(aRatio)} %</span></div>
-                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Nicotine</span><span class="font-bold text-stone-800 dark:text-stone-200">${round1(finalNic)} mg</span></div>
-            </div>
-            <button onclick="openModalFromCard(document.querySelector('#t3_hidden_card .recipe-card-wrapper'))" class="mt-5 w-full py-3 bg-white dark:bg-stone-700 hover:bg-brand-50 dark:hover:bg-stone-600 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-stone-600 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Voir la fiche Mix
-            </button>
-            ${hiddenCardHtml}
-        </div>
-    `;
-}
-
 /* ========================================== */
-/* 6. AFFICHAGE ET GÉNÉRATION HTML DES CARTES */
+/* 8. AFFICHAGE ET GÉNÉRATION HTML DES CARTES */
 /* ========================================== */
 
 function generateCheckboxes(prefix) {
@@ -666,10 +1035,10 @@ function renderMixes(prefix, exact, alt) {
     if(alt.length > 0 && alt[0].err) { container.innerHTML = `<div class="animate-fade-in col-span-full p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 rounded-2xl font-bold text-sm text-center shadow-inner">${alt[0].err}</div>`; return; }
 
     let allHtml = '';
-    if (exact.length > 0 || alt.length > 0) { allHtml += `<div class="animate-fade-in col-span-full mb-2 p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors"><span class="text-xl">💡</span><p><strong>Astuce :</strong> Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options de partage et sauvegarde.</p></div>`; }
+    if (exact.length > 0 || alt.length > 0) { allHtml += `<div class="animate-fade-in col-span-full mb-2 p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors"><span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p></div>`; }
     if(exact.length > 0) { allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-brand-600 dark:text-brand-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-brand-500"></span> ${exact.length} Mix(es) Parfait(s)</div>`; exact.forEach(r => allHtml += buildCard(r, prefix, false, false, false)); }
     if(exact.length === 0 && alt.length > 0) { allHtml += `<div class="animate-fade-in col-span-full text-xs font-black text-amber-500 dark:text-amber-500 uppercase tracking-widest mb-2 ml-2 flex items-center gap-2 mt-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span> Alternatives Proches</div>`; alt.slice(0,3).forEach(r => allHtml += buildCard(r, prefix, true, false, false)); }
-    if(exact.length === 0 && alt.length === 0) { allHtml = `<div class="animate-fade-in col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucun Mix possible. Ajustez les paramètres.</div>`; }
+    if(exact.length === 0 && alt.length === 0) { allHtml = `<div class="animate-fade-in col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucun Mix possible.</div>`; }
     
     container.innerHTML = allHtml; container.querySelectorAll('select').forEach(s => updateSim(s));
 }
@@ -677,17 +1046,18 @@ function renderMixes(prefix, exact, alt) {
 function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     let bColor = isAlt ? 'border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900' : 'border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900';
     let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-brand-700 dark:text-brand-400';
-    let actualAromaPg = (r.aromaPg !== undefined && r.aromaPg !== null && !isNaN(r.aromaPg)) ? r.aromaPg : 100;
-    let aromaWeight = getWeight(r.aroma, actualAromaPg); let totalWeight = aromaWeight;
+    
+    let totalWeight = 0; let aromaWeight = 0;
+    let finalAroma = 0; let totalVol = prefix === 't1' ? r.finalVol : r.prepVol;
+
+    if (totalVol > 0) finalAroma = (r.aroma / totalVol) * 100;
 
     let cfg = { ...r, type: prefix, isAlt: isAlt };
     let dataAttrs = `data-type="${prefix}" data-ratio="${r.realPgRatio}" data-base-pg="${r.realPgRatio}" `;
     if (prefix === 't1') {
-        let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
         let bStr = r.bStr || parseFloat(document.getElementById('t1_booster_str').value) || 20;
         let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0; dataAttrs += `data-aroma-perc="${finalAroma}" data-nic-mg="${finalNic}" `; cfg.bStr = bStr;
     } else if (prefix === 't2') {
-        let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
         let bStr = r.bStr || parseFloat(document.getElementById('t2_booster_str').value) || 20;
         dataAttrs += `data-aroma-perc="${finalAroma}" data-aroma-vol="${r.aroma}" data-nic-max="${r.nicMax}" data-prep-vol="${r.prepVol}" data-booster-str="${bStr}" `; cfg.bStr = bStr;
     }
@@ -695,20 +1065,42 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     let cfgStr = encodeURIComponent(JSON.stringify(cfg)); let theme = prefix === 't1' ? 'complet' : 'shortfill'; let compactClass = isCompact ? "compact-card" : "";
     let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
 
+    let titleText = r.globalName ? r.globalName : (prefix==='t1'?'Liquide Prêt':'Base Shortfill');
+    let titleHtml = `<div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg leading-tight truncate pr-2">${titleText} <span class="text-brand-600 dark:text-brand-400">${round1(totalVol)} ml</span></div>`;
+
     let html = `<div data-theme="${theme}" data-config="${cfgStr}" ${dataAttrs} class="${compactClass} animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">
         <div class="flex-1">
             <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700 transition-colors">
-                <div>
-                    <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg leading-tight">${prefix==='t1'?'Liquide Prêt':'Base Shortfill'} <span class="text-brand-600 dark:text-brand-400">${round1(prefix==='t1'?r.finalVol:r.prepVol)} ml</span></div>
+                <div class="overflow-hidden">
+                    ${titleHtml}
                     <div class="mt-1.5"><span class="text-xs font-bold ${tColor} px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm transition-colors">${formatRatioStr(r.realPgRatio, true)}</span></div>
                 </div>
                 ${btnHtml}
             </div>
-            <div class="card-body space-y-2 mb-4">
-                <div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
+            <div class="card-body space-y-2 mb-4">`;
+
+    if (r.multi) {
+        let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 mb-2 flex justify-between"><span>${r.compoName || 'Composition'}</span><span class="text-xs text-stone-500">${round1(r.aroma)} ml</span></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">`;
+        r.multi.forEach(item => {
+            let vol = r.finalVol * (item.perc/100); let w = getLiquidWeight(item.type, vol, item.pg, item.degree); aromaWeight += w; totalWeight += w;
+            let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
+            multiHtml += `<div class="flex justify-between items-center text-xs bg-stone-50 dark:bg-stone-700/50 p-2 rounded">
+                <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${item.name}">${icon} ${item.name} <span class="text-[9px] text-stone-400 ml-0.5">(${item.perc}%)</span></span>
+                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-[9px] text-brand-600">${round1(w)} g</span></div>
+            </div>`;
+        });
+        multiHtml += `</div></div>`;
+        html += multiHtml;
+    } else {
+        let actualAromaPg = (r.aromaPg !== undefined && r.aromaPg !== null && !isNaN(r.aromaPg)) ? r.aromaPg : 100;
+        aromaWeight = getWeight(r.aroma, actualAromaPg); totalWeight += aromaWeight;
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
                     <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme Concentré <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(actualAromaPg, false)}</span></span>
                     <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.aroma)} ml</span><span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(aromaWeight)} g</span></div>
                 </div>`;
+    }
     
     r.bases.forEach(b => {
         if(b.vol > 0.1) {
@@ -731,7 +1123,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
 
     if(prefix === 't1') {
         let bStr = r.bStr || parseFloat(document.getElementById('t1_booster_str').value) || 20;
-        let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0; let finalAroma = r.finalVol > 0 ? (r.aroma / r.finalVol) * 100 : 0;
+        let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
         html += `<div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700 transition-colors">
             <div class="flex justify-between items-center"><span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span><div class="text-right"><span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(finalAroma)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span> <span class="mx-1 text-stone-300 dark:text-stone-600">|</span> <span class="text-lg font-black ${tColor}">${round1(finalNic)} mg/ml</span></div></div>
             <div class="text-right text-xs font-bold text-brand-600 dark:text-brand-400 mt-1">Poids total estimé : ${round1(totalWeight)} g</div>
@@ -768,8 +1160,129 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     html += `</div>`; return html;
 }
 
+function buildT3CardHtml(c, noBtn = false, isCompact = false) {
+    let aWeight = 0;
+    if (c.multi) {
+        let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
+        c.multi.forEach(i => { aWeight += getLiquidWeight(i.type, c.aVol * (i.perc/tPerc), i.pg, i.degree); });
+    } else { aWeight = getWeight(c.aVol, c.aPg); }
+    let bWeight = getWeight(c.bVol, c.bPg); let nWeight = getWeight(c.nVol, c.nPg);
+    let tVol = c.aVol + c.bVol + c.nVol; let tWeight = aWeight + bWeight + nWeight;
+    let pgRatio = 50; let aRatio = 0; let finalNic = 0;
+    if(tVol > 0) {
+        let totalPg = 0;
+        if(c.multi) {
+            let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
+            c.multi.forEach(i => { if(i.type==='aroma') totalPg += (c.aVol * (i.perc/tPerc)) * (i.pg/100); });
+        } else { totalPg += c.aVol*(c.aPg/100); }
+        totalPg += (c.bVol*(c.bPg/100)) + (c.nVol*(c.nPg/100));
+        pgRatio = (totalPg / tVol) * 100; aRatio = (c.aVol / tVol) * 100; finalNic = (c.nVol * c.str) / tVol;
+    }
+    let cfgStr = encodeURIComponent(JSON.stringify(c)); let theme = 'manuel'; let compactClass = isCompact ? "compact-card" : "";
+    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
+    
+    let titleText = c.globalName ? c.globalName : 'Mélange Manuel';
+    
+    let html = `<div data-theme="${theme}" data-config="${cfgStr}" data-type="t3" data-ratio="${pgRatio}" data-aroma-perc="${aRatio}" data-nic-mg="${finalNic}" class="${compactClass} recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900 rounded-3xl flex flex-col transition-all w-full h-full hover:shadow-xl hover:-translate-y-1 duration-300">
+        <div class="flex-1">
+            <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200/60 dark:border-stone-700 transition-colors">
+                <div class="overflow-hidden">
+                    <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg leading-tight truncate pr-2">${titleText} <span class="text-brand-600 dark:text-brand-400">${round1(tVol)} ml</span></div>
+                    <div class="mt-1.5"><span class="text-xs font-bold text-brand-700 dark:text-brand-300 px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm transition-colors">${formatRatioStr(pgRatio, true)}</span></div>
+                </div>
+                ${btnHtml}
+            </div>
+            <div class="card-body space-y-2 mb-4">`;
+    if (c.multi) {
+        let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 mb-2 flex justify-between"><span>${c.compoName || 'Composition'}</span><span class="text-xs text-stone-500">${round1(c.aVol)} ml</span></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">`;
+        let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
+        c.multi.forEach(item => {
+            let vol = c.aVol * (item.perc/tPerc); let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
+            let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
+            multiHtml += `<div class="flex justify-between items-center text-xs bg-stone-50 dark:bg-stone-700/50 p-2 rounded">
+                <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${item.name}">${icon} ${item.name}</span>
+                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-[9px] text-brand-600">${round1(w)} g</span></div>
+            </div>`;
+        });
+        multiHtml += `</div></div>`;
+        html += multiHtml;
+    } else if (c.aVol > 0) {
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
+                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(c.aPg, false)}</span></span>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.aVol)} ml</span><span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(aWeight)} g</span></div>
+                </div>`;
+    }
+    if (c.bVol > 0) {
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
+                    <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="text-xs font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(c.bPg, false)}</span></span>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml</span><span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(bWeight)} g</span></div>
+                </div>`;
+    }
+    if (c.nVol > 0) {
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
+                    <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors">${formatRatioStr(c.nPg, false)}</span></span>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.nVol)} ml <span class="text-[10px] text-stone-500 font-bold">(${round2(c.nVol/10)} u.)</span></span><span class="block text-xs font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(nWeight)} g</span></div>
+                </div>`;
+    }
+    html += `</div></div>
+        <div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700 transition-colors">
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span>
+                <div class="text-right"><span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(aRatio)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span> <span class="mx-1 text-stone-300 dark:text-stone-600">|</span> <span class="text-lg font-black text-brand-700 dark:text-brand-400">${round1(finalNic)} mg/ml</span></div>
+            </div>
+            <div class="text-right text-xs font-bold text-brand-600 dark:text-brand-400 mt-1">Poids total estimé : ${round1(tWeight)} g</div>
+        </div>
+    </div>`;
+    return html;
+}
+
+function buildBoostCardHtml(c, noBtn = false, isCompact = false) {
+    let jWeight = getWeight(c.vol, c.pg); let bWeight = getWeight(c.bVol, c.bPg); let totalWeight = jWeight + bWeight;
+    let finalVol = c.vol + c.bVol; let finalNic = finalVol > 0 ? (c.bVol * c.bStr) / finalVol : 0; let finalPgRatio = 50;
+    if (c.advChecked) { let totalPgMl = (c.vol * (c.pg / 100)) + (c.bVol * (c.bPg / 100)); finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 50; }
+    
+    let cfgStr = encodeURIComponent(JSON.stringify(c)); let theme = 'boost'; let compactClass = isCompact ? "compact-card" : "";
+    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
+    let titleText = c.globalName ? c.globalName : 'Mélange Boosté';
+
+    let html = `<div data-theme="${theme}" data-config="${cfgStr}" data-type="boost" data-ratio="${finalPgRatio}" data-aroma-perc="Inconnu" data-nic-mg="${finalNic}" class="${compactClass} recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900 rounded-3xl flex flex-col transition-all w-full h-full">
+        <div class="flex-1">
+            <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700">
+                <div class="overflow-hidden">
+                    <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg truncate pr-2">${titleText} <span class="text-brand-600">${round1(finalVol)} ml</span></div>
+                    <div class="mt-1.5"><span class="text-xs font-bold text-brand-700 dark:text-brand-300 px-2 py-1 bg-white dark:bg-stone-800 rounded-lg shadow-sm">${formatRatioStr(finalPgRatio, true)}</span></div>
+                </div>
+                ${btnHtml}
+            </div>
+            <div class="card-body space-y-2 mb-4">`;
+    if(c.vol > 0) {
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
+                    <span class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Jus <span class="text-xs font-bold bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded">${formatRatioStr(c.pg, false)}</span></span>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.vol)} ml</span><span class="block text-xs font-bold text-brand-600 mt-0.5">${round1(jWeight)} g</span></div>
+                </div>`;
+    }
+    if(c.bVol > 0) {
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
+                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Booster <span class="text-xs font-bold bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded">${formatRatioStr(c.bPg, false)}</span></span>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml <span class="text-[10px] text-stone-500 font-bold">(${round2(c.bVol/10)} u.)</span></span><span class="block text-xs font-bold text-brand-600 mt-0.5">${round1(bWeight)} g</span></div>
+                </div>`;
+    }
+    html += `</div></div>
+        <div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700">
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold text-stone-500 uppercase">Taux finaux</span>
+                <div class="text-right"><span class="text-lg font-black text-brand-700 dark:text-brand-400">${round1(finalNic)} mg/ml</span></div>
+            </div>
+            <div class="text-right text-xs font-bold text-brand-600 dark:text-brand-400 mt-1">Poids total estimé : ${round1(totalWeight)} g</div>
+        </div>
+    </div>`;
+    return html;
+}
+
 /* ========================================== */
-/* 7. SYSTÈME DE SIMULATION (SHORTFILL)       */
+/* 9. SYSTÈME DE SIMULATION (SHORTFILL)       */
 /* ========================================== */
 
 function handlePreleveChange(selectEl) {
@@ -814,7 +1327,7 @@ function updateSim(el) {
 }
 
 /* ========================================== */
-/* 8. GESTION DES MODALES (AIDE, CALCULATRICE)*/
+/* 10. GESTION DES MODALES GENERALES          */
 /* ========================================== */
 
 function openCalcModal() { document.getElementById('calc_modal').classList.remove('hidden'); }
@@ -836,12 +1349,15 @@ document.addEventListener('keydown', function(event) {
     if (event.key === "Escape") {
         if (!document.getElementById('jedi_identity_modal').classList.contains('hidden')) { closeJediModal(); return; }
         if (!document.getElementById('export_prompt_modal').classList.contains('hidden')) { cancelExport(); return; }
+        if (!document.getElementById('export_compo_prompt_modal').classList.contains('hidden')) { closeExportCompoPrompt(); return; }
+        if (!document.getElementById('compo_edit_modal').classList.contains('hidden')) { closeCompoEditModal(); return; }
         if (!document.getElementById('recipe_modal').classList.contains('hidden')) { closeRecipeModal(); return; }
         if (!document.getElementById('help_modal').classList.contains('hidden')) { closeHelpModal(); return; }
         if (!document.getElementById('calc_modal').classList.contains('hidden')) { closeCalcModal(); return; }
         if (!document.getElementById('share_flyer_modal').classList.contains('hidden')) { closeShareFlyerModal(); return; }
         if (!document.getElementById('settings_modal').classList.contains('hidden')) { closeSettingsModal(); return; }
         if (!document.getElementById('reset_confirm_modal').classList.contains('hidden')) { closeResetConfirm(); return; }
+        if (!document.getElementById('html_confirm_modal').classList.contains('hidden')) { closeHtmlConfirm(); return; }
     }
 });
 
@@ -864,11 +1380,32 @@ function closeResetConfirm() { document.getElementById('reset_confirm_modal').cl
 function showAlert(msg) { let m = document.getElementById('alert_modal'); document.getElementById('alert_text').innerText = msg; m.classList.remove('hidden'); setTimeout(() => m.classList.add('hidden'), 2500); }
 
 function toggleSaveMixBtn() { 
-    let val = document.getElementById('mix_name_input').value.trim(); let isValid = val.length >= 2;
-    document.getElementById('btn_save_mix').disabled = !isValid;
-    document.getElementById('btn_copy_text').disabled = !isValid;
-    document.getElementById('btn_share_mix').disabled = !isValid;
-    document.getElementById('btn_pdf_mix').disabled = !isValid;
+    let val = document.getElementById('mix_name_input').value.trim(); 
+    let isValid = val.length >= 2;
+    
+    let saveBtn = document.getElementById('btn_save_mix'); 
+    if(saveBtn) saveBtn.disabled = !isValid;
+    
+    document.getElementById('btn_copy_text').disabled = false;
+    document.getElementById('btn_share_mix').disabled = false;
+    document.getElementById('btn_pdf_mix').disabled = false;
+    
+    if(currentMixCard) {
+        let titleEl = currentMixCard.querySelector('.font-extrabold.text-stone-800');
+        if(titleEl) {
+            let baseText = "";
+            let cfgStr = currentMixCard.getAttribute('data-config'); 
+            if(cfgStr) {
+                let c = JSON.parse(decodeURIComponent(cfgStr));
+                if(c.type === 't1') baseText = `Liquide Prêt <span class="text-brand-600 dark:text-brand-400">${round1(c.finalVol)} ml</span>`;
+                else if(c.type === 't2') baseText = `Base Shortfill <span class="text-brand-600 dark:text-brand-400">${round1(c.prepVol)} ml</span>`;
+                else if(c.type === 't3') baseText = `Mélange Manuel <span class="text-brand-600 dark:text-brand-400">${round1(c.aVol+c.bVol+c.nVol)} ml</span>`;
+                else if(c.type === 'boost') baseText = `Mélange Boosté <span class="text-brand-600">${round1(c.vol+c.bVol)} ml</span>`;
+            }
+            let displayName = val.length > 0 ? val : "Mix";
+            titleEl.innerHTML = `${displayName}<br><span class="text-sm font-normal text-stone-500">${baseText}</span>`;
+        }
+    }
 }
 
 function saveCurrentMix() {
@@ -876,6 +1413,7 @@ function saveCurrentMix() {
     let cfgStr = currentMixCard.getAttribute('data-config'); if(!cfgStr) return;
     let cfg = JSON.parse(decodeURIComponent(cfgStr));
     let name = document.getElementById('mix_name_input').value.trim();
+    if(name.length < 2) return;
     savedMixes.push({ id: Date.now(), name: name, config: cfg });
     localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes));
     unreadNotification = true; updateSettingsBadge();
@@ -891,7 +1429,7 @@ function setSort(sortType) {
         if(b === sortType) el.className = "flex-1 sm:flex-none px-3 py-1.5 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 rounded-lg text-xs font-bold shadow-sm transition-all";
         else el.className = "flex-1 sm:flex-none px-3 py-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 rounded-lg text-xs font-bold transition-all";
     });
-    renderMesMixes();
+    renderMesMixes(); renderMesCompos();
 }
 
 function toggleGroupMixes() {
@@ -899,13 +1437,26 @@ function toggleGroupMixes() {
     let btn = document.getElementById('btn_group_mixes');
     if (groupMixes) { btn.classList.add('bg-green-100', 'text-green-700', 'border-green-300', 'dark:bg-green-900/30', 'dark:text-green-400'); btn.classList.remove('bg-stone-100', 'text-stone-500', 'dark:bg-stone-800', 'dark:text-stone-400'); } 
     else { btn.classList.remove('bg-green-100', 'text-green-700', 'border-green-300', 'dark:bg-green-900/30', 'dark:text-green-400'); btn.classList.add('bg-stone-100', 'text-stone-500', 'dark:bg-stone-800', 'dark:text-stone-400'); }
-    renderMesMixes();
+    renderMesMixes(); renderMesCompos();
+}
+
+function switchDataTab(tab) {
+    if(tab === 'mixes') {
+        document.getElementById('mes_mixes_list').classList.remove('hidden'); document.getElementById('mes_compos_list').classList.add('hidden');
+        document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
+        document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
+        document.getElementById('btn_import_compo').classList.add('hidden');
+    } else {
+        document.getElementById('mes_compos_list').classList.remove('hidden'); document.getElementById('mes_mixes_list').classList.add('hidden');
+        document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
+        document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
+        document.getElementById('btn_import_compo').classList.remove('hidden');
+    }
 }
 
 function generateSavedMixHtml(m) {
     let c = m.config; let html = ''; let theme = getTheme(c.type);
-    
-    // Paramètres : (config, prefix/type, isAlt, noBtn = false, isCompact = true)
+    c.globalName = m.name; 
     if(c.type === 't1' || c.type === 't2') html = buildCard(c, c.type, c.isAlt, false, true);
     else if(c.type === 'boost') html = buildBoostCardHtml(c, false, true);
     else html = buildT3CardHtml(c, false, true);
@@ -918,6 +1469,33 @@ function generateSavedMixHtml(m) {
         </div>
         ${html}
     </div>`;
+}
+
+function generateSavedCompoHtml(c) {
+    let totalPerc = c.items.reduce((acc, v)=>acc+v.perc, 0);
+    let html = `<div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col hover:shadow-xl transition-all">
+        <div class="flex justify-between items-start mb-4 border-b border-stone-200 dark:border-stone-700 pb-3">
+            <div>
+                <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg">${c.name}</div>
+                <div class="text-xs font-bold text-brand-600 mt-1">${c.items.length} ingrédient(s) | ${round1(totalPerc)}% Total</div>
+            </div>
+            <button onclick="deleteCompo(${c.id})" class="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 text-red-500 rounded-lg shadow-sm border border-red-200 transition-colors">🗑️</button>
+        </div>
+        <div class="space-y-2 mb-4">`;
+    c.items.forEach(i => {
+        let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+        let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : '');
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 text-sm">
+            <span class="font-bold text-stone-700 dark:text-stone-200">${icon} ${i.name} <span class="text-[10px] text-stone-500 ml-1">${details}</span></span>
+            <span class="font-black text-brand-600 dark:text-brand-400">${i.perc}%</span>
+        </div>`;
+    });
+    html += `</div>
+        <div class="mt-auto pt-3">
+            <button onclick="editCompo(${c.id})" class="w-full py-2 bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 font-bold text-sm rounded-xl border border-stone-200 dark:border-stone-600 shadow-sm transition-all hover:bg-stone-50 dark:hover:bg-stone-600">Éditer / Exporter</button>
+        </div>
+    </div>`;
+    return html;
 }
 
 function renderMesMixes() {
@@ -944,27 +1522,48 @@ function renderMesMixes() {
     container.querySelectorAll('select.sim-sel-vol, select.sim-b-ratio').forEach(s => updateSim(s));
 }
 
+function renderMesCompos() {
+    let container = document.getElementById('mes_compos_list'); if(!container) return;
+    if(savedCompos.length === 0) { container.innerHTML = '<div class="col-span-full p-6 bg-stone-100 dark:bg-stone-800 text-center text-stone-500 rounded-2xl">Aucune composition sauvegardée.</div>'; return; }
+    
+    let sort = document.getElementById('sort_mixes').value; let arr = [...savedCompos];
+    if(sort === 'recent') arr.sort((a,b)=>b.id-a.id); else if(sort === 'old') arr.sort((a,b)=>a.id-b.id);
+    else if(sort === 'az') arr.sort((a,b)=>a.name.localeCompare(b.name)); else if(sort === 'za') arr.sort((a,b)=>b.name.localeCompare(a.name));
+
+    container.innerHTML = arr.map(c => generateSavedCompoHtml(c)).join('');
+}
+
 function editMix(id) {
     let m = savedMixes.find(x => x.id === id); if(!m) return; let c = m.config;
     if(c.type === 't1') {
-        switchTab('tab_complet'); document.getElementById('t1_vol').value = c.finalVol; document.getElementById('t1_aroma_perc').value = (c.aroma/c.finalVol)*100;
-        document.getElementById('t1_adv_aroma').checked = c.aromaPg !== 100; document.getElementById('t1_aroma_pg').value = 100 - c.aromaPg; document.getElementById('t1_ratio_pg').value = 100 - c.realPgRatio;
+        switchTab('tab_complet'); document.getElementById('t1_vol').value = c.finalVol;
+        if(c.multi) { setAromaMode('t1', 'multi'); state.t1.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t1_compo_name').value = c.compoName || ""; renderMultiList('t1'); }
+        else { setAromaMode('t1', 'mono'); document.getElementById('t1_aroma_perc').value = (c.aroma/c.finalVol)*100; document.getElementById('t1_adv_aroma').checked = c.aromaPg !== 100; document.getElementById('t1_aroma_pg').value = 100 - c.aromaPg; toggleAdvAroma('t1'); }
+        document.getElementById('t1_ratio_pg').value = 100 - c.realPgRatio;
         let bStr = c.bStr || parseFloat(document.getElementById('t1_booster_str').value) || 20; document.getElementById('t1_nic_mg').value = round1((c.nic * bStr) / c.finalVol);
-        toggleVolMode('t1','defined'); toggleAdvAroma('t1'); setNicMode('t1','mg');
+        toggleVolMode('t1','defined'); setNicMode('t1','mg');
+        if(c.globalName) document.getElementById('t1_global_name').value = c.globalName;
     } else if (c.type === 't2') {
-        switchTab('tab_booster'); document.getElementById('t2_vol').value = c.prepVol; document.getElementById('t2_aroma_perc').value = (c.aroma/c.finalVol)*100;
-        document.getElementById('t2_max_nic').value = c.nicMax; document.getElementById('t2_adv_aroma').checked = c.aromaPg !== 100;
-        document.getElementById('t2_aroma_pg').value = 100 - c.aromaPg; document.getElementById('t2_ratio_pg').value = 100 - c.realPgRatio; toggleVolMode('t2','defined'); toggleAdvAroma('t2');
+        switchTab('tab_booster'); document.getElementById('t2_vol').value = c.prepVol; document.getElementById('t2_max_nic').value = c.nicMax; document.getElementById('t2_ratio_pg').value = 100 - c.realPgRatio;
+        if(c.multi) { setAromaMode('t2', 'multi'); state.t2.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t2_compo_name').value = c.compoName || ""; renderMultiList('t2'); }
+        else { setAromaMode('t2', 'mono'); document.getElementById('t2_aroma_perc').value = (c.aroma/c.finalVol)*100; document.getElementById('t2_adv_aroma').checked = c.aromaPg !== 100; document.getElementById('t2_aroma_pg').value = 100 - c.aromaPg; toggleAdvAroma('t2'); }
+        toggleVolMode('t2','defined');
+        if(c.globalName) document.getElementById('t2_global_name').value = c.globalName;
     } else if (c.type === 'boost') {
         switchTab('tab_boost_simple'); document.getElementById('tab_boost_vol').value = c.vol; document.getElementById('tab_boost_ml').value = c.bVol;
         document.getElementById('tab_boost_str').value = c.bStr; document.getElementById('tab_boost_adv').checked = c.advChecked;
         if(c.advChecked) { document.getElementById('tab_boost_pg').value = 100 - c.pg; document.getElementById('tab_boost_bpg').value = 100 - c.bPg; }
         document.getElementById('tab_boost_adv_panel').classList.toggle('hidden', !c.advChecked); syncBoostSimple('ml');
     } else if (c.type === 't3') {
-        switchTab('tab_manuel'); document.getElementById('t3_aroma_vol').value = c.aVol; document.getElementById('t3_aroma_pg').value = 100 - c.aPg;
+        switchTab('tab_manuel'); 
+        if(c.multi) {
+            setAromaMode('t3', 'multi'); state.t3.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t3_compo_name').value = c.compoName || ""; document.getElementById('t3_aroma_vol_multi').value = c.aVol; renderMultiList('t3');
+        } else {
+            setAromaMode('t3', 'mono'); document.getElementById('t3_aroma_vol').value = c.aVol; document.getElementById('t3_aroma_pg').value = 100 - c.aPg; document.getElementById('t3_aroma_pg_val').innerText = formatRatioStr(c.aPg, false);
+        }
         document.getElementById('t3_base_vol').value = c.bVol; document.getElementById('t3_base_pg').value = 100 - c.bPg; document.getElementById('t3_boost_vol').value = c.nVol;
         document.getElementById('t3_boost_pg').value = 100 - c.nPg; document.getElementById('t3_boost_str').value = c.str;
-        document.getElementById('t3_aroma_pg_val').innerText = formatRatioStr(c.aPg, false); document.getElementById('t3_base_pg_val').innerText = formatRatioStr(c.bPg, false); document.getElementById('t3_boost_pg_val').innerText = formatRatioStr(c.nPg, false);
+        document.getElementById('t3_base_pg_val').innerText = formatRatioStr(c.bPg, false); document.getElementById('t3_boost_pg_val').innerText = formatRatioStr(c.nPg, false);
     }
     if(c.type === 't1' || c.type === 't2') {
         document.querySelectorAll(`.${c.type}_base_chk`).forEach(chk => { chk.checked = c.bases.some(b => b.pgRatio === parseInt(chk.value)); toggleCheckBtn(chk); });
@@ -974,21 +1573,19 @@ function editMix(id) {
 }
 
 function deleteMix(id) { savedMixes = savedMixes.filter(x => x.id !== id); localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes)); renderMesMixes(); }
+function deleteCompo(id) { 
+    openHtmlConfirm("Supprimer cette composition ?", () => {
+        savedCompos = savedCompos.filter(x => x.id !== id); localStorage.setItem('jediy_compos', JSON.stringify(savedCompos)); syncCompoSelects(); renderMesCompos(); 
+    });
+}
 
 async function exportSettingsJson() {
-    let data = { jediIdentity: localStorage.getItem('jediIdentity') || "", theme: localStorage.getItem('theme') || "", mixes: savedMixes };
+    let data = { jediIdentity: localStorage.getItem('jediIdentity') || "", theme: localStorage.getItem('theme') || "", mixes: savedMixes, compos: savedCompos };
     let jsonStr = JSON.stringify(data, null, 2);
-    
-    // Création du nom exact (jediy_YYDDD_HHMM.json)
-    let now = new Date();
-    let yy = now.getFullYear().toString().slice(-2);
-    let start = new Date(now.getFullYear(), 0, 0);
-    let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
-    let oneDay = 1000 * 60 * 60 * 24;
-    let day = Math.floor(diff / oneDay);
-    let ddd = String(day).padStart(3, '0');
-    let hh = String(now.getHours()).padStart(2, '0');
-    let mm = String(now.getMinutes()).padStart(2, '0');
+    let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
+    let start = new Date(now.getFullYear(), 0, 0); let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+    let ddd = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(3, '0');
+    let hh = String(now.getHours()).padStart(2, '0'); let mm = String(now.getMinutes()).padStart(2, '0');
     let filename = `jediy_${yy}${ddd}_${hh}${mm}.json`;
 
     try {
@@ -1012,6 +1609,7 @@ function handleImport(e) {
         try {
             let data = JSON.parse(ev.target.result);
             if(data.mixes) { savedMixes = data.mixes; localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes)); }
+            if(data.compos) { savedCompos = data.compos; localStorage.setItem('jediy_compos', JSON.stringify(savedCompos)); }
             if(data.jediIdentity !== undefined) { if(data.jediIdentity) localStorage.setItem('jediIdentity', data.jediIdentity); else localStorage.removeItem('jediIdentity'); }
             if(data.theme) localStorage.setItem('theme', data.theme);
             showAlert("Importation réussie !"); setTimeout(() => window.location.reload(), 1000);
@@ -1021,7 +1619,7 @@ function handleImport(e) {
 }
 
 /* ========================================== */
-/* 9. EXPORT & PARTAGE (TEXTE, PDF, MODALES)  */
+/* 11. EXPORT & PARTAGE (TEXTE, PDF, MODALES) */
 /* ========================================== */
 
 function openModalFromCard(element) {
@@ -1037,6 +1635,7 @@ function openModalFromCard(element) {
     let nameInput = document.getElementById('mix_name_input');
     let saveWrapper = document.getElementById('save_mix_wrapper');
     let desc = document.getElementById('export_modal_desc');
+    let cfgStr = clone.getAttribute('data-config'); let c = JSON.parse(decodeURIComponent(cfgStr));
 
     nameInput.style.display = 'block';
 
@@ -1044,13 +1643,12 @@ function openModalFromCard(element) {
         saveWrapper.style.display = 'none'; 
         nameInput.value = savedName;
         desc.innerText = "Modifie le nom si besoin, puis exporte ou partage ton Mix.";
-        let btns = ['btn_copy_text', 'btn_share_mix', 'btn_pdf_mix']; btns.forEach(b => { let el = document.getElementById(b); if(el) el.disabled = false; });
     } else {
         saveWrapper.style.display = 'block'; 
-        nameInput.value = "";
+        nameInput.value = c.globalName || "";
         desc.innerText = "Donne un nom à ton Mix pour le sauvegarder ou l'exporter.";
-        toggleSaveMixBtn();
     }
+    toggleSaveMixBtn();
     
     let buttonsHtml = `
         <div class="modal-buttons flex justify-between gap-3 mt-6 pt-4 border-t border-stone-200 dark:border-stone-700 print:hidden">
@@ -1072,7 +1670,6 @@ function openModalFromCard(element) {
     
     let modalContent = document.getElementById('recipe_modal_content'); modalContent.innerHTML = ''; modalContent.appendChild(clone);
     
-    // Important : On transmet le thème à l'enveloppe de la modale !
     let themeWrapper = document.getElementById('recipe_modal_theme_wrapper'); 
     let themeToApply = card.closest('[data-theme]') ? card.closest('[data-theme]').getAttribute('data-theme') : card.getAttribute('data-theme');
     if(themeWrapper && themeToApply) themeWrapper.dataset.theme = themeToApply;
@@ -1085,7 +1682,7 @@ function closeRecipeModal() { document.getElementById('recipe_modal').classList.
 function showPdfOptions() { document.getElementById('export_step_1').classList.add('hidden'); document.getElementById('export_step_2').classList.remove('hidden'); document.getElementById('export_step_2').classList.add('flex'); document.getElementById('btn_back_export').classList.remove('hidden'); }
 function hidePdfOptions() { document.getElementById('export_step_1').classList.remove('hidden'); document.getElementById('export_step_2').classList.add('hidden'); document.getElementById('export_step_2').classList.remove('flex'); document.getElementById('btn_back_export').classList.add('hidden'); }
 function openExportPrompt() {
-    if (pendingNewMix) { document.getElementById('mix_name_input').value = ''; pendingNewMix = false; }
+    if (pendingNewMix) { document.getElementById('mix_name_input').value = currentMixCard ? (JSON.parse(decodeURIComponent(currentMixCard.getAttribute('data-config'))).globalName || '') : ''; pendingNewMix = false; }
     if(document.getElementById('mix_name_input').style.display !== 'none') { toggleSaveMixBtn(); }
     document.getElementById('export_prompt_modal').classList.remove('hidden'); 
     if(document.getElementById('mix_name_input').style.display !== 'none') document.getElementById('mix_name_input').focus();
@@ -1094,61 +1691,81 @@ function cancelExport() { document.getElementById('export_prompt_modal').classLi
 
 function getRecipeText() {
     if (!currentMixCard) return "";
-    let name = document.getElementById('mix_name_input').value.trim() || "Mon Mix DIY"; let text = `🧪 ${name}\n-----------------\n`;
-    let clone = document.getElementById('recipe_modal_content').querySelector('.export-card');
-    let type = clone.getAttribute('data-type'); let ratio = clone.getAttribute('data-ratio');
-    let aromaPerc = parseFloat(clone.getAttribute('data-aroma-perc')) || 0; let basePg = parseFloat(clone.getAttribute('data-base-pg')) || 50;
-    let titleEl = clone.querySelector('.font-extrabold.text-lg');
-    if(titleEl) text += `${titleEl.innerText.replace(/\n/g, ' ')}\n`; if (ratio) text += `⚖️ Ratio : ${formatRatioStr(ratio, true)}\n`;
+    let name = document.getElementById('mix_name_input').value.trim() || "Mix"; let text = `🧪 ${name}\n-----------------\n`;
+    let cfgStr = currentMixCard.getAttribute('data-config'); let c = JSON.parse(decodeURIComponent(cfgStr));
     
+    let tVol = c.type === 't1' ? c.finalVol : (c.type === 't2' ? c.prepVol : (c.type === 'boost' ? c.vol + c.bVol : c.aVol + c.bVol + c.nVol));
+    let ratio = c.type === 't3' ? (document.querySelector('.export-card').getAttribute('data-ratio') || 50) : (c.realPgRatio || c.pg || 50);
+
+    text += `Volume: ${round1(tVol)} ml\n⚖️ Ratio : ${formatRatioStr(ratio, true)}\n`;
     text += `\n📝 INGRÉDIENTS :\n`;
-    let rows = clone.querySelectorAll('.bg-white.dark\\:bg-stone-800.p-2\\.5');
-    rows.forEach(row => {
-        let nameNode = row.querySelector('.text-sm'); let ingName = nameNode.innerText.replace(/\n/g, ' ').replace(' Concentré', '').trim();
-        let vols = row.querySelector('.text-right').innerText.split('\n'); let ml = vols[0].trim(); let g = vols.length > 1 ? ` (${vols[1].trim()})` : ''; text += `- ${ingName}: ${ml}${g}\n`;
-    });
+
+    if (c.multi) {
+        let totalVol = c.type === 't1' ? c.finalVol : (c.type === 't2' ? c.prepVol : c.aVol);
+        let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
+        c.multi.forEach(i => {
+            let v = totalVol * (i.perc/ (c.type === 't1' || c.type === 't2' ? 100 : tPerc));
+            let w = getLiquidWeight(i.type, v, i.pg, i.degree);
+            text += `- ${i.name} (${i.perc}%): ${round1(v)} ml (${round1(w)} g)\n`;
+        });
+    } else if (c.aroma !== undefined || c.aVol !== undefined) {
+        let av = c.aroma || c.aVol; let aPg = c.aromaPg || c.aPg || 100;
+        text += `- Arôme Concentré: ${round1(av)} ml (${round1(getWeight(av, aPg))} g)\n`;
+    }
+
+    if (c.bases) {
+        c.bases.forEach(b => {
+            if(b.vol > 0.1) text += `- Base ${formatRatioStr(b.pgRatio)}: ${round1(b.vol)} ml (${round1(getWeight(b.vol, b.pgRatio))} g)\n`;
+        });
+    } else if (c.bVol !== undefined && c.type === 't3') {
+        text += `- Base ${formatRatioStr(c.bPg)}: ${round1(c.bVol)} ml (${round1(getWeight(c.bVol, c.bPg))} g)\n`;
+    }
+
+    if (c.nic > 0) {
+        text += `- Booster ${formatRatioStr(c.nicRatio)}: ${round1(c.nic)} ml (${round1(getWeight(c.nic, c.nicRatio))} g)\n`;
+    } else if (c.nVol > 0 && c.type === 't3') {
+        text += `- Booster ${formatRatioStr(c.nPg)}: ${round1(c.nVol)} ml (${round1(getWeight(c.nVol, c.nPg))} g)\n`;
+    } else if (c.type === 'boost' && c.bVol > 0) {
+        text += `- Booster ${formatRatioStr(c.bPg)}: ${round1(c.bVol)} ml (${round1(getWeight(c.bVol, c.bPg))} g)\n`;
+    }
     
-    if (type === 't1' || type === 'boost') {
-        let aromaStr = type === 'boost' ? 'Inconnu' : `${round1(aromaPerc)}%`; text += `\n🎯 RÉSULTAT :\n- Arôme : ${aromaStr}\n`;
-        let nicMg = parseFloat(clone.getAttribute('data-nic-mg')) || 0; text += `- Nicotine : ${round1(nicMg)} mg/ml\n`;
-    } else if (type === 't2') {
-        let nicMax = parseFloat(clone.getAttribute('data-nic-max')) || 0; let prepVol = parseFloat(clone.getAttribute('data-prep-vol')) || 0; let bStr = parseFloat(clone.getAttribute('data-booster-str')) || 20; let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0;
-        let aromaBeforeBoost = prepVol > 0 ? (totalAroma / prepVol) * 100 : 0;
-        text += `\n🎯 RÉSULTAT (Avant boost) :\n- Arôme surdosé : ${round1(aromaBeforeBoost)}%\n- Cibles après boost : ${round1(aromaPerc)}% d'arôme | ${round1(nicMax)} mg/ml max\n`;
-        let bRatioSel = clone.querySelector('.sim-b-ratio'); let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
+    if (c.type === 't1' || c.type === 'boost' || c.type === 't3') {
+        let aromaPerc = parseFloat(currentMixCard.getAttribute('data-aroma-perc')) || 0;
+        let nicMg = parseFloat(currentMixCard.getAttribute('data-nic-mg')) || 0;
+        let aromaStr = c.type === 'boost' ? 'Inconnu' : `${round1(aromaPerc)}%`; 
+        text += `\n🎯 RÉSULTAT :\n- Arôme : ${aromaStr}\n- Nicotine : ${round1(nicMg)} mg/ml\n`;
+    } else if (c.type === 't2') {
+        let aromaBeforeBoost = c.prepVol > 0 ? (c.aroma / c.prepVol) * 100 : 0;
+        let finalAromaPerc = parseFloat(currentMixCard.getAttribute('data-aroma-perc')) || 0;
+        text += `\n🎯 RÉSULTAT (Avant boost) :\n- Arôme surdosé : ${round1(aromaBeforeBoost)}%\n- Cibles après boost : ${round1(finalAromaPerc)}% d'arôme | ${round1(c.nicMax)} mg/ml max\n`;
+        let bRatioSel = currentMixCard.querySelector('.sim-b-ratio'); let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
         
         function getGuideForVol(baseVol, title) {
-            let baseWeight = getWeight(baseVol, basePg); let aromaVolInSample = baseVol * (totalAroma / prepVol);
+            let baseWeight = getWeight(baseVol, ratio); let aromaVolInSample = baseVol * (c.aroma / c.prepVol);
             let out = `\n💡 GUIDE DE BOOST AVEC RATIO ${formatRatioStr(bPg)}\n(${title} - ${round1(baseWeight)} g) :\n`;
             let targets = [3, 6, 9, 12]; let sims = new Map();
             targets.forEach(target => {
-                if (target < nicMax) {
-                    let exactBVol = (baseVol * target) / (bStr - target); let bCount = Math.round(exactBVol / 10);
+                if (target < c.nicMax) {
+                    let exactBVol = (baseVol * target) / (c.bStr - target); let bCount = Math.round(exactBVol / 10);
                     if (bCount > 0) {
-                        let actualVol = bCount * 10; let actualNic = (actualVol * bStr) / (baseVol + actualVol); let finalAromaPerc = (aromaVolInSample / (baseVol + actualVol)) * 100; let finalPg = ((baseVol * (basePg/100)) + (actualVol * (bPg/100))) / (baseVol + actualVol) * 100;
-                        sims.set(bCount, {nic: actualNic, aroma: finalAromaPerc, pg: finalPg});
+                        let actualVol = bCount * 10; let actualNic = (actualVol * c.bStr) / (baseVol + actualVol); let fAroma = (aromaVolInSample / (baseVol + actualVol)) * 100; let fPg = ((baseVol * (ratio/100)) + (actualVol * (bPg/100))) / (baseVol + actualVol) * 100;
+                        sims.set(bCount, {nic: actualNic, aroma: fAroma, pg: fPg});
                     }
                 }
             });
             sims.forEach((data, bCount) => { let w = getWeight(bCount * 10, bPg); out += `+ ${bCount} boost. (${round1(bCount*10)}ml - ${round1(w)}g)\n  > Nic: ~${round1(data.nic)} mg\n  > Arôme: ~${round1(data.aroma)} %\n  > Ratio final: ~${formatRatioStr(data.pg)}\n`; });
-            let exactMaxBVol = (baseVol * nicMax) / (bStr - nicMax); let maxBCount = exactMaxBVol / 10; let floorMax = Math.floor(maxBCount);
+            let exactMaxBVol = (baseVol * c.nicMax) / (c.bStr - c.nicMax); let maxBCount = exactMaxBVol / 10; let floorMax = Math.floor(maxBCount);
             if (floorMax > 0 && floorMax < maxBCount && !sims.has(floorMax)) {
-                let actualNicFloor = (floorMax * 10 * bStr) / (baseVol + floorMax * 10); let finalAromaPercFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100; let finalPgFloor = ((baseVol * (basePg/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100; let wFloor = getWeight(floorMax * 10, bPg);
-                out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml - ${round1(wFloor)}g)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(finalAromaPercFloor)} %\n  > Ratio final: ~${formatRatioStr(finalPgFloor)}\n`;
+                let actualNicFloor = (floorMax * 10 * c.bStr) / (baseVol + floorMax * 10); let fAromaFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100; let fPgFloor = ((baseVol * (ratio/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100; let wFloor = getWeight(floorMax * 10, bPg);
+                out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml - ${round1(wFloor)}g)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(fAromaFloor)} %\n  > Ratio final: ~${formatRatioStr(fPgFloor)}\n`;
             }
-            let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100; let maxFinalPg = ((baseVol * (basePg/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100; let wMax = getWeight(maxBCount * 10, bPg);
-            out += `+ MAX ${round1(maxBCount)} boost. (${round1(maxBCount*10)}ml - ${round1(wMax)}g)\n  > Nic: ${round1(nicMax)} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
+            let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100; let maxFinalPg = ((baseVol * (ratio/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100; let wMax = getWeight(maxBCount * 10, bPg);
+            out += `+ MAX ${round1(maxBCount)} boost. (${round1(maxBCount*10)}ml - ${round1(wMax)}g)\n  > Nic: ${round1(c.nicMax)} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
             return out;
         }
-        text += getGuideForVol(prepVol, "bidon complet " + round1(prepVol) + " ml"); if (50 < prepVol) text += getGuideForVol(50, "si prélèvement 50 ml");
-        let simSel = clone.querySelector('.sim-sel-vol'); let customPreleveVol = (simSel.value === 'custom') ? (parseFloat(clone.querySelector('.sim-custom-vol').value) || 0) : (parseFloat(simSel.value) || 0); let customBCount = parseFloat(clone.querySelector('.sim-b-count').value) || 0;
-        if (customPreleveVol > 0 && customBCount > 0) {
-            let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10); let aromaVolInSample = customPreleveVol * (totalAroma / prepVol); let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100; let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100; let wCustom = getWeight(customBCount * 10, bPg);
-            let customLine = `+ ${round1(customBCount)} boost. (${round1(customBCount*10)}ml - ${round1(wCustom)}g)\n  > Nic: ~${round1(actualNic)} mg\n  > Arôme: ~${round1(finalAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(customFinalPg)}\n`;
-            if (!text.includes(customLine)) { text += `\n💡 GUIDE PERSONNALISÉ RATIO ${formatRatioStr(bPg)}\n(pour ${round1(customPreleveVol)} ml) :\n${customLine}`; if (actualNic > nicMax) text += `⚠️ ATTENTION : Taux max dépassé !\n`; }
-        }
+        text += getGuideForVol(c.prepVol, "bidon complet " + round1(c.prepVol) + " ml"); if (50 < c.prepVol) text += getGuideForVol(50, "si prélèvement 50 ml");
     }
-    if (jediIdentity) text += `\nCe Mix a été partagé par ${jediIdentity}\n`;
+    if (jediIdentity) text += `\nCette composition aromatique vous est proposée par ${jediIdentity}\n`;
     text += `\n-----------------\nL'app Je-DIY :\nhttps://lehcimcramtrebor.github.io/jediy/`; return text;
 }
 
@@ -1192,8 +1809,8 @@ function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, b
 function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, basePg, bPg) {
     let baseWeight = getWeight(baseVol, basePg); let data = computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, bPg);
     let html = `
-        <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
-            <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center gap-2">
+        <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid h-full">
+            <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center justify-between">
                 <span>💡 ${title}</span><span class="text-[8px] bg-stone-200 px-1.5 py-0.5 rounded">${round1(baseVol)} ml (${round1(baseWeight)} g)</span>
             </div>
             <table class="w-full text-left font-medium mt-1">`;
@@ -1213,13 +1830,48 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
 
 function prepareCardForExport() {
     let clone = document.getElementById('recipe_modal_content').querySelector('.export-card'); if (!clone) return null;
-    clone.classList.remove('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
-    let name = document.getElementById('mix_name_input').value.trim() || "Mix personnalisé";
-    let headerDiv = document.createElement('div'); headerDiv.className = 'export-title text-center mb-3 pb-3 border-b-2 border-stone-200';
-    headerDiv.innerHTML = `<div class="text-3xl font-black text-stone-800 tracking-tight mb-1">Je-<span class="text-brand-600">DIY</span></div><div class="text-lg font-bold text-stone-500">${name}</div>`;
+    clone.classList.remove('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar', 'shadow-2xl');
+    clone.classList.add('border-2', 'border-stone-200', 'rounded-3xl', 'p-6');
+    
+    // Contraint la taille pour un rendu de carte homogène sur PDF
+    clone.style.width = '600px';
+    clone.style.margin = '0 auto';
+    clone.style.backgroundColor = '#ffffff';
+
+    let name = document.getElementById('mix_name_input').value.trim() || "Mix";
+    let cfgStr = clone.getAttribute('data-config'); let c = JSON.parse(decodeURIComponent(cfgStr));
+    
+    // Masquer le header existant pour éviter les doublons UI / PDF
+    let originalHeader = clone.querySelector('.flex-1 > div.flex.justify-between.items-start');
+    if (originalHeader) originalHeader.style.display = 'none';
+    
+    let prepType = "";
+    if (c.type === 't1') prepType = "Liquide Prêt";
+    else if (c.type === 't2') prepType = "Base Shortfill";
+    else if (c.type === 't3') prepType = "Mélange Manuel";
+    else if (c.type === 'boost') prepType = "Mélange Boosté";
+
+    let totalVol = c.type === 't1' ? c.finalVol : (c.type === 't2' ? c.prepVol : (c.type === 'boost' ? c.vol+c.bVol : c.aVol+c.bVol+c.nVol));
+    let pgRatioNum = c.type === 't3' ? parseFloat(clone.getAttribute('data-ratio')) : (c.realPgRatio !== undefined ? c.realPgRatio : c.pg);
+    let ratioStr = formatRatioStr(pgRatioNum || 50, true);
+
+    // Nouvel En-tête Unique
+    let headerDiv = document.createElement('div'); headerDiv.className = 'export-title mb-5 border-b border-stone-200 pb-4 flex justify-between items-start';
+    let qrcodeHtml = `<img src="jediy.png" alt="QR" class="w-14 h-14 rounded-xl shadow-sm border border-stone-200">`;
+    let techHtml = `<div class="text-right"><span class="block font-black text-stone-800 text-[10px] bg-stone-100 px-2 py-1 rounded-lg mb-1">${ratioStr}</span><span class="block text-brand-600 font-black text-base">${round1(totalVol)} ml</span></div>`;
+    
+    headerDiv.innerHTML = `
+        <div class="flex-1 pr-4">
+            <div class="text-2xl font-black text-stone-800 tracking-tight leading-none mb-1.5">${name}</div>
+            <div class="inline-block text-[9px] font-bold text-stone-500 uppercase tracking-widest bg-stone-100 px-2 py-0.5 rounded">Je-DIY • ${prepType}</div>
+        </div>
+        <div class="flex gap-3 items-center">${techHtml}${qrcodeHtml}</div>
+    `;
     clone.insertBefore(headerDiv, clone.firstChild);            
+    
     let buttons = clone.querySelector('.modal-buttons'); if (buttons) buttons.style.display = 'none';
 
+    // Rendu des simulations Shortfill
     let simContainer = clone.querySelector('.sim-container'); let cleanSimDiv = null;
     if (simContainer) {
         let type = clone.getAttribute('data-type');
@@ -1227,18 +1879,24 @@ function prepareCardForExport() {
             let bStr = parseFloat(clone.getAttribute('data-booster-str')) || 20; let totalAroma = parseFloat(clone.getAttribute('data-aroma-vol')) || 0; let prepVolAttr = parseFloat(clone.getAttribute('data-prep-vol')) || 0; let maxNic = parseFloat(clone.getAttribute('data-nic-max')) || 0; let basePg = parseFloat(clone.getAttribute('data-base-pg')) || 50;
             let bRatioSel = clone.querySelector('.sim-b-ratio'); let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
             generatedSignatures.clear(); 
-            cleanSimDiv = document.createElement('div'); cleanSimDiv.className = 'mt-3 flex flex-col gap-2 w-full pdf-guides';
-            let guidesHtml = getGuideHtmlForVol(prepVolAttr, `Bidon Complet (Boosters ${formatRatioStr(bPg)})`, totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
-            if (prepVolAttr > 50) guidesHtml += getGuideHtmlForVol(50, "Prélèvement", totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
+            
+            // Grille pour affichage côte à côte
+            cleanSimDiv = document.createElement('div'); cleanSimDiv.className = 'mt-4 grid grid-cols-2 gap-3 w-full pdf-guides';
+            
+            let defaultGuidesHtml = getGuideHtmlForVol(prepVolAttr, `Bidon Complet`, totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
+            if (prepVolAttr > 50) defaultGuidesHtml += getGuideHtmlForVol(50, "Prélèvement", totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
+            cleanSimDiv.innerHTML = defaultGuidesHtml;
+
             let sel = clone.querySelector('.sim-sel-vol'); let customPreleveVol = sel.value === 'custom' ? (parseFloat(clone.querySelector('.sim-custom-vol').value) || 0) : (parseFloat(sel.value) || 0); let customBCount = parseFloat(clone.querySelector('.sim-b-count').value) || 0;
             
+            // Custom guide qui prend toute la largeur au dessous (col-span-2)
             if (customPreleveVol > 0 && customBCount > 0) {
                 let sig = `${customPreleveVol}-${customBCount}`;
                 if (!generatedSignatures.has(sig)) {
                     let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10); let aromaVolInSample = customPreleveVol * (totalAroma / prepVolAttr); let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100; let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
                     let warning = actualNic > maxNic; let customMlText = round1(customBCount * 10); let customBoostWeight = getWeight(customBCount * 10, bPg); let customBaseWeight = getWeight(customPreleveVol, basePg);
-                    guidesHtml += `
-                    <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid">
+                    let customHtml = `
+                    <div class="col-span-2 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-[10px] leading-tight break-inside-avoid mt-1">
                         <div class="font-black uppercase tracking-widest text-stone-500 mb-1 border-b border-stone-200 pb-1 flex items-center gap-2"><span>💡 Personnalisé</span><span class="text-[8px] bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded">${round1(customPreleveVol)} ml (${round1(customBaseWeight)} g)</span></div>
                         <table class="w-full text-left font-medium mt-1">
                             <tr class="border-b border-stone-100/50 last:border-0">
@@ -1248,15 +1906,16 @@ function prepareCardForExport() {
                             </tr>
                         </table>
                     </div>`;
+                    cleanSimDiv.innerHTML += customHtml;
                 }
             }
-            cleanSimDiv.innerHTML = guidesHtml; simContainer.style.display = 'none'; simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
+            simContainer.style.display = 'none'; simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
         }
     }
 
-    let footerDiv = document.createElement('div'); footerDiv.className = 'export-footer flex items-center justify-center gap-4 mt-6 pt-4 border-t-2 border-stone-100';
-    let footerText = jediIdentity ? `Ce Mix a été partagé par <span class="text-brand-600 font-black text-base">${jediIdentity}</span>` : `Scanne ce code pour réaliser tes propres calculs<br><span class="text-brand-600 font-black text-base">Je-DIY</span>`;
-    footerDiv.innerHTML = `<img src="jediy.png" alt="QR Code Je-DIY" class="w-20 h-20 rounded-xl shadow-sm border border-stone-200" onerror="this.src='https://placehold.co/80x80/e2e8f0/475569?text=Je-DIY'"><div class="text-stone-500 font-bold text-xs text-left leading-tight">${footerText}</div>`;
+    let footerDiv = document.createElement('div'); footerDiv.className = 'export-footer mt-5 text-center border-t border-stone-200 pt-3';
+    let footerText = jediIdentity ? `Mix partagé par <strong class="text-brand-600">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
+    footerDiv.innerHTML = `<span class="text-[9px] text-stone-500 uppercase tracking-widest font-bold">${footerText}</span>`;
     clone.appendChild(footerDiv);
     
     document.documentElement.dataset.pdfTheme = document.getElementById('recipe_modal_theme_wrapper').dataset.theme;
@@ -1273,7 +1932,10 @@ function prepareCardForExport() {
             applyTheme(); 
             let addedTitle = clone.querySelector('.export-title'); if (addedTitle) addedTitle.remove();
             let addedFooter = clone.querySelector('.export-footer'); if (addedFooter) addedFooter.remove();
-            clone.classList.add('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
+            clone.classList.remove('border-2', 'border-stone-200', 'rounded-3xl', 'p-6');
+            clone.classList.add('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar', 'shadow-2xl');
+            clone.style.width = ''; clone.style.margin = ''; clone.style.backgroundColor = '';
+            if (originalHeader) originalHeader.style.display = '';
             if (cleanSimDiv) cleanSimDiv.remove(); if (simContainer) simContainer.style.display = ''; if (buttons) buttons.style.display = ''; 
         }
     };
@@ -1331,7 +1993,7 @@ function executeShare() {
 }
 
 /* ========================================== */
-/* 10. PWA ET SERVICE WORKER                  */
+/* 12. PWA ET SERVICE WORKER                  */
 /* ========================================== */
 
 let deferredPrompt;
