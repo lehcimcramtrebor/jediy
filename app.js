@@ -340,12 +340,14 @@ function setAromaMode(prefix, mode) {
 
 function checkMultiAddButtons(prefix) {
     let isValid = true;
-    // Vérifie si un ingrédient a un nom de moins de 2 caractères
+    
     state[prefix].multi.forEach(item => {
         if (item.name.trim().length < 2) isValid = false;
     });
     
-    // Cible et grise automatiquement les 3 boutons d'ajout concernés
+    let currentTotal = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
+    if (currentTotal >= MAX_AROMA) isValid = false;
+    
     let btns = document.querySelectorAll(`button[onclick^="addMultiLine('${prefix}'"]`);
     btns.forEach(btn => {
         btn.disabled = !isValid;
@@ -354,9 +356,16 @@ function checkMultiAddButtons(prefix) {
     });
 }
 
+const MAX_AROMA = 40;
+
 function addMultiLine(prefix, type) {
+    let currentTotal = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
+    if (currentTotal >= MAX_AROMA) {
+        showAlert(`Ajout impossible : limite de ${MAX_AROMA}% atteinte !`);
+        return;
+    }
+
     let id = Date.now() + Math.floor(Math.random() * 1000);
-    // Nom vide pour l'arôme, pré-rempli pour Eau et Alcool
     let name = type === 'aroma' ? '' : (type === 'water' ? 'Eau' : 'Alcool');
     state[prefix].multi.push({ id, type, name, pg: 100, degree: 40, perc: 0 });
     renderMultiList(prefix); 
@@ -371,7 +380,18 @@ function removeMultiLine(prefix, id) {
 
 function updateMulti(prefix, id, field, val) {
     let item = state[prefix].multi.find(x => x.id === id); if(!item) return;
-    if(field === 'perc') { val = parseFloat(val); if(isNaN(val) || val < 0) val = 0; }
+    
+    if(field === 'perc') { 
+        val = parseFloat(val); if(isNaN(val) || val < 0) val = 0; 
+        
+        let otherTotal = state[prefix].multi.reduce((acc, v) => v.id !== id ? acc + v.perc : acc, 0);
+        
+        if (otherTotal + val > MAX_AROMA) {
+            val = round1(MAX_AROMA - otherTotal);
+            showAlert(`La concentration totale est bloquée à ${MAX_AROMA}% max.`);
+        }
+    }
+    
     if(field === 'pg' || field === 'degree') val = parseFloat(val) || 0;
     item[field] = val;
     
@@ -387,7 +407,17 @@ function updateMulti(prefix, id, field, val) {
 
 function updateMultiPerc(prefix, id, step) {
     let item = state[prefix].multi.find(x => x.id === id); if(!item) return;
-    item.perc = Math.max(0, round1(item.perc + step));
+    
+    let targetVal = item.perc + step;
+    let otherTotal = state[prefix].multi.reduce((acc, v) => v.id !== id ? acc + v.perc : acc, 0);
+    
+    if (otherTotal + targetVal > MAX_AROMA) {
+        item.perc = round1(MAX_AROMA - otherTotal);
+        showAlert(`La concentration totale est bloquée à ${MAX_AROMA}% max.`);
+    } else {
+        item.perc = Math.max(0, round1(targetVal));
+    }
+
     renderMultiList(prefix); if(prefix !== 'edit_compo'){ updateAromaPreview(prefix); triggerCalc(); }
 }
 
@@ -398,35 +428,41 @@ function renderMultiList(prefix) {
         total += item.perc;
         let selectHtml = '';
         if (item.type === 'aroma') {
-            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'pg', this.value)" class="mt-2 w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1 text-[10px] font-bold focus:outline-none transition-colors">`;
+            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'pg', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
             RATIOS.forEach(r => selectHtml += `<option value="${r}" ${item.pg === r ? 'selected' : ''}>${formatRatioStr(r, true)}</option>`);
             selectHtml += `</select>`;
         } else if (item.type === 'alcohol') {
-            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'degree', this.value)" class="mt-2 w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1 text-[10px] font-bold focus:outline-none transition-colors">`;
+            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'degree', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
             for(let d=10; d<=90; d++) selectHtml += `<option value="${d}" ${item.degree === d ? 'selected' : ''}>${d}°</option>`;
             selectHtml += `</select>`;
         } else if (item.type === 'water') {
-            selectHtml = `<div class="text-[10px] text-stone-500 font-bold mt-2 px-1">Densité: 1.0</div>`;
+            selectHtml = `<div class="text-[10px] text-stone-500 font-bold px-1 h-8 flex items-center">Densité: 1.0</div>`;
         }
 
-        // Le texte inactif quand la case est vide
         let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
 
         html += `
-        <div class="flex items-center p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm relative h-[104px] gap-2">
-            <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-6 h-6 shrink-0 flex items-center justify-center transition-colors">✕</button>
-            
-            <div class="flex-1 flex flex-col justify-between h-full pr-2">
+        <div class="flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
+            <div class="w-full">
                 <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
-                ${selectHtml}
             </div>
             
-            <div class="flex flex-col items-end justify-center w-28 pl-2 border-l border-stone-100 dark:border-stone-700 h-full">
-                <div class="text-[10px] text-stone-400 font-bold mb-1">Dosage (%)</div>
-                <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full">
-                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-8 flex items-center justify-center text-brand-600 font-bold hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">-</button>
-                    <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-sm text-stone-800 dark:text-stone-100 hide-arrows">
-                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-8 flex items-center justify-center text-brand-600 font-bold hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">+</button>
+            <div class="flex items-center gap-2 w-full">
+                <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 shrink-0 flex items-center justify-center transition-colors">✕</button>
+                
+                <div class="flex-1 min-w-0">
+                    ${selectHtml}
+                </div>
+                
+                <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-32 h-8 shrink-0">
+                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
+                    
+                    <div class="flex-1 relative flex items-center h-full">
+                        <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
+                        <span class="absolute right-1 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                    </div>
+
+                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
                 </div>
             </div>
         </div>`;
@@ -437,7 +473,7 @@ function renderMultiList(prefix) {
     if(prefix !== 'edit_compo') checkCompoSave(prefix);
     if(prefix === 't3') syncT3MultiVol(document.getElementById('t3_aroma_vol_multi').value);
     
-    checkMultiAddButtons(prefix); // Grise les boutons d'ajout si un nom est manquant
+    checkMultiAddButtons(prefix);
 }
 
 function checkCompoSave(prefix) {
