@@ -7,9 +7,11 @@ Teste la directement: https://lehcimcramtrebor.github.io/jediy/
 
 Fonctions:
 
-- Calcul du liquide complet nicotiné, d'une réserve surconcentrée pour shortfills avec simulation de boosters ou simple calcul de boost.
-- Assistant pas, avec ça même ta belle-mère peut faire du DIY.
-- Partage tes recettes, ou télécharge les en pdf.
+- Calcul du liquide complet nicotiné, d'une réserve surconcentrée pour shortfills avec simulations de boosters, calcul manuel ou simple calcul de boost avec prise en considération des densité de PG, VG, eau, alcool pour une conception sur mesures avec balance de précision.
+- Assistant pas à pas, avec ça même ta belle-mère peut faire du DIY.
+- Gestion multi-arômes, sauvegarde et partage tes compositions.
+- Partage tes mixes, ou télécharge les en pdf.
+
 
 <img width="1536" height="1536" alt="Flyer" src="https://github.com/user-attachments/assets/266de302-4a47-4f99-9f73-5cff77e8b28b" />
 
