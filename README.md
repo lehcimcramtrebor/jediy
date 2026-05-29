@@ -16,18 +16,12 @@ Fonctions:
 <img width="1536" height="1536" alt="Flyer" src="https://github.com/user-attachments/assets/266de302-4a47-4f99-9f73-5cff77e8b28b" />
 
 
-APP EN TAILLE REELLE SUR PC:
-
-<img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_50_08" src="https://github.com/user-attachments/assets/9c6f8457-5d2a-4d0b-ab7c-d9d3d6270d19" />
-
-
-VUES ZOOM OUT DE L'APP SUR PC:
-
-
-<img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_46_12" src="https://github.com/user-attachments/assets/7e4b3dc2-0ce4-4e1f-b365-971615261821" />
-
-<img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_46_25" src="https://github.com/user-attachments/assets/5a1faa94-156f-452f-a75a-db91548ab5a4" />
-
-<img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_46_49" src="https://github.com/user-attachments/assets/e1e4c4be-2a47-4847-b5a8-31b4a5a4cb60" />
-
-<img width="2560" height="1440" alt="Je-DIY - Calculateur Expert - Google Chrome 18_05_2026 23_47_11" src="https://github.com/user-attachments/assets/afb66048-29d6-4966-a9b8-e53e9abe0d4f" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-17-26-234_com android chrome" src="https://github.com/user-attachments/assets/cce9f203-4fab-4293-bada-5c51326506c0" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-17-53-368_com android chrome" src="https://github.com/user-attachments/assets/8000c5c3-5daf-494b-9505-71c0dc5cd298" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-18-00-640_com android chrome" src="https://github.com/user-attachments/assets/44c8db56-bcb8-40f2-9330-fbfc1defdabe" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-18-04-771_com android chrome" src="https://github.com/user-attachments/assets/cff74ef0-d66e-4479-bb87-e7e23b2cb0f7" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-18-08-691_com android chrome" src="https://github.com/user-attachments/assets/7d820c8a-95af-46e5-b8e1-d10fad0a78dd" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-18-17-332_com android chrome" src="https://github.com/user-attachments/assets/a0192707-f38f-44cd-9d5b-99a6ac835113" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-18-26-714_com android chrome" src="https://github.com/user-attachments/assets/147808de-a7a7-4c0c-b9b3-919d931c132e" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-19-25-954_org chromium webapk a472114ed23cad2b7_v2" src="https://github.com/user-attachments/assets/a2a5911d-70fe-4561-b4a5-b21860a940d4" />
+<img width="1440" height="3200" alt="Screenshot_2026-05-29-06-19-43-765_org chromium webapk a472114ed23cad2b7_v2" src="https://github.com/user-attachments/assets/1c2aa479-a29d-463f-9cfa-496ae966cb14" />
