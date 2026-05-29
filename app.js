@@ -1602,18 +1602,28 @@ function toggleGroupMixes() {
 
 function switchDataTab(tab) {
     let btnCreate = document.getElementById('btn_create_compo');
+    let btnGroup = document.getElementById('btn_group_mixes'); // On cible le bouton Regrouper
+    
     if(tab === 'mixes') {
-        document.getElementById('mes_mixes_list').classList.remove('hidden'); document.getElementById('mes_compos_list').classList.add('hidden');
+        document.getElementById('mes_mixes_list').classList.remove('hidden'); 
+        document.getElementById('mes_compos_list').classList.add('hidden');
         document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
         document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
         document.getElementById('btn_import_compo').classList.add('hidden');
         if(btnCreate) btnCreate.classList.add('hidden');
+        
+        // On affiche le bouton Regrouper
+        if(btnGroup) { btnGroup.classList.remove('hidden'); btnGroup.classList.add('flex'); }
     } else {
-        document.getElementById('mes_compos_list').classList.remove('hidden'); document.getElementById('mes_mixes_list').classList.add('hidden');
+        document.getElementById('mes_compos_list').classList.remove('hidden'); 
+        document.getElementById('mes_mixes_list').classList.add('hidden');
         document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
         document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
         document.getElementById('btn_import_compo').classList.remove('hidden');
         if(btnCreate) btnCreate.classList.remove('hidden');
+        
+        // On masque le bouton Regrouper
+        if(btnGroup) { btnGroup.classList.add('hidden'); btnGroup.classList.remove('flex'); }
     }
 }
 

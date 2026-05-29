@@ -150,13 +150,13 @@
         <p class="text-stone-500 dark:text-stone-400 font-medium text-sm pointer-events-none">Calculateur de e-liquide</p>
     </header>
 
-    <div class="bg-stone-200/70 dark:bg-stone-800 p-1.5 rounded-2xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-1.5 mb-6 shadow-inner transition-colors">
+    <div class="bg-stone-200/70 dark:bg-stone-800 p-1.5 rounded-2xl grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-1.5 mb-6 shadow-inner transition-colors">
         <button onclick="switchTab('tab_assistant')" id="btn_tab_assistant" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10 flex items-center justify-center gap-1">🪄 Assistant</button>
-        <button onclick="switchTab('tab_boost_simple')" id="btn_tab_boost_simple" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">🚀 Boost</button>
-        <button onclick="switchTab('tab_complet')" id="btn_tab_complet" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">⚗️ Complet</button>
-        <button onclick="switchTab('tab_booster')" id="btn_tab_booster" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">🛢️ Shortfill</button>
-        <button onclick="switchTab('tab_manuel')" id="btn_tab_manuel" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">✊ Manuel</button>
-        <button onclick="switchTab('tab_mes_donnees')" id="btn_tab_mes_donnees" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">💾 Données</button>
+        <button onclick="switchTab('tab_boost_simple')" id="btn_tab_boost_simple" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">🚀 Boost simple</button>
+        <button onclick="switchTab('tab_complet')" id="btn_tab_complet" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">🎯 Liquide Complet</button>
+        <button onclick="switchTab('tab_booster')" id="btn_tab_booster" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">🧪️ Créer Shortfill</button>
+        <button onclick="switchTab('tab_manuel')" id="btn_tab_manuel" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">🤏 Mélange manuel</button>
+        <button onclick="switchTab('tab_mes_donnees')" id="btn_tab_mes_donnees" class="py-2.5 px-2 sm:px-3 rounded-xl font-bold text-xs sm:text-sm transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 flex items-center justify-center gap-1">📝️ Mixes & Compositions</button>
     </div>
 
     <div id="tab_assistant" class="tab-content active">
@@ -167,7 +167,7 @@
             </div>
 
             <div id="wiz_s0" class="wiz-step block animate-slide-up text-center m-auto max-w-md">
-                <div class="text-6xl mb-4">👋</div>
+                <div class="text-6xl mb-4">🤖</div>
                 <h2 class="text-3xl font-black text-stone-800 dark:text-stone-100 mb-4">Prêt à concocter ton jus ?</h2>
                 <p class="text-stone-500 dark:text-stone-400 mb-8 font-medium">Je vais te guider étape par étape pour trouver le mix parfait ou juste booster ton liquide. Zéro prise de tête.</p>
                 <button onclick="wizNext()" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-lg shadow-md transition-all active:scale-95">Démarrer</button>
@@ -811,7 +811,7 @@
     <div id="tab_manuel" class="tab-content">
         <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-2xl mx-auto transition-colors">
             <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                <span class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 flex items-center justify-center text-lg">🧮</span> Mélange Manuel
+                <span class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 flex items-center justify-center text-lg">🤏</span> Mélange Manuel
             </h2>
             <p class="text-sm text-stone-500 dark:text-stone-400 mb-6">Entre les volumes exacts que tu as mélangé pour connaître le résultat final.</p>
 
@@ -939,16 +939,16 @@
         <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl max-w-5xl mx-auto w-full border border-stone-100 dark:border-stone-800 transition-colors">
             
             <div class="flex gap-4 border-b border-stone-200 dark:border-stone-700 mb-6 overflow-x-auto hide-scrollbar">
-                <button id="tab_btn_mes_mixes" onclick="switchDataTab('mixes')" class="pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors">Mes Mixes</button>
-                <button id="tab_btn_mes_compos" onclick="switchDataTab('compos')" class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors">Mes Compos</button>
+                <button id="tab_btn_mes_mixes" onclick="switchDataTab('mixes')" class="pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors">🧴 Mes Mixes</button>
+                <button id="tab_btn_mes_compos" onclick="switchDataTab('compos')" class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors">✍️ Mes Compositions</button>
             </div>
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                <h2 class="text-xl font-extrabold flex items-center gap-2 text-stone-800 dark:text-stone-100">💾 Historique</h2>
+                <h2 class="text-xl font-extrabold flex items-center gap-2 text-stone-800 dark:text-stone-100">📝 Fiches</h2>
                 
 				<div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
                     <button id="btn_create_compo" onclick="createNewCompo()" class="hidden px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2">
-                        ✨ Nouvelle Compo
+                        ✚ Nouvelle Composition
                     </button>
                     <button id="btn_import_compo" onclick="document.getElementById('json_compo_import_input').click()" class="hidden px-4 py-2 bg-brand-100 dark:bg-brand-900/30 text-brand-700 dark:text-brand-400 hover:bg-brand-200 dark:hover:bg-brand-900/50 rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-2 border border-brand-200 dark:border-brand-800">
                         📥 Importer Composition
@@ -1014,7 +1014,7 @@
         
         <div class="p-5 border-t border-stone-200 dark:border-stone-700 flex gap-3 transition-colors">
             <button onclick="saveEditedCompo()" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-all">Enregistrer</button>
-            <button onclick="saveAsNewCompo()" class="py-3 px-4 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-300 font-bold rounded-xl transition-all shadow-sm" title="Dupliquer">📝 Copie</button>
+            <button onclick="saveAsNewCompo()" class="py-3 px-4 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-300 font-bold rounded-xl transition-all shadow-sm" title="Dupliquer">📝 Dupliquer</button>
         </div>
     </div>
 </div>
@@ -1060,17 +1060,17 @@
             <button onclick="exportSettingsJson()" class="w-full py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-bold transition-all flex justify-between px-4 items-center">
     <span>Sauvegarder JSON</span>
     <span class="relative text-xl">
-        📥
+        💾
         <span id="export_json_badge" class="hidden absolute -top-1 -right-2 w-3 h-3 bg-red-500 rounded-full border-2 border-white dark:border-stone-800"></span>
     </span>
 </button>
             <button onclick="triggerImport()" class="w-full py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-bold transition-all flex justify-between px-4 items-center">
-                <span>Importer JSON</span> <span class="text-xl">📤</span>
+                <span>Importer JSON</span> <span class="text-xl">⚙️📥</span>
             </button>
             <input type="file" id="json_import_input" accept=".json" class="hidden" onchange="handleImport(event)">
             
             <button onclick="shareApp()" class="w-full py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-bold transition-all flex justify-between px-4 items-center">
-                <span>Partager l'App</span> <span class="text-xl">🔗</span>
+                <span>Partager l'App</span> <span class="text-xl">🌐</span>
             </button>
 
             <button onclick="openJediModal()" class="w-full py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-bold transition-all flex justify-between px-4 items-center">
@@ -1196,16 +1196,16 @@
                     <span class="text-purple-600 dark:text-purple-400">🎨</span> Compositions (Multi-Arômes)
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Tu aimes faire tes propres recettes avec plusieurs arômes, de l'eau ou de l'alcool ? Le mode <strong>Multi-Arômes</strong> est fait pour ça. Sauvegarde tes recettes et réutilise-les n'importe quand !
+                    Tu aimes faire tes propres recettes avec plusieurs arômes, de l'eau ou de l'alcool ? Le mode <strong>Multi-Arômes</strong> est fait pour ça. Sauvegarde tes compositions et réutilise-les n'importe quand !
                 </p>
             </div>
 
             <div>
                 <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
-                    <span class="text-stone-600 dark:text-stone-400">💾</span> Sauvegardes & Données
+                    <span class="text-stone-600 dark:text-stone-400">📝</span> Mixes & Compositions
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Dans l'onglet "Données", tu retrouveras tous tes mixes ET tes compositions sauvegardées. Tu peux exporter tout ton historique dans un fichier JSON via la roue crantée.
+                    Dans l'onglet "Mixes et Compositions", tu retrouveras tous tes mixes ET tes compositions sauvegardées. Tu peux exporter tout ton historique dans un fichier JSON via la roue crantée. Tu peux également exporter une fiche en JSON pour la partager.
                 </p>
             </div>
 
@@ -1223,7 +1223,7 @@
                     <span class="text-brand-600 dark:text-brand-400">🎯</span> Liquide Complet
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Pour faire ton jus prêt à vaper de A à Z. Tu rentres la quantité voulue, ton ratio cible et ton taux de nicotine.
+                    Pour faire ton jus prêt à vaper de A à Z (nicotiné ou non). Tu rentres la quantité voulue, ton ratio cible et ton taux de nicotine.
                 </p>
             </div>
 
@@ -1232,13 +1232,13 @@
                     <span class="text-indigo-600 dark:text-indigo-400">🧪</span> Créer Shortfill
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
-                    Le mode des gros consommateurs. L'idée est de préparer une grosse fiole surdosée en arôme (le shortfill).
+                    Le mode des gros consommateurs. L'idée est de préparer une grosse fiole surdosée en arôme (le shortfill) sans nicotine afin d'effectuer des prélevements à booster.
                 </p>
             </div>
 
             <div>
                 <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
-                    <span class="text-stone-600 dark:text-stone-400">🧮</span> Mode Manuel
+                    <span class="text-stone-600 dark:text-stone-400">🤏</span> Mode Manuel
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
                     Rentre les volumes que tu as mis dans ta fiole, et l'outil te dira exactement sur quel ratio et quel taux de nicotine tu es retombé.
