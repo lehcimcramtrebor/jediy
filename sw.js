@@ -1,9 +1,15 @@
-const CACHE_NAME = 'je-diy-v7.5';
+const CACHE_NAME = 'je-diy-v7.6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './app.js',
+  './tailwind.config.js',
+  './assets/js/tailwind.js',
+  './assets/js/html2canvas.min.js',
+  './assets/js/html2pdf.bundle.min.js',
+  './assets/css/inter.css'
 ];
 
 // Installation du service worker et mise en cache des fichiers
