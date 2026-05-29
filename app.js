@@ -684,65 +684,175 @@ function exportCompoMedia(format, action = 'download') {
     
     let wrapper = document.createElement('div');
     wrapper.id = "temp_compo_pdf_wrapper";
-    wrapper.style.width = "794px";
-    wrapper.style.height = "1123px";
-    wrapper.style.padding = "40px";
+    wrapper.style.width = "100%";
+    wrapper.style.maxWidth = "800px";
+    wrapper.style.margin = "0 auto";
+    wrapper.style.padding = "20px";
     wrapper.style.backgroundColor = "#ffffff";
-    wrapper.style.boxSizing = "border-box";
-    wrapper.style.position = "absolute";
-    wrapper.style.left = "-9999px";
+    wrapper.style.fontFamily = "sans-serif";
     
-    let container = document.createElement('div');
-    container.className = 'export-card p-6 bg-white w-full border-2 border-stone-200 rounded-3xl shadow-sm';
     let tPerc = data.items.reduce((acc, v)=>acc+v.perc, 0);
+    if (tPerc <= 0) tPerc = 1; 
     
-    let html = `<div class="export-title mb-5 border-b border-stone-200 pb-4 flex justify-between items-start">
-        <div class="flex-1 pr-4"><div class="text-2xl font-black text-stone-800 tracking-tight mb-1.5 pb-1" style="line-height:1.2;">${data.name}</div><span class="inline-block bg-stone-100 px-2 py-1 rounded font-bold text-stone-500 uppercase tracking-widest" style="font-size:9px; line-height:1.2;">Je-DIY • Composition Recipe</span></div>
-        <div class="flex gap-3 items-center"><div class="text-right"><span class="inline-block bg-stone-100 px-2 py-1 rounded-lg text-brand-600 font-black" style="font-size:16px; line-height:1.2;">${round1(tPerc)}% Total</span></div><img src="jediy.png" alt="QR" class="w-14 h-14 rounded-xl shadow-sm border border-stone-200"></div>
-    </div><div class="grid grid-cols-3 gap-2">`;
+    let currentSimVol = 30;
+    if (typeof currentEditCompoId !== 'undefined' && currentEditCompoId) {
+        let el = document.getElementById('conc_vol_' + currentEditCompoId);
+        if (el && el.value) currentSimVol = parseFloat(el.value);
+    }
+    if (isNaN(currentSimVol) || currentSimVol <= 0) currentSimVol = 30;
+
+    // On prépare les colonnes de volumes (les 4 standards + le personnalisé si différent)
+    let vols = [10, 30, 50, 100];
+    if (!vols.includes(currentSimVol)) vols.push(currentSimVol);
+    // On trie pour avoir un tableau logique du plus petit au plus grand volume
+    vols.sort((a, b) => a - b);
+
+    let html = `
+    <div style="border: 2px solid #e5e7eb; border-radius: 16px; padding: 24px; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        
+        <div style="margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1; padding-right: 16px;">
+                <div style="font-size: 24px; font-weight: 900; color: #1c1917; line-height: 1.2; margin-bottom: 6px;">${data.name}</div>
+                <span style="display: inline-block; background-color: #f5f5f4; padding: 4px 8px; border-radius: 4px; font-weight: bold; color: #78716c; text-transform: uppercase; font-size: 9px; letter-spacing: 1px;">Je-DIY • Fiche Recette Concentré</span>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="text-align: right;">
+					<span style="display: block; font-size: 9px; font-weight: bold; color: #a8a29e; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">Dosage préconisé en 50/50</span>
+					<span style="display: inline-block; background-color: #fef3c7; padding: 4px 10px; border-radius: 8px; color: #d97706; font-weight: 900; font-size: 15px; border: 1px solid #fde68a;">${round1(tPerc)} %</span>
+				</div>
+                <div style="width: 48px; height: 48px; background-color: #f5f5f4; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; border: 1px solid #e5e7eb;">🧪</div>
+            </div>
+        </div>
+        
+        <div style="font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">📊 Proportions de la recette</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;">`;
+        
+        data.items.forEach(i => {
+            let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : 'Densité 1.0');
+            let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+            html += `
+            <div style="width: calc(33.333% - 6px); display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #fafaf9; padding: 8px; border-radius: 12px; border: 1px solid #e5e7eb; text-align: center; box-sizing: border-box;">
+                <span style="font-weight: bold; color: #44403c; word-break: break-word; white-space: normal; width: 100%; padding: 2px 0; font-size: 11px; line-height: 1.2;">${icon} ${i.name}</span>
+                <span style="display: inline-block; background-color: #e7e5e4; color: #78716c; padding: 2px 6px; border-radius: 4px; margin: 4px 0; font-weight: bold; font-size: 8px;">${details}</span>
+                <span style="font-weight: 900; color: #d97706; font-size: 12px;">${i.perc}%</span>
+            </div>`;
+        });
+        
+        html += `
+        </div>
+        
+        <div style="font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">🧪 Tableau de fabrication de concentré</div>
+        <div style="background-color: #fcfcfc; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; box-sizing: border-box; break-inside: avoid;">
+            
+            <div style="display: flex; background-color: #e7e5e4; padding: 8px 12px; border-radius: 8px; font-size: 10px; font-weight: 900; color: #44403c; text-transform: uppercase; margin-bottom: 8px;">
+                <div style="flex: 2; text-align: left;">Ingrédients</div>`;
+                
+        // Ajout dynamique des colonnes de volumes dans l'en-tête
+        vols.forEach(v => {
+            let isCustom = v === currentSimVol && ![10, 30, 50, 100].includes(v);
+            let textColor = isCustom ? 'color: #d97706;' : ''; // Mise en évidence du volume custom
+            html += `<div style="flex: 1; text-align: right; ${textColor}">${v} ml</div>`;
+        });
+        
+        html += `</div>`;
+
+        // Lignes des ingrédients
+        data.items.forEach((i, idx) => {
+            let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+            let borderBottom = idx < data.items.length - 1 ? 'border-bottom: 1px solid #f5f5f4;' : '';
+            
+            html += `
+            <div style="display: flex; padding: 8px 12px; align-items: center; ${borderBottom} font-size: 11px;">
+                <div style="flex: 2; font-weight: bold; color: #57534e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 8px;">${icon} ${i.name}</div>`;
+                
+            // Calculs pour chaque colonne
+            vols.forEach(v => {
+                let v_i = v * (i.perc / tPerc);
+                let w_i = getLiquidWeight(i.type, v_i, i.pg, i.degree);
+                html += `
+                <div style="flex: 1; text-align: right; line-height: 1.2;">
+                    <span style="font-weight: 900; color: #1c1917; display: block;">${round1(v_i)} ml</span>
+                    <span style="font-size: 9px; font-weight: bold; color: #d97706; display: block;">${round1(w_i)} g</span>
+                </div>`;
+            });
+            
+            html += `</div>`;
+        });
+
+        html += `</div>`; // Fin du tableau
+
+        let footerText = typeof jediIdentity !== 'undefined' && jediIdentity ? `Composition partagée par <strong style="color: #d97706;">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
+        html += `
+        <div style="margin-top: 24px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+            <span style="text-transform: uppercase; letter-spacing: 1px; font-weight: bold; color: #78716c; font-size: 9px;">${footerText}</span>
+        </div>
+    </div>`;
     
-    data.items.forEach(i => {
-        let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : 'Densité 1.0');
-        let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
-        html += `<div class="flex flex-col items-center justify-center bg-stone-50 p-2 rounded-xl border border-stone-200 text-center">
-            <span class="font-bold text-stone-700 break-words whitespace-normal w-full py-0.5" style="font-size:12px; line-height:1.2;" title="${i.name}">${icon} ${i.name}</span>
-            <span class="inline-block bg-stone-200 text-stone-500 px-1.5 py-0.5 rounded my-1 font-bold" style="font-size:9px; line-height:1.2;">${details}</span>
-            <span class="font-black text-brand-600" style="font-size:12px;">${i.perc}%</span>
-        </div>`;
-    });
-    
-    let footerText = jediIdentity ? `Composition partagée par <strong class="text-brand-600">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
-    html += `</div><div class="export-footer mt-6 text-center border-t border-stone-200 pt-3"><span class="uppercase tracking-widest font-bold text-stone-500" style="font-size:9px;">${footerText}</span></div>`;    
-    
-    container.innerHTML = html;
-    wrapper.appendChild(container);
+    wrapper.innerHTML = html;
     document.body.appendChild(wrapper); 
     document.body.classList.add('exporting');
+    
+    window.scrollTo(0, 0);
     
     let safeName = data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     
     setTimeout(() => {
+        let html2canvasOpts = { 
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: '#ffffff'
+        };
+
         if (format === 'png') {
-            // Bifurcation PNG direct
-            html2canvas(wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+            html2canvas(wrapper, html2canvasOpts).then(canvas => {
                 let link = document.createElement('a');
                 link.download = `Compo_${safeName}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt();
+                document.body.classList.remove('exporting');
+                wrapper.remove();
+                closeExportCompoPrompt();
             });
         } else {
-            // Bifurcation PDF complet
-            let opt = { margin: 5, filename: `Compo_${safeName}.pdf`, image: { type: 'jpeg', quality: 0.95 }, html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            let opt = { 
+                margin: 5, 
+                filename: `Compo_${safeName}.pdf`, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: html2canvasOpts, 
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+            };
+            
             let worker = html2pdf().set(opt).from(wrapper);
-            worker.output('blob').then(pdfBlob => {
-                if (action === 'download') worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); });
-                else {
+            
+            if (action === 'download') {
+                worker.save().then(() => { 
+                    document.body.classList.remove('exporting');
+                    wrapper.remove(); 
+                    closeExportCompoPrompt(); 
+                });
+            } else {
+                worker.output('blob').then(pdfBlob => {
+                    document.body.classList.remove('exporting');
+                    wrapper.remove();
+                    closeExportCompoPrompt();
+                    
                     let file = new File([pdfBlob], `Compo_${safeName}.pdf`, { type: 'application/pdf' });
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) { navigator.share({ files: [file], title: data.name, text: 'Ma compo Je-DIY' }).then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }).catch(()=>{wrapper.remove(); document.body.classList.remove('exporting');}); } 
-                    else { worker.save().then(() => { wrapper.remove(); document.body.classList.remove('exporting'); closeExportCompoPrompt(); }); }
-                }
-            });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) { 
+                        navigator.share({ files: [file], title: data.name, text: 'Ma compo Je-DIY' })
+                        .catch(()=>{ 
+                            let link = document.createElement('a');
+                            link.href = URL.createObjectURL(pdfBlob);
+                            link.download = `Compo_${safeName}.pdf`;
+                            link.click();
+                        }); 
+                    } else { 
+                        let link = document.createElement('a');
+                        link.href = URL.createObjectURL(pdfBlob);
+                        link.download = `Compo_${safeName}.pdf`;
+                        link.click();
+                    }
+                });
+            }
         }
     }, 600);
 }
@@ -1198,6 +1308,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     let titleText = r.globalName ? r.globalName : (prefix==='t1'?'Liquide Prêt':'Base Shortfill');
     let titleHtml = `<div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg truncate pr-2" style="line-height:1.2;">${titleText} <span class="text-brand-600 dark:text-brand-400">${round1(totalVol)} ml</span></div>`;
 
+
     let html = `<div data-theme="${theme}" data-config="${cfgStr}" ${dataAttrs} class="${compactClass} animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">
         <div class="flex-1">
             <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700 transition-colors">
@@ -1211,8 +1322,15 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
 
 if (r.multi) {
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
-            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 mb-2 flex justify-between"><span>${r.compoName || 'Composition'}</span><span class="text-xs text-stone-500">${round1(r.aroma)} ml</span></div>
-            <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
+                <span class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    ${r.compoName || 'Composition'}
+                </span>
+                <span class="text-xs text-stone-500">${round1(r.aroma)} ml</span>
+            </div>
+            <div class="hidden mt-2">
+                <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
         r.multi.forEach(item => {
             let vol = r.finalVol * (item.perc/100); let w = getLiquidWeight(item.type, vol, item.pg, item.degree); aromaWeight += w; totalWeight += w;
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
@@ -1221,7 +1339,7 @@ if (r.multi) {
                 <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round1(w)} g</span></div>
             </div>`;
         });
-        multiHtml += `</div></div>`;
+        multiHtml += `</div></div></div>`;
         html += multiHtml;
     } else {
         let actualAromaPg = (r.aromaPg !== undefined && r.aromaPg !== null && !isNaN(r.aromaPg)) ? r.aromaPg : 100;
@@ -1266,24 +1384,31 @@ if (r.multi) {
 			html += `</div>`;
 			
 			html += `<div class="sim-container mt-2 p-3 bg-white dark:bg-stone-800 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-100 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${r.prepVol}" data-aroma-vol="${r.aroma}" data-max-nic="${r.nicMax}" data-bstr="${r.bStr||(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${r.realPgRatio}">
-				<div class="flex items-center justify-center gap-2 mb-2 text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors" style="font-size:10px;"><span>🧪 Simulation d'ajout de boosters</span></div>
-				<div class="flex flex-col items-center gap-0.5 mb-3">
-					<span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Je prélève</span>
-					<select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors">`;
+				<div class="flex items-center justify-between cursor-pointer select-none text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors" style="font-size:10px;" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
+                    <span class="flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        🧪 Simulation d'ajout de boosters
+                    </span>
+                </div>
+                <div class="hidden mt-3">
+                    <div class="flex flex-col items-center gap-0.5 mb-3">
+                        <span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Je prélève</span>
+                        <select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors">`;
 			[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(v => { html += `<option value="${v}" ${v===50 ? 'selected' : ''}>${v} ml</option>`; });
 			html += `   <option value="${r.prepVol}">Total (${round1(r.prepVol)}ml)</option><option value="custom">Manuel...</option></select>
-					<div class="sim-custom-wrapper hidden items-center bg-stone-50 dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors"><button onclick="adjustCustomPreleve(this, -1)" class="btn-adjust-xs">-</button><input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)"><button onclick="adjustCustomPreleve(this, 1)" class="btn-adjust-xs">+</button></div>
-					<div class="sim-preleve-weight text-brand-600 dark:text-brand-400 font-bold mt-1 text-center w-full" style="font-size:10px;"></div>
-				</div>
-				<div class="flex flex-col items-center mb-3 bg-stone-50 dark:bg-black/20 p-2 rounded-lg border border-stone-200 dark:border-stone-700 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
-					<div class="w-full flex justify-between items-center mb-2 px-1"><span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Ratio des boosters:</span><select class="sim-b-ratio bg-white dark:bg-stone-900 text-stone-800 dark:text-white rounded px-1 py-0.5 font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors" style="font-size:10px;" onchange="updateSim(this)"><option value="100">100% PG</option><option value="90">90/10</option><option value="80">80/20</option><option value="70">70/30</option><option value="60">60/40</option><option value="50" selected>50/50</option><option value="40">40/60</option><option value="30">30/70</option><option value="20">20/80</option><option value="10">10/90</option><option value="0">100% VG</option></select></div>
-					<span class="font-bold text-stone-500 dark:text-stone-400 mb-1" style="font-size:10px;">J'ajoute</span>
-					<div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimBoosters(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimBoosters(this, 1)" class="btn-adjust-xs">+</button></div>
-					<span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">boosters</span><span class="font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest my-1" style="font-size:9px;">ou</span>
-					<div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimMl(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimMl(this, 1)" class="btn-adjust-xs">+</button></div>
-					<span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">ml</span>
-				</div>
-				<div class="mt-3 text-center bg-stone-100 dark:bg-stone-900 p-2 rounded w-full border border-stone-200 dark:border-stone-700 transition-colors"><div class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Résultat estimé :</div><div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result">...</div></div>
+                        <div class="sim-custom-wrapper hidden items-center bg-stone-50 dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors"><button onclick="adjustCustomPreleve(this, -1)" class="btn-adjust-xs">-</button><input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)"><button onclick="adjustCustomPreleve(this, 1)" class="btn-adjust-xs">+</button></div>
+                        <div class="sim-preleve-weight text-brand-600 dark:text-brand-400 font-bold mt-1 text-center w-full" style="font-size:10px;"></div>
+                    </div>
+                    <div class="flex flex-col items-center mb-3 bg-stone-50 dark:bg-black/20 p-2 rounded-lg border border-stone-200 dark:border-stone-700 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
+                        <div class="w-full flex justify-between items-center mb-2 px-1"><span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Ratio des boosters:</span><select class="sim-b-ratio bg-white dark:bg-stone-900 text-stone-800 dark:text-white rounded px-1 py-0.5 font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors" style="font-size:10px;" onchange="updateSim(this)"><option value="100">100% PG</option><option value="90">90/10</option><option value="80">80/20</option><option value="70">70/30</option><option value="60">60/40</option><option value="50" selected>50/50</option><option value="40">40/60</option><option value="30">30/70</option><option value="20">20/80</option><option value="10">10/90</option><option value="0">100% VG</option></select></div>
+                        <span class="font-bold text-stone-500 dark:text-stone-400 mb-1" style="font-size:10px;">J'ajoute</span>
+                        <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimBoosters(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimBoosters(this, 1)" class="btn-adjust-xs">+</button></div>
+                        <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">boosters</span><span class="font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest my-1" style="font-size:9px;">ou</span>
+                        <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimMl(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimMl(this, 1)" class="btn-adjust-xs">+</button></div>
+                        <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">ml</span>
+                    </div>
+                    <div class="mt-3 text-center bg-stone-100 dark:bg-stone-900 p-2 rounded w-full border border-stone-200 dark:border-stone-700 transition-colors"><div class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Résultat estimé :</div><div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result">...</div></div>
+                </div>
 			</div>`;
 
     }
@@ -1325,8 +1450,15 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
             <div class="card-body space-y-2 mb-4">`;
     if (c.multi) {
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
-            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 mb-2 flex justify-between"><span>${c.compoName || 'Composition'}</span><span class="text-xs text-stone-500">${round1(c.aVol)} ml</span></div>
-            <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
+                <span class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    ${c.compoName || 'Composition'}
+                </span>
+                <span class="text-xs text-stone-500">${round1(c.aVol)} ml</span>
+            </div>
+            <div class="hidden mt-2">
+                <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
         c.multi.forEach(item => {
             let vol = c.aVol * (item.perc/tPerc); let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
@@ -1336,7 +1468,7 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
                 <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round1(w)} g</span></div>
             </div>`;
         });
-        multiHtml += `</div></div>`;
+        multiHtml += `</div></div></div>`;
         html += multiHtml;
     } else if (c.aVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
@@ -1629,46 +1761,152 @@ function switchDataTab(tab) {
 
 function generateSavedMixHtml(m) {
     let c = m.config; let html = ''; let theme = getTheme(c.type);
-    c.globalName = m.name; 
-    if(c.type === 't1' || c.type === 't2') html = buildCard(c, c.type, c.isAlt, false, true);
-    else if(c.type === 'boost') html = buildBoostCardHtml(c, false, true);
-    else html = buildT3CardHtml(c, false, true);
+    c.globalName = m.name;
     
-    return `<div class="relative group mt-6 h-full w-full" data-theme="${theme}">
-        <div class="absolute -top-3 left-4 z-10 bg-brand-500 text-white px-3 py-1 rounded-lg text-sm font-black shadow-md border-2 border-white dark:border-stone-800">${m.name}</div>
+    // On passe 'true' pour cacher le petit bouton d'agrandissement
+    if(c.type === 't1' || c.type === 't2') html = buildCard(c, c.type, c.isAlt, true, true);
+    else if(c.type === 'boost') html = buildBoostCardHtml(c, true, true);
+    else html = buildT3CardHtml(c, true, true);
+    
+    // On ajoute cursor-pointer et onclick sur la div mère, et stopPropagation sur les boutons
+    return `<div class="relative group mt-6 h-full w-full cursor-pointer" data-theme="${theme}" onclick="openModalFromCard(this.querySelector('.recipe-card-wrapper'))">
         <div class="absolute -top-4 right-4 z-10 flex gap-2">
-            <button onclick="editMix(${m.id})" class="w-8 h-8 flex items-center justify-center bg-stone-800 dark:bg-stone-700 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-stone-700 transition-colors" title="Éditer">✏️</button>
-            <button onclick="deleteMix(${m.id})" class="w-8 h-8 flex items-center justify-center bg-red-500 dark:bg-red-600 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-red-600 transition-colors" title="Supprimer">🗑️</button>
+            <button onclick="event.stopPropagation(); editMix(${m.id})" class="w-8 h-8 flex items-center justify-center bg-stone-800 dark:bg-stone-700 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-stone-700 transition-colors" title="Éditer">✏️</button>
+            <button onclick="event.stopPropagation(); deleteMix(${m.id})" class="w-8 h-8 flex items-center justify-center bg-red-500 dark:bg-red-600 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-red-600 transition-colors" title="Supprimer">🗑️</button>
         </div>
         ${html}
     </div>`;
 }
 
+/* ========================================== */
+/* MODIFICATION : generateSavedCompoHtml ET   */
+/* FONCTIONS DU SIMULATEUR DE CONCENTRÉ       */
+/* ========================================== */
+
 function generateSavedCompoHtml(c) {
     let totalPerc = c.items.reduce((acc, v)=>acc+v.perc, 0);
-    let html = `<div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col hover:shadow-xl transition-all">
-        <div class="flex justify-between items-start mb-4 border-b border-stone-200 dark:border-stone-700 pb-3">
-            <div>
-                <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg">${c.name}</div>
-                <div class="text-xs font-bold text-brand-600 mt-1">${c.items.length} ingrédient(s) | ${round1(totalPerc)}% Total</div>
-            </div>
-            <button onclick="deleteCompo(${c.id})" class="w-8 h-8 flex items-center justify-center bg-red-500 dark:bg-red-600 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-red-600 transition-colors" title="Supprimer">🗑️</button>
-        </div>
-        <div class="space-y-2 mb-4">`;
+    let safeItems = encodeURIComponent(JSON.stringify(c.items));
+
+    // Vue 1 : Fiche standard
+    let compoHtml = `<div id="compo_view_${c.id}" class="space-y-2 mb-4 animate-fade-in">`;
     c.items.forEach(i => {
         let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
         let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : '');
-        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 text-sm">
+        compoHtml += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 text-sm transition-colors">
             <span class="font-bold text-stone-700 dark:text-stone-200">${icon} ${i.name} <span class="text-[10px] text-stone-500 ml-1">${details}</span></span>
             <span class="font-black text-brand-600 dark:text-brand-400">${i.perc}%</span>
         </div>`;
     });
-    html += `</div>
+    compoHtml += `</div>`;
+
+    // Vue 2 : Simulateur de concentré
+    let concHtml = `
+    <div id="conc_view_${c.id}" class="hidden flex-col mb-4 animate-fade-in">
+        <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">Volume final du concentré</label>
+        <div class="flex items-center gap-2 mb-3">
+            <button onclick="adjustConcVol(${c.id}, -5, '${safeItems}')" class="btn-adjust-sm">-</button>
+            <input type="number" id="conc_vol_${c.id}" value="30" class="hide-arrows flex-1 min-w-0 h-10 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-center font-bold text-stone-800 dark:text-stone-100 transition-colors" oninput="updateConcSim(${c.id}, '${safeItems}')">
+            <button onclick="adjustConcVol(${c.id}, 5, '${safeItems}')" class="btn-adjust-sm">+</button>
+            <span class="text-xs font-bold text-stone-500 w-4">ml</span>
+        </div>
+        <div class="grid grid-cols-4 gap-2 mb-4">
+            <button onclick="setConcVol(${c.id}, 10, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">10ml</button>
+            <button onclick="setConcVol(${c.id}, 30, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">30ml</button>
+            <button onclick="setConcVol(${c.id}, 50, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">50ml</button>
+            <button onclick="setConcVol(${c.id}, 100, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">100ml</button>
+        </div>
+        <div id="conc_list_${c.id}" class="space-y-2"></div>
+    </div>`;
+
+    let html = `<div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col hover:shadow-xl transition-all">
+        <div class="flex justify-between items-start mb-3 border-b border-stone-200 dark:border-stone-700 pb-3">
+            <div>
+                <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg">${c.name}</div>
+                <div class="text-xs font-bold text-brand-600 mt-1">${c.items.length} ingrédient(s) | ${round1(totalPerc)}% Total</div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="editCompo(${c.id})" class="w-8 h-8 flex items-center justify-center bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-lg shadow-sm border border-stone-200 dark:border-stone-600 hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors" title="Éditer">✏️</button>
+                <button onclick="deleteCompo(${c.id})" class="w-8 h-8 flex items-center justify-center bg-red-500 dark:bg-red-600 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-red-600 transition-colors" title="Supprimer">🗑️</button>
+            </div>
+        </div>
+        
+        <div class="flex bg-white dark:bg-stone-800 p-1 rounded-xl mb-4 border border-stone-200 dark:border-stone-700 transition-colors">
+            <button id="compo_tab_btn_${c.id}" onclick="switchCompoTab(${c.id}, 'compo', '${safeItems}')" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all">Fiche</button>
+            <button id="conc_tab_btn_${c.id}" onclick="switchCompoTab(${c.id}, 'conc', '${safeItems}')" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">Créer Concentré</button>
+        </div>
+
+        ${compoHtml}
+        ${concHtml}
+
         <div class="mt-auto pt-3">
-            <button onclick="editCompo(${c.id})" class="w-full py-2 bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 font-bold text-sm rounded-xl border border-stone-200 dark:border-stone-600 shadow-sm transition-all hover:bg-stone-50 dark:hover:bg-stone-600">Éditer / Exporter</button>
+            <button onclick="directExportCompo(${c.id})" class="w-full py-2 bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 font-bold text-sm rounded-xl border border-stone-200 dark:border-stone-600 shadow-sm transition-all hover:bg-stone-50 dark:hover:bg-stone-600">Exporter</button>
         </div>
     </div>`;
     return html;
+}
+
+function directExportCompo(id) {
+    currentEditCompoId = id; // On cible la bonne composition
+    openExportCompoPrompt(); // On ouvre directement la modale d'export
+}
+
+function switchCompoTab(id, tab, safeItems) {
+    let btnCompo = document.getElementById(`compo_tab_btn_${id}`);
+    let btnConc = document.getElementById(`conc_tab_btn_${id}`);
+    let viewCompo = document.getElementById(`compo_view_${id}`);
+    let viewConc = document.getElementById(`conc_view_${id}`);
+
+    let activeClass = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all";
+    let inactiveClass = "flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all";
+
+    if(tab === 'compo') {
+        btnCompo.className = activeClass; btnConc.className = inactiveClass;
+        viewCompo.classList.remove('hidden'); viewConc.classList.add('hidden'); viewConc.classList.remove('flex');
+    } else {
+        btnConc.className = activeClass; btnCompo.className = inactiveClass;
+        viewConc.classList.remove('hidden'); viewConc.classList.add('flex'); viewCompo.classList.add('hidden');
+        updateConcSim(id, safeItems); 
+    }
+}
+
+function adjustConcVol(id, step, safeItems) {
+    let el = document.getElementById(`conc_vol_${id}`);
+    el.value = Math.max(0, (parseFloat(el.value) || 0) + step);
+    updateConcSim(id, safeItems);
+}
+
+function setConcVol(id, vol, safeItems) {
+    document.getElementById(`conc_vol_${id}`).value = vol;
+    updateConcSim(id, safeItems);
+}
+
+function updateConcSim(id, safeItems) {
+    let items = JSON.parse(decodeURIComponent(safeItems));
+    let vol = parseFloat(document.getElementById(`conc_vol_${id}`).value) || 0;
+    let listContainer = document.getElementById(`conc_list_${id}`);
+    
+    if(vol <= 0 || items.length === 0) {
+        listContainer.innerHTML = '<div class="text-xs text-center text-stone-500 mt-2">Volume invalide</div>';
+        return;
+    }
+
+    let totalPerc = items.reduce((acc, v) => acc + v.perc, 0);
+    let html = '';
+    
+    items.forEach(i => {
+        let v_i = vol * (i.perc / totalPerc);
+        let w_i = getLiquidWeight(i.type, v_i, i.pg, i.degree);
+        let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+        
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 text-sm transition-colors">
+            <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${i.name}">${icon} ${i.name}</span>
+            <div class="text-right leading-tight whitespace-nowrap">
+                <span class="font-black text-stone-800 dark:text-stone-100 block">${round1(v_i)} ml</span>
+                <span class="text-[10px] font-bold text-brand-600 block">${round1(w_i)} g</span>
+            </div>
+        </div>`;
+    });
+    listContainer.innerHTML = html;
 }
 
 function renderMesMixes() {
@@ -2046,6 +2284,7 @@ function prepareCardForExport() {
     aromaGrids.forEach(g => {
         g.classList.remove('grid-cols-1', 'sm:grid-cols-2');
         g.classList.add('grid-cols-3');
+        if (g.parentElement.classList.contains('hidden')) g.parentElement.classList.remove('hidden');
     });
 
     let name = document.getElementById('mix_name_input').value.trim() || "Mix";
