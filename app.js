@@ -1209,10 +1209,10 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
             </div>
             <div class="card-body space-y-2 mb-4">`;
 
-    if (r.multi) {
+if (r.multi) {
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
             <div class="text-sm font-bold text-brand-600 dark:text-brand-400 mb-2 flex justify-between"><span>${r.compoName || 'Composition'}</span><span class="text-xs text-stone-500">${round1(r.aroma)} ml</span></div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">`;
+            <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
         r.multi.forEach(item => {
             let vol = r.finalVol * (item.perc/100); let w = getLiquidWeight(item.type, vol, item.pg, item.degree); aromaWeight += w; totalWeight += w;
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
@@ -1326,7 +1326,7 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
     if (c.multi) {
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
             <div class="text-sm font-bold text-brand-600 dark:text-brand-400 mb-2 flex justify-between"><span>${c.compoName || 'Composition'}</span><span class="text-xs text-stone-500">${round1(c.aVol)} ml</span></div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">`;
+            <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
         c.multi.forEach(item => {
             let vol = c.aVol * (item.perc/tPerc); let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
@@ -2042,7 +2042,7 @@ function prepareCardForExport() {
     clone.style.margin = '0 auto';
     clone.style.backgroundColor = '#ffffff';
 
-    let aromaGrids = clone.querySelectorAll('.grid-cols-1.sm\\:grid-cols-2');
+    let aromaGrids = clone.querySelectorAll('.pdf-aroma-grid, .grid-cols-1.sm\\:grid-cols-2');
     aromaGrids.forEach(g => {
         g.classList.remove('grid-cols-1', 'sm:grid-cols-2');
         g.classList.add('grid-cols-3');
