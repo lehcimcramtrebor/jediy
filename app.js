@@ -733,10 +733,19 @@ function generateCompoText() {
     return text;
 }
 
-function exportCompoText() {
+function copyCompoText() {
     let text = generateCompoText();
-    if (navigator.share) navigator.share({ title: 'Composition Je-DIY', text: text }).catch(()=>copyToClipboard(text));
-    else copyToClipboard(text);
+    copyToClipboard(text);
+    closeExportCompoPrompt();
+}
+
+function shareCompoText() {
+    let text = generateCompoText();
+    if (navigator.share) {
+        navigator.share({ title: 'Composition Je-DIY', text: text }).catch(() => copyToClipboard(text));
+    } else {
+        copyToClipboard(text);
+    }
     closeExportCompoPrompt();
 }
 
