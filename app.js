@@ -176,16 +176,38 @@ function switchTab(tabId) {
     }
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('button[id^="btn_tab_"]').forEach(el => {
-        let baseClasses = "py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ";
-        
-        // Conserver les classes de span responsive uniquement pour le bouton Coils
-        if (el.id === 'btn_tab_coils') {
-            baseClasses += "nav-coils-btn ";
+        const baseClasses = "py-2.5 px-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ";
+        if (el.id === 'btn_' + tabId) {
+            el.className = baseClasses + "bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10";
+        } else {
+            el.className = baseClasses + "text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-850/50";
+        }
+    });
+
+    // Synchronize Mobile Custom Dropdown
+    const triggerContent = document.getElementById('mobile_tab_trigger_content');
+    if (triggerContent) {
+        const correspondingOpt = document.querySelector(`.mobile-tab-opt[data-tab-id="${tabId}"]`);
+        if (correspondingOpt) {
+            // Update trigger text & icon
+            triggerContent.innerHTML = correspondingOpt.querySelector('span:first-child').innerHTML;
         }
         
-        if (el.id === 'btn_' + tabId) el.className = baseClasses + "bg-white dark:bg-stone-800 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10";
-        else el.className = baseClasses + "text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800";
-    });
+        // Highlight active option in mobile dropdown list and toggle checkmarks
+        document.querySelectorAll('.mobile-tab-opt').forEach(opt => {
+            const isSelected = opt.getAttribute('data-tab-id') === tabId;
+            const checkIcon = opt.querySelector('.mobile-tab-check');
+            
+            if (isSelected) {
+                opt.className = "mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-brand-600 dark:text-brand-400 bg-stone-50 dark:bg-stone-800/40 rounded-xl";
+                if (checkIcon) checkIcon.classList.remove('hidden');
+            } else {
+                opt.className = "mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl";
+                if (checkIcon) checkIcon.classList.add('hidden');
+            }
+        });
+    }
+
     document.getElementById(tabId).classList.add('active');
     
     if (tabId === 'tab_mes_donnees') {
@@ -3832,3 +3854,50 @@ function renderMarkdownToHtml(mdText) {
     
     return outputLines.join('\n');
 }
+
+// ==========================================
+// MOBILE CUSTOM TAB DROPDOWN FUNCTIONS
+// ==========================================
+function toggleMobileTabDropdown() {
+    const menu = document.getElementById('mobile_tab_dropdown_menu');
+    const arrow = document.getElementById('mobile_tab_trigger_arrow');
+    if (!menu || !arrow) return;
+    
+    const isOpen = !menu.classList.contains('pointer-events-none');
+    if (isOpen) {
+        // Fermer le dropdown
+        menu.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
+        menu.classList.remove('scale-100', 'opacity-100');
+        arrow.classList.remove('rotate-180');
+    } else {
+        // Ouvrir le dropdown
+        menu.classList.remove('pointer-events-none', 'scale-95', 'opacity-0');
+        menu.classList.add('scale-100', 'opacity-100');
+        arrow.classList.add('rotate-180');
+    }
+}
+
+function selectMobileTab(tabId) {
+    // Changer d'onglet en utilisant la fonction principale
+    switchTab(tabId);
+    // Fermer le dropdown après sélection
+    const menu = document.getElementById('mobile_tab_dropdown_menu');
+    const arrow = document.getElementById('mobile_tab_trigger_arrow');
+    if (menu && arrow) {
+        menu.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
+        menu.classList.remove('scale-100', 'opacity-100');
+        arrow.classList.remove('rotate-180');
+    }
+}
+
+// Fermer le dropdown lors d'un clic en dehors du conteneur
+document.addEventListener('click', function(event) {
+    const container = document.getElementById('tab_dropdown_container');
+    const menu = document.getElementById('mobile_tab_dropdown_menu');
+    const arrow = document.getElementById('mobile_tab_trigger_arrow');
+    if (container && !container.contains(event.target) && menu && !menu.classList.contains('pointer-events-none')) {
+        menu.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
+        menu.classList.remove('scale-100', 'opacity-100');
+        arrow.classList.remove('rotate-180');
+    }
+});
