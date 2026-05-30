@@ -214,45 +214,48 @@
         <button onclick="switchTab('tab_coils')" id="btn_tab_coils" class="py-2.5 px-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">🌀 Coils & Ohm</button>
     </div>
 
-    <!-- MOBILE CUSTOM HTML DROPDOWN SELECTOR -->
-    <div class="relative w-full mb-6 sm:hidden" id="tab_dropdown_container">
-        <!-- Trigger Button -->
-        <button onclick="toggleMobileTabDropdown()" id="mobile_tab_trigger" class="w-full py-3.5 px-4 bg-white dark:bg-stone-900 text-stone-850 dark:text-stone-100 rounded-2xl shadow-md border border-stone-200 dark:border-stone-800 flex items-center justify-between font-bold text-sm transition-all active:scale-98 relative z-25">
-            <span id="mobile_tab_trigger_content" class="flex items-center gap-2">🪄 Assistant</span>
-            <svg id="mobile_tab_trigger_arrow" class="w-5 h-5 text-stone-400 dark:text-stone-500 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-        </button>
-        <!-- Floating Option List -->
-        <div id="mobile_tab_dropdown_menu" class="absolute left-0 right-0 mt-2 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200 dark:border-stone-700 z-50 py-1.5 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top">
-            <button onclick="selectMobileTab('tab_assistant')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_assistant">
-                <span class="flex items-center gap-2.5">🪄 Assistant</span>
-                <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+    <!-- MOBILE STICKY ENVELOPE WRAPPER (STICKY TOP & CONTENT ENVELOPE SLIDE UNDER EFFECT) -->
+    <div class="sticky top-0 z-30 -mx-2 px-2 bg-stone-100 dark:bg-stone-950 pt-2 pb-3 border-b border-stone-200/50 dark:border-stone-800/40 mb-6 sm:hidden transition-colors duration-300">
+        <!-- MOBILE CUSTOM HTML DROPDOWN SELECTOR -->
+        <div class="relative w-full" id="tab_dropdown_container">
+            <!-- Trigger Button -->
+            <button onclick="toggleMobileTabDropdown()" id="mobile_tab_trigger" class="w-full py-3.5 px-4 bg-white dark:bg-stone-900 text-stone-850 dark:text-stone-100 rounded-2xl shadow-md border border-stone-200 dark:border-stone-800 flex items-center justify-between font-bold text-sm transition-all active:scale-98 relative z-25">
+                <span id="mobile_tab_trigger_content" class="flex items-center gap-2">🪄 Assistant</span>
+                <svg id="mobile_tab_trigger_arrow" class="w-5 h-5 text-stone-400 dark:text-stone-500 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
             </button>
-            <button onclick="selectMobileTab('tab_boost_simple')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_boost_simple">
-                <span class="flex items-center gap-2.5">🚀 Boost simple</span>
-                <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-            </button>
-            <button onclick="selectMobileTab('tab_complet')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_complet">
-                <span class="flex items-center gap-2.5">🎯 Liquide Complet</span>
-                <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-            </button>
-            <button onclick="selectMobileTab('tab_booster')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_booster">
-                <span class="flex items-center gap-2.5">🧪 Créer Shortfill</span>
-                <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-            </button>
-            <button onclick="selectMobileTab('tab_manuel')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_manuel">
-                <span class="flex items-center gap-2.5">🤏 Mélange manuel</span>
-                <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-            </button>
-            <button onclick="selectMobileTab('tab_mes_donnees')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_mes_donnees">
-                <span class="flex items-center gap-2.5">📝 Mixes & Compositions</span>
-                <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-            </button>
-            <button onclick="selectMobileTab('tab_coils')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_coils">
-                <span class="flex items-center gap-2.5">🌀 Coils & Ohm</span>
-                <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
-            </button>
+            <!-- Floating Option List -->
+            <div id="mobile_tab_dropdown_menu" class="absolute left-0 right-0 mt-2 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200 dark:border-stone-700 z-50 py-1.5 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top">
+                <button onclick="selectMobileTab('tab_assistant')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_assistant">
+                    <span class="flex items-center gap-2.5">🪄 Assistant</span>
+                    <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                </button>
+                <button onclick="selectMobileTab('tab_boost_simple')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_boost_simple">
+                    <span class="flex items-center gap-2.5">🚀 Boost simple</span>
+                    <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                </button>
+                <button onclick="selectMobileTab('tab_complet')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_complet">
+                    <span class="flex items-center gap-2.5">🎯 Liquide Complet</span>
+                    <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                </button>
+                <button onclick="selectMobileTab('tab_booster')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_booster">
+                    <span class="flex items-center gap-2.5">🧪 Créer Shortfill</span>
+                    <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                </button>
+                <button onclick="selectMobileTab('tab_manuel')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_manuel">
+                    <span class="flex items-center gap-2.5">🤏 Mélange manuel</span>
+                    <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                </button>
+                <button onclick="selectMobileTab('tab_mes_donnees')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_mes_donnees">
+                    <span class="flex items-center gap-2.5">📝 Mixes & Compositions</span>
+                    <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                </button>
+                <button onclick="selectMobileTab('tab_coils')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl" data-tab-id="tab_coils">
+                    <span class="flex items-center gap-2.5">🌀 Coils & Ohm</span>
+                    <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
+                </button>
+            </div>
         </div>
     </div>
 
