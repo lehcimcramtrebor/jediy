@@ -676,8 +676,8 @@ function openExportCompoPrompt() { document.getElementById('export_compo_prompt_
 function closeExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.add('hidden'); }
 
 function getCompoExportData() {
-    let name = document.getElementById('edit_compo_name').value.trim() || "Composition";
     let c = savedCompos.find(x => x.id === currentEditCompoId);
+    let name = c ? c.name : (document.getElementById('edit_compo_name').value.trim() || "Composition");
     let items = c ? c.items : state.edit_compo.multi;
     return { name, items };
 }
