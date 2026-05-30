@@ -85,7 +85,7 @@ function formatRatioStr(pg, labels = false) {
     return labels ? `${p}PG / ${100-p}VG` : `${p}/${100-p}`;
 }
 function round1(num) { return Math.round(num * 10) / 10; }
-function round2(num) { return Math.round(num * 100) / 100; }
+function round2(num) { return Number(num).toFixed(2); }
 function getTheme(prefix) { return prefix === 't1' ? 'complet' : (prefix === 't2' ? 'shortfill' : (prefix === 'boost' ? 'boost' : (prefix === 'compo' ? 'assistant' : 'manuel'))); }
 
 function adjustVal(id, step) {
@@ -850,8 +850,8 @@ function exportCompoMedia(format, action = 'download') {
                 let w_i = getLiquidWeight(i.type, v_i, i.pg, i.degree);
                 html += `
                 <div style="flex: 1; text-align: right; line-height: 1.2;">
-                    <span style="font-weight: 900; color: #1c1917; display: block;">${round1(v_i)} ml</span>
-                    <span style="font-size: 9px; font-weight: bold; color: #d97706; display: block;">${round1(w_i)} g</span>
+<span style="font-weight: 900; color: #1c1917; display: block;">${round2(v_i)} ml</span>
+<span style="font-size: 9px; font-weight: bold; color: #d97706; display: block;">${round2(w_i)} g</span>
                 </div>`;
             });
             
@@ -1230,7 +1230,7 @@ function calcTab3() {
     let strVal = parseFloat(document.getElementById('t3_boost_str').value); let str = isNaN(strVal) ? 20 : strVal;
 
     let bWeight = getWeight(bVol, bPg); let nWeight = getWeight(nVol, nPg);
-    document.getElementById('t3_aroma_w').innerText = `${round1(aWeight)} g`; document.getElementById('t3_base_w').innerText = `${round1(bWeight)} g`; document.getElementById('t3_boost_w').innerText = `${round1(nWeight)} g`;
+    document.getElementById('t3_aroma_w').innerText = `${round2(aWeight)} g`; document.getElementById('t3_base_w').innerText = `${round2(bWeight)} g`; document.getElementById('t3_boost_w').innerText = `${round2(nWeight)} g`;
     let tVol = aVol + bVol + nVol; let tWeight = aWeight + bWeight + nWeight;
 
     if(tVol === 0) { document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in">Aucun volume.</div>`; return; }
@@ -1249,7 +1249,7 @@ function calcTab3() {
 
     document.getElementById('t3_results').innerHTML = `
         <div class="animate-fade-in">
-            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml <span class="text-base text-brand-600 dark:text-brand-400 font-black">(${round1(tWeight)} g)</span></span></div>
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml <span class="text-base text-brand-600 dark:text-brand-400 font-black">(${round2(tWeight)} g)</span></span></div>
             <div class="grid grid-cols-3 gap-2 mt-4 text-left">
                 <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio)}</span></div>
                 <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600 dark:text-brand-400">${round1(aRatio)} %</span></div>
@@ -1277,7 +1277,7 @@ function calcBoostSimple(prefix, containerId) {
     let jWeight = getWeight(vol, pg); let bWeight = getWeight(bVol, bPg); let totalWeight = jWeight + bWeight;
 
     let jWeightEl = document.getElementById('tab_boost_vol_w'); let bWeightEl = document.getElementById('tab_boost_b_w');
-    if (advChecked) { if(jWeightEl) { jWeightEl.innerText = round1(jWeight) + " g"; jWeightEl.classList.remove('hidden'); } if(bWeightEl) { bWeightEl.innerText = round1(bWeight) + " g"; bWeightEl.classList.remove('hidden'); } } 
+    if (advChecked) { if(jWeightEl) { jWeightEl.innerText = round2(jWeight) + " g"; jWeightEl.classList.remove('hidden'); } if(bWeightEl) { bWeightEl.innerText = round2(bWeight) + " g"; bWeightEl.classList.remove('hidden'); } } 
     else { if(jWeightEl) jWeightEl.classList.add('hidden'); if(bWeightEl) bWeightEl.classList.add('hidden'); }
 
     let finalPgRatio = 50; let btnHtml = ""; let hiddenCardHtml = "";
@@ -1292,7 +1292,7 @@ function calcBoostSimple(prefix, containerId) {
     }
 
     let visualCap = finalVol * 1.1; let hJuice = (vol / visualCap) * 100; let hBoost = (bVol / visualCap) * 100; let hAir = 100 - hJuice - hBoost;
-    let weightHtmlFinal = advChecked ? `<span class="text-base text-brand-600 dark:text-brand-400 font-black block mt-1">(${round1(totalWeight)} g)</span>` : '';
+    let weightHtmlFinal = advChecked ? `<span class="text-base text-brand-600 dark:text-brand-400 font-black block mt-1">(${round2(totalWeight)} g)</span>` : '';
 
     let html = `
         <div class="animate-fade-in flex flex-col md:flex-row gap-6 items-center md:items-stretch bg-brand-50 dark:bg-brand-900 p-4 rounded-3xl border border-brand-200 dark:border-brand-700 transition-colors">
@@ -1434,7 +1434,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
             multiHtml += `<div class="flex justify-between items-center text-xs bg-stone-50 dark:bg-stone-700/50 p-2 rounded">
                 <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${item.name}">${icon} ${item.name} <span class="text-stone-400 ml-0.5" style="font-size:9px;">(${item.perc}%)</span></span>
-                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round1(w)} g</span></div>
+                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round2(w)} g</span></div>
             </div>`;
         });
         multiHtml += `</div></div></div>`;
@@ -1443,8 +1443,8 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         let actualAromaPg = (r.aromaPg !== undefined && r.aromaPg !== null && !isNaN(r.aromaPg)) ? r.aromaPg : 100;
         aromaWeight = getWeight(r.aroma, actualAromaPg); totalWeight += aromaWeight;
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme Concentré <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(actualAromaPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.aroma)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round1(aromaWeight)} g</span></div>
+                    <div class="flex flex-col items-start gap-1"><span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme Concentré</span><span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:9px; line-height:1.2;">${formatRatioStr(actualAromaPg, false)}</span></div>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.aroma)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aromaWeight)} g</span></div>
                 </div>`;
     }
     
@@ -1453,7 +1453,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
             let baseWeight = getWeight(b.vol, b.pgRatio); totalWeight += baseWeight;
             html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
                     <span class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Base <span class="inline-block font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(b.pgRatio, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(b.vol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round1(baseWeight)} g</span></div>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(b.vol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(baseWeight)} g</span></div>
                 </div>`;
         }
     });
@@ -1462,7 +1462,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         let nicWeight = getWeight(r.nic, r.nicRatio); totalWeight += nicWeight;
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
                 <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(r.nicRatio, false)}</span></span>
-                <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.nic)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(r.nic/10)} u.)</span></span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round1(nicWeight)} g</span></div>
+                <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.nic)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(r.nic/10)} u.)</span></span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(nicWeight)} g</span></div>
             </div>`;
     }
     html += `</div></div>`; 
@@ -1472,13 +1472,13 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
         html += `<div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700 transition-colors">
             <div class="flex justify-between items-center"><span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span><div class="text-right"><span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(finalAroma)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span> <span class="mx-1 text-stone-300 dark:text-stone-600">|</span> <span class="text-lg font-black ${tColor}">${round1(finalNic)} mg/ml</span></div></div>
-            <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round1(totalWeight)} g</div>
+            <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round2(totalWeight)} g</div>
         </div>`;
     }
 
     if(prefix === 't2') {
         let surconcentration = (r.aroma / r.prepVol) * 100;
-        html += `<div class="mt-auto border-t border-stone-200 dark:border-stone-700 pt-3 text-right transition-colors"><span class="font-bold text-brand-600 dark:text-brand-400" style="font-size:11px;">Poids total estimé : ${round1(totalWeight)} g</span>`;
+        html += `<div class="mt-auto border-t border-stone-200 dark:border-stone-700 pt-3 text-right transition-colors"><span class="font-bold text-brand-600 dark:text-brand-400" style="font-size:11px;">Poids total estimé : ${round2(totalWeight)} g</span>`;
         html += `<br><span class="font-bold text-stone-500 mt-1 block" style="font-size:10px;">Surconcentration arôme : ${round1(surconcentration)}%</span>`;
         html += `</div>`;
         
@@ -1568,27 +1568,27 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
             multiHtml += `<div class="flex justify-between items-center text-xs bg-stone-50 dark:bg-stone-700/50 p-2 rounded">
                 <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${item.name}">${icon} ${item.name}</span>
-                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round1(w)} g</span></div>
+                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round2(w)} g</span></div>
             </div>`;
         });
         multiHtml += `</div></div></div>`;
         html += multiHtml;
     } else if (c.aVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(c.aPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.aVol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round1(aWeight)} g</span></div>
+                    <div class="flex flex-col items-start gap-1"><span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme</span><span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:9px; line-height:1.2;">${formatRatioStr(c.aPg, false)}</span></div>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.aVol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aWeight)} g</span></div>
                 </div>`;
     }
     if (c.bVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
                     <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="inline-block font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(c.bPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round1(bWeight)} g</span></div>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(bWeight)} g</span></div>
                 </div>`;
     }
     if (c.nVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
                     <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(c.nPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.nVol)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(c.nVol/10)} u.)</span></span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round1(nWeight)} g</span></div>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.nVol)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(c.nVol/10)} u.)</span></span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(nWeight)} g</span></div>
                 </div>`;
     }
     html += `</div></div>
@@ -1597,7 +1597,7 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
                 <span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span>
                 <div class="text-right"><span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(aRatio)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span> <span class="mx-1 text-stone-300 dark:text-stone-600">|</span> <span class="text-lg font-black text-brand-700 dark:text-brand-400">${round1(finalNic)} mg/ml</span></div>
             </div>
-            <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round1(tWeight)} g</div>
+            <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round2(tWeight)} g</div>
         </div>
     </div>`;
     return html;
@@ -1625,13 +1625,13 @@ function buildBoostCardHtml(c, noBtn = false, isCompact = false) {
     if(c.vol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
                     <span class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Jus <span class="inline-block font-bold bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded" style="font-size:11px; line-height:1.2;">${formatRatioStr(c.pg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.vol)} ml</span><span class="block font-bold text-brand-600 mt-0.5" style="font-size:10px;">${round1(jWeight)} g</span></div>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.vol)} ml</span><span class="block font-bold text-brand-600 mt-0.5" style="font-size:10px;">${round2(jWeight)} g</span></div>
                 </div>`;
     }
     if(c.bVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
                     <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Booster <span class="inline-block font-bold bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded" style="font-size:11px; line-height:1.2;">${formatRatioStr(c.bPg, false)}</span></span>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(c.bVol/10)} u.)</span></span><span class="block font-bold text-brand-600 mt-0.5" style="font-size:10px;">${round1(bWeight)} g</span></div>
+                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(c.bVol/10)} u.)</span></span><span class="block font-bold text-brand-600 mt-0.5" style="font-size:10px;">${round2(bWeight)} g</span></div>
                 </div>`;
     }
     html += `</div></div>
@@ -1640,7 +1640,7 @@ function buildBoostCardHtml(c, noBtn = false, isCompact = false) {
                 <span class="text-xs font-bold text-stone-500 uppercase">Taux finaux</span>
                 <div class="text-right"><span class="text-lg font-black text-brand-700 dark:text-brand-400">${round1(finalNic)} mg/ml</span></div>
             </div>
-            <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round1(totalWeight)} g</div>
+            <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round2(totalWeight)} g</div>
         </div>
     </div>`;
     return html;
@@ -1678,7 +1678,7 @@ function updateSim(el) {
     let prepVolAttr = parseFloat(simContObj.getAttribute('data-base-vol')) || 0; let basePg = parseFloat(simContObj.getAttribute('data-base-pg')) || 50;
     let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
 
-    if(preleveWeightEl) preleveWeightEl.innerText = preleveVol > 0 ? round1(getWeight(preleveVol, basePg)) + " g" : "";
+    if(preleveWeightEl) preleveWeightEl.innerText = preleveVol > 0 ? round2(getWeight(preleveVol, basePg)) + " g" : "";
     
     let bVol = bCount * 10; let finalVol = preleveVol + bVol; let aromaInSample = preleveVol * (totalAroma / prepVolAttr);
     
@@ -1896,7 +1896,10 @@ function generateSavedCompoHtml(c) {
         let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
         let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : '');
         compoHtml += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 text-sm transition-colors">
-            <span class="font-bold text-stone-700 dark:text-stone-200">${icon} ${i.name} <span class="text-[10px] text-stone-500 ml-1">${details}</span></span>
+<div class="flex flex-col">
+    <span class="font-bold text-stone-700 dark:text-stone-200">${icon} ${i.name}</span>
+    <span class="text-[10px] text-stone-400 dark:text-stone-500 mt-0.5">${details}</span>
+</div>
             <span class="font-black text-brand-600 dark:text-brand-400">${i.perc}%</span>
         </div>`;
     });
@@ -2004,8 +2007,8 @@ function updateConcSim(id, safeItems) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 text-sm transition-colors">
             <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${i.name}">${icon} ${i.name}</span>
             <div class="text-right leading-tight whitespace-nowrap">
-                <span class="font-black text-stone-800 dark:text-stone-100 block">${round1(v_i)} ml</span>
-                <span class="text-[10px] font-bold text-brand-600 block">${round1(w_i)} g</span>
+                <span class="font-black text-stone-800 dark:text-stone-100 block">${round2(v_i)} ml</span>
+<span class="text-[10px] font-bold text-brand-600 block">${round2(w_i)} g</span>
             </div>
         </div>`;
     });
@@ -2238,27 +2241,27 @@ function getRecipeText() {
         c.multi.forEach(i => {
             let v = totalVol * (i.perc/ (c.type === 't1' || c.type === 't2' ? 100 : tPerc));
             let w = getLiquidWeight(i.type, v, i.pg, i.degree);
-            text += `- ${i.name} (${i.perc}%): ${round1(v)} ml (${round1(w)} g)\n`;
+            text += `- ${i.name} (${i.perc}%): ${round1(v)} ml (${round2(w)} g)\n`;
         });
     } else if (c.aroma !== undefined || c.aVol !== undefined) {
         let av = c.aroma || c.aVol; let aPg = c.aromaPg || c.aPg || 100;
-        text += `- Arôme Concentré: ${round1(av)} ml (${round1(getWeight(av, aPg))} g)\n`;
+        text += `- Arôme Concentré: ${round1(av)} ml (${round2(getWeight(av, aPg))} g)\n`;
     }
 
     if (c.bases) {
         c.bases.forEach(b => {
-            if(b.vol > 0.1) text += `- Base ${formatRatioStr(b.pgRatio)}: ${round1(b.vol)} ml (${round1(getWeight(b.vol, b.pgRatio))} g)\n`;
+            if(b.vol > 0.1) text += `- Base ${formatRatioStr(b.pgRatio)}: ${round1(b.vol)} ml (${round2(getWeight(b.vol, b.pgRatio))} g)\n`;
         });
     } else if (c.bVol !== undefined && c.type === 't3') {
-        text += `- Base ${formatRatioStr(c.bPg)}: ${round1(c.bVol)} ml (${round1(getWeight(c.bVol, c.bPg))} g)\n`;
+        text += `- Base ${formatRatioStr(c.bPg)}: ${round1(c.bVol)} ml (${round2(getWeight(c.bVol, c.bPg))} g)\n`;
     }
 
     if (c.nic > 0) {
-        text += `- Booster ${formatRatioStr(c.nicRatio)}: ${round1(c.nic)} ml (${round1(getWeight(c.nic, c.nicRatio))} g)\n`;
+        text += `- Booster ${formatRatioStr(c.nicRatio)}: ${round1(c.nic)} ml (${round2(getWeight(c.nic, c.nicRatio))} g)\n`;
     } else if (c.nVol > 0 && c.type === 't3') {
-        text += `- Booster ${formatRatioStr(c.nPg)}: ${round1(c.nVol)} ml (${round1(getWeight(c.nVol, c.nPg))} g)\n`;
+        text += `- Booster ${formatRatioStr(c.nPg)}: ${round1(c.nVol)} ml (${round2(getWeight(c.nVol, c.nPg))} g)\n`;
     } else if (c.type === 'boost' && c.bVol > 0) {
-        text += `- Booster ${formatRatioStr(c.bPg)}: ${round1(c.bVol)} ml (${round1(getWeight(c.bVol, c.bPg))} g)\n`;
+        text += `- Booster ${formatRatioStr(c.bPg)}: ${round1(c.bVol)} ml (${round2(getWeight(c.bVol, c.bPg))} g)\n`;
     }
     
     if (c.type === 't1' || c.type === 'boost' || c.type === 't3') {
@@ -2274,7 +2277,7 @@ function getRecipeText() {
         
         function getGuideForVol(baseVol, title) {
             let baseWeight = getWeight(baseVol, ratio); let aromaVolInSample = baseVol * (c.aroma / c.prepVol);
-            let out = `\n💡 GUIDE DE BOOST AVEC RATIO ${formatRatioStr(bPg)}\n(${title} - ${round1(baseWeight)} g) :\n`;
+            let out = `\n💡 GUIDE DE BOOST AVEC RATIO ${formatRatioStr(bPg)}\n(${title} - ${round2(baseWeight)} g) :\n`;
             let targets = [3, 6, 9, 12]; let sims = new Map();
             targets.forEach(target => {
                 if (target < c.nicMax) {
@@ -2285,14 +2288,14 @@ function getRecipeText() {
                     }
                 }
             });
-            sims.forEach((data, bCount) => { let w = getWeight(bCount * 10, bPg); out += `+ ${bCount} boost. (${round1(bCount*10)}ml - ${round1(w)}g)\n  > Nic: ~${round1(data.nic)} mg\n  > Arôme: ~${round1(data.aroma)} %\n  > Ratio final: ~${formatRatioStr(data.pg)}\n`; });
+            sims.forEach((data, bCount) => { let w = getWeight(bCount * 10, bPg); out += `+ ${bCount} boost. (${round1(bCount*10)}ml - ${round2(w)}g)\n  > Nic: ~${round1(data.nic)} mg\n  > Arôme: ~${round1(data.aroma)} %\n  > Ratio final: ~${formatRatioStr(data.pg)}\n`; });
             let exactMaxBVol = (baseVol * c.nicMax) / (c.bStr - c.nicMax); let maxBCount = exactMaxBVol / 10; let floorMax = Math.floor(maxBCount);
             if (floorMax > 0 && floorMax < maxBCount && !sims.has(floorMax)) {
                 let actualNicFloor = (floorMax * 10 * c.bStr) / (baseVol + floorMax * 10); let fAromaFloor = (aromaVolInSample / (baseVol + floorMax * 10)) * 100; let fPgFloor = ((baseVol * (ratio/100)) + (floorMax * 10 * (bPg/100))) / (baseVol + floorMax * 10) * 100; let wFloor = getWeight(floorMax * 10, bPg);
-                out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml - ${round1(wFloor)}g)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(fAromaFloor)} %\n  > Ratio final: ~${formatRatioStr(fPgFloor)}\n`;
+                out += `+ ${floorMax} boost. (${round1(floorMax*10)}ml - ${round2(wFloor)}g)\n  > Nic: ~${round1(actualNicFloor)} mg\n  > Arôme: ~${round1(fAromaFloor)} %\n  > Ratio final: ~${formatRatioStr(fPgFloor)}\n`;
             }
             let maxAromaPerc = (aromaVolInSample / (baseVol + exactMaxBVol)) * 100; let maxFinalPg = ((baseVol * (ratio/100)) + (exactMaxBVol * (bPg/100))) / (baseVol + exactMaxBVol) * 100; let wMax = getWeight(maxBCount * 10, bPg);
-            out += `+ MAX ${round1(maxBCount)} boost. (${round1(maxBCount*10)}ml - ${round1(wMax)}g)\n  > Nic: ${round1(c.nicMax)} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
+            out += `+ MAX ${round1(maxBCount)} boost. (${round1(maxBCount*10)}ml - ${round2(wMax)}g)\n  > Nic: ${round1(c.nicMax)} mg\n  > Arôme: ${round1(maxAromaPerc)} %\n  > Ratio final: ~${formatRatioStr(maxFinalPg)}\n`;
             return out;
         }
         text += getGuideForVol(c.prepVol, "bidon complet " + round1(c.prepVol) + " ml"); if (50 < c.prepVol) text += getGuideForVol(50, "si prélèvement 50 ml");
@@ -2343,7 +2346,7 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
     let html = `
         <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 leading-tight break-inside-avoid h-full flex flex-col" style="font-size:10px;">
             <div class="font-black uppercase tracking-widest text-stone-500 mb-2 border-b border-stone-200 pb-1 flex items-center justify-between">
-                <span>💡 ${title}</span><span class="bg-stone-200 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(baseVol)} ml (${round1(baseWeight)} g)</span>
+                <span>💡 ${title}</span><span class="bg-stone-200 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(baseVol)} ml (${round2(baseWeight)} g)</span>
             </div>
             <div class="flex-1 flex flex-col justify-center gap-1.5">`;
     data.forEach(row => {
@@ -2356,7 +2359,7 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
             <div class="flex justify-between items-center border-b border-stone-200/50 last:border-0 pb-1.5 ${trClass}">
                 <div class="flex flex-col">
                     <span class="font-bold">${prefix}${round1(row.bCount)} boost.</span>
-                    <span class="opacity-70" style="font-size:8px;">(${mlText}ml - ${round1(bWeight)}g)</span>
+                    <span class="opacity-70" style="font-size:8px;">(${mlText}ml - ${round2(bWeight)}g)</span>
                     <span class="text-brand-600 font-bold mt-0.5">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</span>
                 </div>
                 <div class="flex flex-col items-end text-right" style="line-height:1.2;">
@@ -2446,11 +2449,11 @@ function prepareCardForExport() {
                     let warning = actualNic > maxNic; let customMlText = round1(customBCount * 10); let customBoostWeight = getWeight(customBCount * 10, bPg); let customBaseWeight = getWeight(customPreleveVol, basePg);
                     let customHtml = `
                     <div class="col-span-2 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 leading-tight break-inside-avoid mt-1" style="font-size:10px;">
-                        <div class="font-black uppercase tracking-widest text-stone-500 mb-2 border-b border-stone-200 pb-1 flex items-center gap-2"><span>💡 Personnalisé</span><span class="bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(customPreleveVol)} ml (${round1(customBaseWeight)} g)</span></div>
+                        <div class="font-black uppercase tracking-widest text-stone-500 mb-2 border-b border-stone-200 pb-1 flex items-center gap-2"><span>💡 Personnalisé</span><span class="bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(customPreleveVol)} ml (${round2(customBaseWeight)} g)</span></div>
                         <div class="flex justify-between items-center">
                             <div class="flex flex-col">
                                 <span class="font-bold">+ ${round1(customBCount)} boost.</span>
-                                <span class="opacity-70" style="font-size:8px;">(${customMlText}ml - ${round1(customBoostWeight)}g)</span>
+                                <span class="opacity-70" style="font-size:8px;">(${customMlText}ml - ${round2(customBoostWeight)}g)</span>
                                 <span class="text-brand-600 font-bold mt-0.5">-> ~${round1(actualNic)} mg</span>
                             </div>
                             <div class="flex flex-col items-end text-right" style="line-height:1.2;">
