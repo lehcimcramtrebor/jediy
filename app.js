@@ -1415,37 +1415,55 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
             <div class="card-body space-y-2 mb-4">`;
 
     if (r.multi) {
+        let compoPgMl = 0;
+        aromaWeight = 0;
+        r.multi.forEach(item => {
+            let vol = r.finalVol * (item.perc/100);
+            if (item.type === 'aroma') compoPgMl += vol * (item.pg/100);
+            aromaWeight += getLiquidWeight(item.type, vol, item.pg, item.degree);
+        });
+        totalWeight += aromaWeight;
+        let compoPgRatio = r.aroma > 0 ? (compoPgMl / r.aroma) * 100 : 0;
+
         let originalPercBadge = (r.originalCompoTotal > 0) ? `<span class="block text-[9px] font-normal text-stone-500 mt-0.5">Recette originale : ${round1(r.originalCompoTotal)}%</span>` : '';
+        
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
             <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
                 <span class="flex items-center gap-1.5 leading-tight">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    <div>
-                        ${r.compoName || 'Composition'}
+                    <div class="flex flex-col">
+                        <span>${r.compoName || 'Composition'}</span>
                         ${originalPercBadge}
+                        <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors mt-1 self-start" style="font-size:9px; line-height:1.2;">${formatRatioStr(compoPgRatio, false)}</span>
                     </div>
                 </span>
-                <span class="text-xs text-stone-500 shrink-0">${round1(r.aroma)} ml</span>
+                <div class="text-right leading-tight">
+                    <span class="font-black text-stone-800 dark:text-stone-100 block">${round1(r.aroma)} ml</span>
+                    <span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aromaWeight)} g</span>
+                </div>
             </div>
-            <div class="hidden mt-2">
+            <div class="hidden mt-2 border-t border-stone-100 dark:border-stone-700 pt-2">
                 <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
+        
         r.multi.forEach(item => {
-            let vol = r.finalVol * (item.perc/100); let w = getLiquidWeight(item.type, vol, item.pg, item.degree); aromaWeight += w; totalWeight += w;
+            let vol = r.finalVol * (item.perc/100); 
+            let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
+            let details = item.type === 'aroma' ? `${item.pg}PG` : (item.type === 'alcohol' ? `${item.degree}°` : 'Densité 1.0');
+            
             multiHtml += `<div class="flex justify-between items-center text-xs bg-stone-50 dark:bg-stone-700/50 p-2 rounded">
-                <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${item.name}">${icon} ${item.name} <span class="text-stone-400 ml-0.5" style="font-size:9px;">(${item.perc}%)</span></span>
-                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round2(w)} g</span></div>
+                <div class="flex flex-col truncate pr-2">
+                    <span class="font-bold text-stone-700 dark:text-stone-200 truncate" title="${item.name}">${icon} ${item.name} <span class="text-stone-400 ml-0.5" style="font-size:9px;">(${item.perc}%)</span></span>
+                    <span class="text-[9px] text-stone-400 font-bold mt-0.5">${details}</span>
+                </div>
+                <div class="text-right whitespace-nowrap">
+                    <span class="font-black text-stone-800 dark:text-stone-100 block">${round1(vol)} ml</span>
+                    <span class="block text-brand-600" style="font-size:9px;">${round2(w)} g</span>
+                </div>
             </div>`;
         });
         multiHtml += `</div></div></div>`;
         html += multiHtml;
-    } else {
-        let actualAromaPg = (r.aromaPg !== undefined && r.aromaPg !== null && !isNaN(r.aromaPg)) ? r.aromaPg : 100;
-        aromaWeight = getWeight(r.aroma, actualAromaPg); totalWeight += aromaWeight;
-        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <div class="flex flex-col items-start gap-1"><span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme Concentré</span><span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:9px; line-height:1.2;">${formatRatioStr(actualAromaPg, false)}</span></div>
-                    <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.aroma)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aromaWeight)} g</span></div>
-                </div>`;
     }
     
     r.bases.forEach(b => {
@@ -1553,27 +1571,43 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
             <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
                 <span class="flex items-center gap-1.5 leading-tight">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    <div>
-                        ${c.compoName || 'Composition'}
+                    <div class="flex flex-col">
+                        <span>${c.compoName || 'Composition'}</span>
                         ${originalPercBadge}
+                        <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors mt-1 self-start" style="font-size:9px; line-height:1.2;">${formatRatioStr(c.aPg, false)}</span>
                     </div>
                 </span>
-                <span class="text-xs text-stone-500 shrink-0">${round1(c.aVol)} ml</span>
+                <div class="text-right leading-tight">
+                    <span class="font-black text-stone-800 dark:text-stone-100 block">${round1(c.aVol)} ml</span>
+                    <span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aWeight)} g</span>
+                </div>
             </div>
-            <div class="hidden mt-2">
+            <div class="hidden mt-2 border-t border-stone-100 dark:border-stone-700 pt-2">
                 <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
+        
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
         c.multi.forEach(item => {
-            let vol = c.aVol * (item.perc/tPerc); let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
+            let vol = c.aVol * (item.perc/tPerc); 
+            let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
+            let details = item.type === 'aroma' ? `${item.pg}PG` : (item.type === 'alcohol' ? `${item.degree}°` : 'Densité 1.0');
+            
             multiHtml += `<div class="flex justify-between items-center text-xs bg-stone-50 dark:bg-stone-700/50 p-2 rounded">
-                <span class="font-bold text-stone-700 dark:text-stone-200 truncate pr-2" title="${item.name}">${icon} ${item.name}</span>
-                <div class="text-right whitespace-nowrap"><span class="font-black text-stone-800 dark:text-stone-100">${round1(vol)} ml</span><span class="block text-brand-600" style="font-size:9px;">${round2(w)} g</span></div>
+                <div class="flex flex-col truncate pr-2">
+                    <span class="font-bold text-stone-700 dark:text-stone-200 truncate" title="${item.name}">${icon} ${item.name} <span class="text-stone-400 ml-0.5" style="font-size:9px;">(${item.perc}%)</span></span>
+                    <span class="text-[9px] text-stone-400 font-bold mt-0.5">${details}</span>
+                </div>
+                <div class="text-right whitespace-nowrap">
+                    <span class="font-black text-stone-800 dark:text-stone-100 block">${round1(vol)} ml</span>
+                    <span class="block text-brand-600" style="font-size:9px;">${round2(w)} g</span>
+                </div>
             </div>`;
         });
         multiHtml += `</div></div></div>`;
         html += multiHtml;
-    } else if (c.aVol > 0) {
+    } 
+	
+	else if (c.aVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
                     <div class="flex flex-col items-start gap-1"><span class="text-sm font-bold text-brand-600 dark:text-brand-400">Arôme</span><span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:9px; line-height:1.2;">${formatRatioStr(c.aPg, false)}</span></div>
                     <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.aVol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aWeight)} g</span></div>
