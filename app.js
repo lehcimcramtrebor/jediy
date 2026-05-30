@@ -248,7 +248,14 @@ function updateRatioDisp(prefix) { let sliderVal = document.getElementById(`${pr
 function updateAromaPreview(prefix) {
     if(prefix === 't3') return;
     let isMulti = state[prefix].aroma_mode === 'multi';
-    let perc = isMulti ? state[prefix].multi.reduce((acc, v)=>acc+v.perc, 0) : (parseFloat(document.getElementById(`${prefix}_aroma_perc`)?.value) || 0);
+    
+    let perc = 0;
+    if (isMulti) {
+        let globalSlider = document.getElementById(`${prefix}_multi_global_perc`);
+        perc = globalSlider ? (parseFloat(globalSlider.value) || 0) : state[prefix].multi.reduce((acc, v)=>acc+v.perc, 0);
+    } else {
+        perc = parseFloat(document.getElementById(`${prefix}_aroma_perc`)?.value) || 0;
+    }
     
     if(!isMulti && document.getElementById(`${prefix}_aroma_perc_disp`)) {
         document.getElementById(`${prefix}_aroma_perc_disp`).innerText = `${perc}%`;
@@ -421,6 +428,36 @@ function updateMultiPerc(prefix, id, step) {
     renderMultiList(prefix); if(prefix !== 'edit_compo'){ updateAromaPreview(prefix); triggerCalc(); }
 }
 
+function updateGlobalMultiPerc(prefix, val) {
+    let originalTotal = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
+    let currentVal = parseFloat(val);
+    let slider = document.getElementById(`${prefix}_multi_global_perc`);
+    
+    // Magnétisme à +/- 0.5% autour de l'original
+    if (Math.abs(currentVal - originalTotal) <= 0.5) {
+        currentVal = originalTotal;
+        if (slider) slider.value = currentVal;
+    }
+    
+    let disp = document.getElementById(`${prefix}_multi_total_perc`);
+    let label = document.getElementById(`${prefix}_multi_status_label`);
+    
+    if (disp) disp.innerText = `${round1(currentVal)}%`;
+    
+    if (label) {
+        if (currentVal === originalTotal) {
+            label.innerText = "Concentration originale";
+            label.className = "text-[10px] font-bold text-center mt-2 text-stone-500 uppercase tracking-widest transition-colors";
+        } else if (currentVal > originalTotal) {
+            label.innerText = "Supérieure à l'original";
+            label.className = "text-[10px] font-bold text-center mt-2 text-brand-600 uppercase tracking-widest transition-colors";
+        } else {
+            label.innerText = "Inférieure à l'original";
+            label.className = "text-[10px] font-bold text-center mt-2 text-amber-500 uppercase tracking-widest transition-colors";
+        }
+    }
+}
+
 function renderMultiList(prefix) {
     let container = document.getElementById(`${prefix}_multi_list`); if(!container) return;
     let html = ''; let total = 0;
@@ -467,10 +504,39 @@ function renderMultiList(prefix) {
             </div>
         </div>`;
     });
-    container.innerHTML = html;
-    let percEl = document.getElementById(`${prefix}_multi_total_perc`);
-    if(percEl) percEl.innerText = `${round1(total)}%`;
-    if(prefix !== 'edit_compo') checkCompoSave(prefix);
+container.innerHTML = html;
+    
+    let wrapper = document.getElementById(`${prefix}_multi_global_wrapper`);
+    let slider = document.getElementById(`${prefix}_multi_global_perc`);
+    let disp = document.getElementById(`${prefix}_multi_total_perc`);
+    
+    if (prefix === 't1' || prefix === 't2') {
+        if (state[prefix].multi.length > 0) {
+            if (wrapper) { wrapper.classList.remove('hidden'); wrapper.classList.add('flex'); }
+            if (slider) {
+                let oldOriginal = state[prefix].lastOriginalTotal || 0;
+                let currentSliderVal = parseFloat(slider.value) || 0;
+                // Le slider traque la nouvelle valeur originale s'il n'était pas altéré
+                if (currentSliderVal === 0 || currentSliderVal === oldOriginal || state[prefix].resetSlider) {
+                    slider.value = total;
+                    state[prefix].resetSlider = false;
+                }
+                state[prefix].lastOriginalTotal = total;
+                updateGlobalMultiPerc(prefix, slider.value);
+            }
+        } else {
+            if (wrapper) { wrapper.classList.add('hidden'); wrapper.classList.remove('flex'); }
+            if (disp) disp.innerText = `0%`;
+            if (slider) slider.value = 0;
+            state[prefix].lastOriginalTotal = 0;
+        }
+        checkCompoSave(prefix);
+    } else {
+        let percEl = document.getElementById(`${prefix}_multi_total_perc`);
+        if(percEl) percEl.innerText = `${round1(total)}%`;
+        if(prefix !== 'edit_compo') checkCompoSave(prefix);
+    }
+    
     if(prefix === 't3') syncT3MultiVol(document.getElementById('t3_aroma_vol_multi').value);
     
     checkMultiAddButtons(prefix);
@@ -522,6 +588,10 @@ function loadCompo(prefix, idStr) {
         state[prefix].multi.forEach(i => i.id = Date.now() + Math.floor(Math.random()*10000));
         let nameInp = document.getElementById(`${prefix}_compo_name`);
         if(nameInp) nameInp.value = compo.name;
+        
+        // Force le reset du slider au chargement d'une nouvelle compo
+        state[prefix].resetSlider = true;
+        
         renderMultiList(prefix); if(prefix !== 't3') updateAromaPreview(prefix); triggerCalc();
     }
 }
@@ -998,7 +1068,10 @@ function calcTab1() {
     let isMulti = state.t1.aroma_mode === 'multi';
     let aromaPgVal = parseInt(document.getElementById('t1_aroma_pg').value); 
     let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
-    let p = isMulti ? state.t1.multi.reduce((acc, v) => acc + v.perc, 0) : (parseFloat(document.getElementById('t1_aroma_perc').value) || 0);
+    
+    let originalTotalMulti = isMulti ? state.t1.multi.reduce((acc, v) => acc + v.perc, 0) : 0;
+    let p = isMulti ? (parseFloat(document.getElementById('t1_multi_global_perc').value) || originalTotalMulti) : (parseFloat(document.getElementById('t1_aroma_perc').value) || 0);
+    let ratioScale = (isMulti && originalTotalMulti > 0) ? (p / originalTotalMulti) : 1;
 
     if(state.t1.vol_mode === 'defined') {
         finalVol = parseFloat(document.getElementById('t1_vol').value) || 0; aromaVol = finalVol * (p/100);
@@ -1026,11 +1099,14 @@ function calcTab1() {
     let targetPgMl = finalVol * (targetPgRatio / 100); 
     let aromaPgMl = 0;
     if (isMulti) {
-        state.t1.multi.forEach(item => { if (item.type === 'aroma') aromaPgMl += (finalVol * (item.perc/100)) * (item.pg/100); });
+        state.t1.multi.forEach(item => { if (item.type === 'aroma') aromaPgMl += (finalVol * ((item.perc * ratioScale)/100)) * (item.pg/100); });
     } else { aromaPgMl = aromaVol * (aromaPg / 100); }
 
-let exactRecipes = []; let altRecipes = [];
+    let exactRecipes = []; let altRecipes = [];
     let multiData = isMulti ? JSON.parse(JSON.stringify(state.t1.multi)) : null;
+    if (multiData && ratioScale !== 1) {
+        multiData.forEach(m => m.perc = round1(m.perc * ratioScale));
+    }
     let compoName = isMulti ? document.getElementById('t1_compo_name').value.trim() : null;
     
     let isWiz = document.getElementById('tab_assistant').classList.contains('active');
@@ -1055,7 +1131,11 @@ let exactRecipes = []; let altRecipes = [];
 function calcTab2() {
     let finalVolAfterBoost, prepVol, aromaVol;
     let isMulti = state.t2.aroma_mode === 'multi';
-    let targetAromaPerc = isMulti ? state.t2.multi.reduce((acc, v)=>acc+v.perc, 0) : (parseFloat(document.getElementById('t2_aroma_perc').value) || 15);
+    
+    let originalTotalMulti = isMulti ? state.t2.multi.reduce((acc, v) => acc + v.perc, 0) : 0;
+    let targetAromaPerc = isMulti ? (parseFloat(document.getElementById('t2_multi_global_perc').value) || originalTotalMulti) : (parseFloat(document.getElementById('t2_aroma_perc').value) || 15);
+    let ratioScale = (isMulti && originalTotalMulti > 0) ? (targetAromaPerc / originalTotalMulti) : 1;
+    
     let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
     let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
 
@@ -1079,15 +1159,18 @@ function calcTab2() {
     
     let aromaPgMl = 0;
     if (isMulti) {
-        state.t2.multi.forEach(item => { if (item.type === 'aroma') aromaPgMl += (finalVolAfterBoost * (item.perc/100)) * (item.pg/100); });
+        state.t2.multi.forEach(item => { if (item.type === 'aroma') aromaPgMl += (finalVolAfterBoost * ((item.perc * ratioScale)/100)) * (item.pg/100); });
     } else { aromaPgMl = aromaVol * (aromaPg / 100); }
 
     let remainingPgNeededInBase = shortfillTargetPgMl - aromaPgMl;
     let basesAvail = getChecked('t2_base_chk');
     if(basesAvail.length === 0) { renderMixes('t2', [], [{err: "Cochez au moins une base."}]); return; }
 
-let exactRecipes = []; let altRecipes = [];
+    let exactRecipes = []; let altRecipes = [];
     let multiData = isMulti ? JSON.parse(JSON.stringify(state.t2.multi)) : null;
+    if (multiData && ratioScale !== 1) {
+        multiData.forEach(m => m.perc = round1(m.perc * ratioScale));
+    }
     let compoName = isMulti ? document.getElementById('t2_compo_name').value.trim() : null;
 
     let isWiz = document.getElementById('tab_assistant').classList.contains('active');
