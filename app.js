@@ -1117,12 +1117,12 @@ function calcTab1() {
         let boostPgMl = nicVol * (bPg / 100); let remainingPgNeeded = targetPgMl - aromaPgMl - boostPgMl;
         let mixes = findBaseMixes(baseVol, remainingPgNeeded, basesAvail);
         
-        if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: mix, finalVol: finalVol, realPgRatio: targetPgRatio, bStr, multi: multiData, compoName, globalName }); } 
+        if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: mix, finalVol: finalVol, realPgRatio: targetPgRatio, bStr, multi: multiData, compoName, globalName, originalCompoTotal: originalTotalMulti }); } 
         else {
             let bestBase = basesAvail[0]; let minDiff = 9999;
             for(let bp of basesAvail) { let testPg = aromaPgMl + boostPgMl + (baseVol * (bp/100)); let diff = Math.abs(testPg - targetPgMl); if(diff < minDiff) { minDiff = diff; bestBase = bp; } }
             let realPg = ((aromaPgMl + boostPgMl + (baseVol * (bestBase/100))) / finalVol) * 100;
-            altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: [{pgRatio: bestBase, vol: baseVol}], finalVol: finalVol, realPgRatio: realPg, isAlt: true, bStr, multi: multiData, compoName, globalName });
+            altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, nic: nicVol, nicRatio: bPg, bases: [{pgRatio: bestBase, vol: baseVol}], finalVol: finalVol, realPgRatio: realPg, isAlt: true, bStr, multi: multiData, compoName, globalName, originalCompoTotal: originalTotalMulti });
         }
     }
     renderMixes('t1', deduplicateMixes(exactRecipes), deduplicateMixes(altRecipes).sort((a,b) => Math.abs(a.realPgRatio - targetPgRatio) - Math.abs(b.realPgRatio - targetPgRatio)));
@@ -1178,12 +1178,12 @@ function calcTab2() {
     let globalName = globalNameObj && globalNameObj.value.trim() !== "" ? globalNameObj.value.trim() : null;
 
     let mixes = findBaseMixes(baseVol, remainingPgNeededInBase, basesAvail);
-    if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: shortfillTargetPgRatio, nicMax: maxNic, bStr, multi: multiData, compoName, globalName }); } 
+    if(mixes) { for(let mix of mixes) exactRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: mix, prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: shortfillTargetPgRatio, nicMax: maxNic, bStr, multi: multiData, compoName, globalName, originalCompoTotal: originalTotalMulti }); } 
     else {
         let bestBase = basesAvail[0]; let minDiff = 9999;
         for(let bp of basesAvail) { let testPg = aromaPgMl + (baseVol * (bp/100)); let diff = Math.abs(testPg - shortfillTargetPgMl); if(diff < minDiff) { minDiff = diff; bestBase = bp; } }
         let realPg = ((aromaPgMl + (baseVol * (bestBase/100))) / prepVol) * 100;
-        altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: [{pgRatio: bestBase, vol: baseVol}], prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic, bStr, multi: multiData, compoName, globalName });
+        altRecipes.push({ aroma: aromaVol, aromaPg: aromaPg, bases: [{pgRatio: bestBase, vol: baseVol}], prepVol: prepVol, finalVol: finalVolAfterBoost, realPgRatio: realPg, isAlt: true, nicMax: maxNic, bStr, multi: multiData, compoName, globalName, originalCompoTotal: originalTotalMulti });
     }
     renderMixes('t2', deduplicateMixes(exactRecipes), deduplicateMixes(altRecipes).sort((a,b) => Math.abs(a.realPgRatio - shortfillTargetPgRatio) - Math.abs(b.realPgRatio - shortfillTargetPgRatio)));
 }
@@ -1229,10 +1229,12 @@ function calcTab3() {
     let totalPg = isMulti ? (totalAromaPgMl + (bVol*(bPg/100)) + (nVol*(nPg/100))) : ((aVol*(aPg/100)) + (bVol*(bPg/100)) + (nVol*(nPg/100)));
     let pgRatio = (totalPg / tVol) * 100; let aRatio = (aVol / tVol) * 100; let finalNic = (nVol * str) / tVol;
     
+    let originalCompoTotal = isMulti ? state.t3.multi.reduce((acc, v)=>acc+v.perc, 0) : 0;
     let c = { 
         type: 't3', aVol, aPg, bVol, bPg, nVol, nPg, str, 
         multi: isMulti ? JSON.parse(JSON.stringify(state.t3.multi)) : null, 
-        compoName: isMulti ? document.getElementById('t3_compo_name').value.trim() : null 
+        compoName: isMulti ? document.getElementById('t3_compo_name').value.trim() : null,
+        originalCompoTotal: originalCompoTotal
     };
     let hiddenCardHtml = `<div id="t3_hidden_card" class="hidden">${buildT3CardHtml(c, false, false)}</div>`;
 
@@ -1403,14 +1405,18 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
             </div>
             <div class="card-body space-y-2 mb-4">`;
 
-if (r.multi) {
+    if (r.multi) {
+        let originalPercBadge = (r.originalCompoTotal > 0) ? `<span class="block text-[9px] font-normal text-stone-500 mt-0.5">Recette originale : ${round1(r.originalCompoTotal)}%</span>` : '';
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
             <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
-                <span class="flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    ${r.compoName || 'Composition'}
+                <span class="flex items-center gap-1.5 leading-tight">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <div>
+                        ${r.compoName || 'Composition'}
+                        ${originalPercBadge}
+                    </div>
                 </span>
-                <span class="text-xs text-stone-500">${round1(r.aroma)} ml</span>
+                <span class="text-xs text-stone-500 shrink-0">${round1(r.aroma)} ml</span>
             </div>
             <div class="hidden mt-2">
                 <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
@@ -1461,38 +1467,39 @@ if (r.multi) {
         </div>`;
     }
 
-	if(prefix === 't2') {
-			html += `<div class="mt-auto border-t border-stone-200 dark:border-stone-700 pt-3 text-right transition-colors"><span class="font-bold text-brand-600 dark:text-brand-400" style="font-size:11px;">Poids total estimé : ${round1(totalWeight)} g</span>`;
-			if (isCompact) { let surconcentration = (r.aroma / r.prepVol) * 100; html += `<br><span class="font-bold text-stone-500 mt-1 block" style="font-size:10px;">Surconcentration arôme : ${round1(surconcentration)}%</span>`; }
-			html += `</div>`;
-			
-			html += `<div class="sim-container mt-2 p-3 bg-white dark:bg-stone-800 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-100 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${r.prepVol}" data-aroma-vol="${r.aroma}" data-max-nic="${r.nicMax}" data-bstr="${r.bStr||(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${r.realPgRatio}">
-				<div class="flex items-center justify-between cursor-pointer select-none text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors" style="font-size:10px;" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
-                    <span class="flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                        🧪 Simulation d'ajout de boosters
-                    </span>
+    if(prefix === 't2') {
+        let surconcentration = (r.aroma / r.prepVol) * 100;
+        html += `<div class="mt-auto border-t border-stone-200 dark:border-stone-700 pt-3 text-right transition-colors"><span class="font-bold text-brand-600 dark:text-brand-400" style="font-size:11px;">Poids total estimé : ${round1(totalWeight)} g</span>`;
+        html += `<br><span class="font-bold text-stone-500 mt-1 block" style="font-size:10px;">Surconcentration arôme : ${round1(surconcentration)}%</span>`;
+        html += `</div>`;
+        
+        html += `<div class="sim-container mt-2 p-3 bg-white dark:bg-stone-800 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-100 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${r.prepVol}" data-aroma-vol="${r.aroma}" data-max-nic="${r.nicMax}" data-bstr="${r.bStr||(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${r.realPgRatio}">
+            <div class="flex items-center justify-between cursor-pointer select-none text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors" style="font-size:10px;" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
+                <span class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    🧪 Simulation d'ajout de boosters
+                </span>
+            </div>
+            <div class="hidden mt-3">
+                <div class="flex flex-col items-center gap-0.5 mb-3">
+                    <span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Je prélève</span>
+                    <select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors">`;
+        [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(v => { html += `<option value="${v}" ${v===50 ? 'selected' : ''}>${v} ml</option>`; });
+        html += `   <option value="${r.prepVol}">Total (${round1(r.prepVol)}ml)</option><option value="custom">Manuel...</option></select>
+                    <div class="sim-custom-wrapper hidden items-center bg-stone-50 dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors"><button onclick="adjustCustomPreleve(this, -1)" class="btn-adjust-xs">-</button><input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)"><button onclick="adjustCustomPreleve(this, 1)" class="btn-adjust-xs">+</button></div>
+                    <div class="sim-preleve-weight text-brand-600 dark:text-brand-400 font-bold mt-1 text-center w-full" style="font-size:10px;"></div>
                 </div>
-                <div class="hidden mt-3">
-                    <div class="flex flex-col items-center gap-0.5 mb-3">
-                        <span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Je prélève</span>
-                        <select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors">`;
-			[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(v => { html += `<option value="${v}" ${v===50 ? 'selected' : ''}>${v} ml</option>`; });
-			html += `   <option value="${r.prepVol}">Total (${round1(r.prepVol)}ml)</option><option value="custom">Manuel...</option></select>
-                        <div class="sim-custom-wrapper hidden items-center bg-stone-50 dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors"><button onclick="adjustCustomPreleve(this, -1)" class="btn-adjust-xs">-</button><input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)"><button onclick="adjustCustomPreleve(this, 1)" class="btn-adjust-xs">+</button></div>
-                        <div class="sim-preleve-weight text-brand-600 dark:text-brand-400 font-bold mt-1 text-center w-full" style="font-size:10px;"></div>
-                    </div>
-                    <div class="flex flex-col items-center mb-3 bg-stone-50 dark:bg-black/20 p-2 rounded-lg border border-stone-200 dark:border-stone-700 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
-                        <div class="w-full flex justify-between items-center mb-2 px-1"><span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Ratio des boosters:</span><select class="sim-b-ratio bg-white dark:bg-stone-900 text-stone-800 dark:text-white rounded px-1 py-0.5 font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors" style="font-size:10px;" onchange="updateSim(this)"><option value="100">100% PG</option><option value="90">90/10</option><option value="80">80/20</option><option value="70">70/30</option><option value="60">60/40</option><option value="50" selected>50/50</option><option value="40">40/60</option><option value="30">30/70</option><option value="20">20/80</option><option value="10">10/90</option><option value="0">100% VG</option></select></div>
-                        <span class="font-bold text-stone-500 dark:text-stone-400 mb-1" style="font-size:10px;">J'ajoute</span>
-                        <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimBoosters(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimBoosters(this, 1)" class="btn-adjust-xs">+</button></div>
-                        <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">boosters</span><span class="font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest my-1" style="font-size:9px;">ou</span>
-                        <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimMl(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimMl(this, 1)" class="btn-adjust-xs">+</button></div>
-                        <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">ml</span>
-                    </div>
-                    <div class="mt-3 text-center bg-stone-100 dark:bg-stone-900 p-2 rounded w-full border border-stone-200 dark:border-stone-700 transition-colors"><div class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Résultat estimé :</div><div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result">...</div></div>
+                <div class="flex flex-col items-center mb-3 bg-stone-50 dark:bg-black/20 p-2 rounded-lg border border-stone-200 dark:border-stone-700 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
+                    <div class="w-full flex justify-between items-center mb-2 px-1"><span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Ratio des boosters:</span><select class="sim-b-ratio bg-white dark:bg-stone-900 text-stone-800 dark:text-white rounded px-1 py-0.5 font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors" style="font-size:10px;" onchange="updateSim(this)"><option value="100">100% PG</option><option value="90">90/10</option><option value="80">80/20</option><option value="70">70/30</option><option value="60">60/40</option><option value="50" selected>50/50</option><option value="40">40/60</option><option value="30">30/70</option><option value="20">20/80</option><option value="10">10/90</option><option value="0">100% VG</option></select></div>
+                    <span class="font-bold text-stone-500 dark:text-stone-400 mb-1" style="font-size:10px;">J'ajoute</span>
+                    <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimBoosters(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimBoosters(this, 1)" class="btn-adjust-xs">+</button></div>
+                    <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">boosters</span><span class="font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest my-1" style="font-size:9px;">ou</span>
+                    <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimMl(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimMl(this, 1)" class="btn-adjust-xs">+</button></div>
+                    <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">ml</span>
                 </div>
-			</div>`;
+                <div class="mt-3 text-center bg-stone-100 dark:bg-stone-900 p-2 rounded w-full border border-stone-200 dark:border-stone-700 transition-colors"><div class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Résultat estimé :</div><div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result">...</div></div>
+            </div>
+        </div>`;
 
     }
     html += `</div>`; return html;
@@ -1532,13 +1539,17 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
             </div>
             <div class="card-body space-y-2 mb-4">`;
     if (c.multi) {
+        let originalPercBadge = (c.originalCompoTotal > 0) ? `<span class="block text-[9px] font-normal text-stone-500 mt-0.5">Recette originale : ${round1(c.originalCompoTotal)}%</span>` : '';
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
             <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
-                <span class="flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    ${c.compoName || 'Composition'}
+                <span class="flex items-center gap-1.5 leading-tight">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    <div>
+                        ${c.compoName || 'Composition'}
+                        ${originalPercBadge}
+                    </div>
                 </span>
-                <span class="text-xs text-stone-500">${round1(c.aVol)} ml</span>
+                <span class="text-xs text-stone-500 shrink-0">${round1(c.aVol)} ml</span>
             </div>
             <div class="hidden mt-2">
                 <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
@@ -2211,7 +2222,9 @@ function getRecipeText() {
     text += `\n📝 INGRÉDIENTS :\n`;
 
     if (c.multi) {
-        let totalVol = c.type === 't1' ? c.finalVol : (c.type === 't2' ? c.prepVol : c.aVol);
+        let originalText = c.originalCompoTotal ? ` (Recette originale: ${round1(c.originalCompoTotal)}%)` : '';
+        text += `\n📝 COMPOSITION : ${c.compoName || 'Multi-arômes'}${originalText}\n`;
+        let totalVol = (c.type === 't1' || c.type === 't2') ? c.finalVol : c.aVol;
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
         c.multi.forEach(i => {
             let v = totalVol * (i.perc/ (c.type === 't1' || c.type === 't2' ? 100 : tPerc));
@@ -2245,8 +2258,8 @@ function getRecipeText() {
         let aromaStr = c.type === 'boost' ? 'Inconnu' : `${round1(aromaPerc)}%`; 
         text += `\n🎯 RÉSULTAT :\n- Arôme : ${aromaStr}\n- Nicotine : ${round1(nicMg)} mg/ml\n`;
     } else if (c.type === 't2') {
-        let aromaBeforeBoost = c.prepVol > 0 ? (c.aroma / c.prepVol) * 100 : 0;
-        let finalAromaPerc = parseFloat(currentMixCard.getAttribute('data-aroma-perc')) || 0;
+    let aromaBeforeBoost = c.prepVol > 0 ? (c.aroma / c.prepVol) * 100 : 0;
+    let finalAromaPerc = c.finalVol > 0 ? (c.aroma / c.finalVol) * 100 : 0;
         text += `\n🎯 RÉSULTAT (Avant boost) :\n- Arôme surdosé : ${round1(aromaBeforeBoost)}%\n- Cibles après boost : ${round1(finalAromaPerc)}% d'arôme | ${round1(c.nicMax)} mg/ml max\n`;
         let bRatioSel = currentMixCard.querySelector('.sim-b-ratio'); let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
         
