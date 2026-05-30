@@ -70,6 +70,8 @@ function init() {
     triggerCalc(); 
     wizUpdateView();
     updateSettingsBadge();
+    if(typeof setCoilType === 'function') setCoilType('wire');
+    if(typeof setCoilMode === 'function') setCoilMode('electro');
 }
 window.onload = () => { init(); };
 
@@ -91,7 +93,13 @@ function getTheme(prefix) { return prefix === 't1' ? 'complet' : (prefix === 't2
 function adjustVal(id, step) {
     let el = document.getElementById(id); if(!el) return;
     let val = parseFloat(el.value) || 0;
-    el.value = Math.max(0, val + step);
+    let newVal = Math.max(0, val + step);
+    if (id === 'coil_volts') {
+        newVal = Math.max(0.1, Math.min(12.6, newVal));
+        el.value = newVal.toFixed(1);
+    } else {
+        el.value = newVal;
+    }
     let prefix = id.substring(0, 2); 
     if (prefix === 't1' || prefix === 't2' || prefix === 't3') { 
         if(id === 't3_aroma_vol_multi') syncT3MultiVol(el.value);
@@ -160,6 +168,7 @@ function switchTab(tabId) {
     else if (tabId === 'tab_complet') document.documentElement.dataset.theme = 'complet';
     else if (tabId === 'tab_booster') document.documentElement.dataset.theme = 'shortfill';
     else if (tabId === 'tab_manuel') document.documentElement.dataset.theme = 'manuel';
+    else if (tabId === 'tab_coils') document.documentElement.dataset.theme = 'coils';
     else if (tabId === 'tab_mes_donnees') document.documentElement.dataset.theme = 'assistant';
     else if (tabId === 'tab_assistant') {
         if (wizState.step < 2) document.documentElement.dataset.theme = 'assistant';
@@ -167,7 +176,13 @@ function switchTab(tabId) {
     }
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('button[id^="btn_tab_"]').forEach(el => {
-        let baseClasses = "py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1 sm:gap-2 ";
+        let baseClasses = "py-2.5 px-2 sm:px-4 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap ";
+        
+        // Conserver les classes de span responsive uniquement pour le bouton Coils
+        if (el.id === 'btn_tab_coils') {
+            baseClasses += "nav-coils-btn ";
+        }
+        
         if (el.id === 'btn_' + tabId) el.className = baseClasses + "bg-white dark:bg-stone-800 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10";
         else el.className = baseClasses + "text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800";
     });
@@ -1051,11 +1066,13 @@ function runWizCalculation() {
 
 function triggerCalc() {
     pendingNewMix = true; 
-    let activeTab = document.querySelector('.tab-content.active').id;
+    let activeTab = document.querySelector('.tab-content.active')?.id;
+    if(!activeTab) return;
     if(activeTab === 'tab_complet') calcTab1();
     else if(activeTab === 'tab_booster') calcTab2();
     else if(activeTab === 'tab_manuel') calcTab3();
     else if(activeTab === 'tab_boost_simple') calcBoostSimple('tab_boost', 'tab_boost_results');
+    else if(activeTab === 'tab_coils') { if(typeof calculateCoil === 'function') calculateCoil(); }
 }
 
 function findBaseMixes(targetVol, targetPgMl, basesObj) {
@@ -2714,4 +2731,734 @@ function hardResetApp() {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then((registrations) => { for (let r of registrations) r.unregister(); }).then(() => { window.location.reload(true); });
     } else window.location.reload(true);
+}
+
+
+/* ========================================== */
+/* 13. CALCULATEUR DE COILS EXPERT            */
+/* ========================================== */
+
+const COIL_MATERIALS = {
+    kanthal: { name: 'Kanthal A1', rho: 1.45, density: 7.1 },
+    ni80: { name: 'Nichrome 80 (Ni80)', rho: 1.09, density: 8.3 },
+    ni90: { name: 'Nichrome 90 (Ni90)', rho: 0.99, density: 8.4 },
+    ss316l: { name: 'Inox 316L (SS316L)', rho: 0.74, density: 8.0 },
+    ss430: { name: 'Inox 430 (SS430)', rho: 0.60, density: 7.7 },
+    ni200: { name: 'Nickel 200 (Ni200)', rho: 0.096, density: 8.9 },
+    ti: { name: 'Titane Grade 1 (Ti)', rho: 0.47, density: 4.51 },
+    nife52: { name: 'NiFe52', rho: 0.37, density: 8.2 },
+    nife70: { name: 'NiFe70', rho: 0.20, density: 8.3 }
+};
+
+const AWG_TABLE = {
+    20: 0.81, 21: 0.72, 22: 0.64, 23: 0.57, 24: 0.51,
+    25: 0.45, 26: 0.40, 27: 0.36, 28: 0.32, 29: 0.29,
+    30: 0.25, 32: 0.20, 34: 0.16, 36: 0.13, 38: 0.10, 40: 0.08
+};
+
+function syncCoilSize(prefix, source) {
+    let awgEl = document.getElementById(`coil_${prefix}_awg`);
+    let mmEl = document.getElementById(`coil_${prefix}_mm`);
+    if (!awgEl || !mmEl) return;
+    if (source === 'awg') {
+        let val = parseInt(awgEl.value);
+        if (AWG_TABLE[val]) mmEl.value = AWG_TABLE[val].toFixed(2);
+    } else {
+        let mmVal = parseFloat(mmEl.value) || 0;
+        let bestAwg = '';
+        for (let awg in AWG_TABLE) {
+            if (Math.abs(AWG_TABLE[awg] - mmVal) < 0.015) {
+                bestAwg = awg;
+                break;
+            }
+        }
+        awgEl.value = bestAwg;
+    }
+}
+
+let shouldCalibrateSweetSpot = false;
+
+function toggleCoilStructureFields() {
+    shouldCalibrateSweetSpot = true;
+    let struct = document.getElementById('coil_structure').value;
+    let isSimple = struct === 'simple';
+    let isRibbon = struct === 'ribbon';
+    let isStaple = struct === 'staple';
+    let isFramed = struct === 'framed';
+    let isClaptonOrFused = ['clapton', 'fused2', 'fused3', 'fused4'].includes(struct);
+    
+    document.getElementById('coil_core_size_panel').classList.toggle('hidden', isRibbon || isStaple);
+    document.getElementById('coil_ribbon_size_panel').classList.toggle('hidden', !isRibbon && !isStaple && !isFramed);
+    document.getElementById('coil_ribbon_count_panel').classList.toggle('hidden', !isStaple && !isFramed);
+    document.getElementById('coil_frame_size_panel').classList.toggle('hidden', !isFramed);
+    
+    let hasWrap = isClaptonOrFused || isStaple || isFramed;
+    document.getElementById('coil_wrap_panel').classList.toggle('hidden', !hasWrap);
+}
+
+
+
+const MESH_CATALOG = {
+    'weave_80':   { name: 'Tissé #80',   porosity: 0.55, thickness: 0.12, weaveMultiplier: 1.4 },
+    'weave_150':  { name: 'Tissé #150',  porosity: 0.50, thickness: 0.08, weaveMultiplier: 1.4 },
+    'weave_200':  { name: 'Tissé #200',  porosity: 0.48, thickness: 0.06, weaveMultiplier: 1.4 },
+    'weave_300':  { name: 'Tissé #300',  porosity: 0.45, thickness: 0.04, weaveMultiplier: 1.4 },
+    'weave_400':  { name: 'Tissé #400',  porosity: 0.40, thickness: 0.03, weaveMultiplier: 1.4 },
+    'honeycomb':  { name: 'Nid d\'abeille (NexMesh)', porosity: 0.35, thickness: 0.10, weaveMultiplier: 1.0 }
+};
+
+let currentCoilType = 'wire';
+function setCoilType(type) {
+    shouldCalibrateSweetSpot = true;
+    currentCoilType = type;
+    let btnWire = document.getElementById('coil_type_wire');
+    let btnMesh = document.getElementById('coil_type_mesh');
+    if (!btnWire || !btnMesh) return;
+    
+    let activeClass = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm transition-all";
+    let inactiveClass = "flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all";
+    
+    if (type === 'wire') {
+        btnWire.className = activeClass;
+        btnMesh.className = inactiveClass;
+        
+        document.getElementById('wire_structure_only')?.classList.remove('hidden');
+        document.getElementById('mesh_structure_only')?.classList.add('hidden');
+        document.getElementById('coil_mat_grid')?.classList.add('md:grid-cols-2');
+        
+        let label = document.getElementById('coil_mat_label');
+        if (label) label.innerText = "Matériau de l'Ame";
+        
+        document.getElementById('wire_dimensions_only')?.classList.remove('hidden');
+        document.getElementById('mesh_dimensions_only')?.classList.add('hidden');
+        
+        let btnSingle = document.getElementById('coil_config_single');
+        let btnDouble = document.getElementById('coil_config_double');
+        if (btnSingle) btnSingle.innerText = "Single Coil";
+        if (btnDouble) btnDouble.innerText = "Double Coil";
+        
+        toggleCoilStructureFields();
+    } else {
+        btnMesh.className = activeClass;
+        btnWire.className = inactiveClass;
+        
+        document.getElementById('wire_structure_only')?.classList.add('hidden');
+        document.getElementById('mesh_structure_only')?.classList.remove('hidden');
+        document.getElementById('coil_mat_grid')?.classList.remove('md:grid-cols-2');
+        
+        let label = document.getElementById('coil_mat_label');
+        if (label) label.innerText = "Matériau du Mesh";
+        
+        document.getElementById('coil_core_size_panel')?.classList.add('hidden');
+        document.getElementById('coil_ribbon_size_panel')?.classList.add('hidden');
+        document.getElementById('coil_ribbon_count_panel')?.classList.add('hidden');
+        document.getElementById('coil_frame_size_panel')?.classList.add('hidden');
+        document.getElementById('coil_wrap_panel')?.classList.add('hidden');
+        
+        document.getElementById('wire_dimensions_only')?.classList.add('hidden');
+        document.getElementById('mesh_dimensions_only')?.classList.remove('hidden');
+        
+        let btnSingle = document.getElementById('coil_config_single');
+        let btnDouble = document.getElementById('coil_config_double');
+        if (btnSingle) btnSingle.innerText = "Simple Mesh";
+        if (btnDouble) btnDouble.innerText = "Double Mesh";
+    }
+    calculateCoil();
+}
+
+let currentCoilConfig = 'single';
+function setCoilConfig(config) {
+    shouldCalibrateSweetSpot = true;
+    currentCoilConfig = config;
+    let btnSingle = document.getElementById('coil_config_single');
+    let btnDouble = document.getElementById('coil_config_double');
+    if (!btnSingle || !btnDouble) return;
+    
+    let activeClass = "flex-1 py-2 rounded-lg text-sm font-bold bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm transition-all";
+    let inactiveClass = "flex-1 py-2 rounded-lg text-sm font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all";
+    
+    if (config === 'single') {
+        btnSingle.className = activeClass;
+        btnDouble.className = inactiveClass;
+        document.getElementById('coil_config_sub').innerText = currentCoilType === 'mesh' ? "Montage Simple Mesh" : "Montage Simple Coil";
+    } else {
+        btnDouble.className = activeClass;
+        btnSingle.className = inactiveClass;
+        document.getElementById('coil_config_sub').innerText = currentCoilType === 'mesh' ? "Montage Double Mesh (en parallèle)" : "Montage Double Coil (en parallèle)";
+    }
+    calculateCoil();
+}
+
+let isOhmSolving = false;
+function syncCoilOhmSolver(source) {
+    if (isOhmSolving) return;
+    isOhmSolving = true;
+    
+    let ohmsText = document.getElementById('coil_ohms').innerText;
+    let r = parseFloat(ohmsText.replace(' Ω', '')) || 0;
+    if (r <= 0) { isOhmSolving = false; return; }
+    
+    if (source === 'volts') {
+        let uInp = document.getElementById('coil_volts');
+        let u = parseFloat(uInp?.value) || 0;
+        if (u < 0.1) { u = 0.1; if (uInp) uInp.value = "0.1"; }
+        else if (u > 12.6) { u = 12.6; if (uInp) uInp.value = "12.6"; }
+        let i = u / r;
+        let p = (u * u) / r;
+        
+        document.getElementById('coil_amps').innerText = i.toFixed(2);
+        let wattsSlider = document.getElementById('coil_watts');
+        wattsSlider.value = Math.max(5, Math.min(150, Math.round(p)));
+        document.getElementById('coil_watts_disp').innerText = Math.round(p) + ' W';
+    }
+    isOhmSolving = false;
+    calculateCoil();
+}
+
+function syncCoilVoltage() {
+    document.getElementById('coil_volts').value = "3.7";
+    syncCoilOhmSolver('volts');
+}
+
+function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
+    let container = document.getElementById('coil_svg_container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    let svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('viewBox', '0 0 300 150');
+    svg.setAttribute('width', '100%');
+    svg.setAttribute('height', '100%');
+    
+    let defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+    
+    let grad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    grad.setAttribute('id', 'svgMetalCoil');
+    grad.setAttribute('x1', '0%');
+    grad.setAttribute('y1', '0%');
+    grad.setAttribute('x2', '0%');
+    grad.setAttribute('y2', '100%');
+    
+    let s1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    s1.setAttribute('offset', '0%'); s1.setAttribute('stop-color', '#4b5563');
+    let s2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    s2.setAttribute('offset', '30%'); s2.setAttribute('stop-color', '#f3f4f6');
+    let s3 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    s3.setAttribute('offset', '60%'); s3.setAttribute('stop-color', '#9ca3af');
+    let s4 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+    s4.setAttribute('offset', '100%'); s4.setAttribute('stop-color', '#1f2937');
+    
+    grad.appendChild(s1); grad.appendChild(s2); grad.appendChild(s3); grad.appendChild(s4);
+    defs.appendChild(grad);
+    svg.appendChild(defs);
+
+    if (currentCoilType === 'mesh') {
+        let l = parseFloat(document.getElementById('mesh_length')?.value) || 16.0;
+        let w = parseFloat(document.getElementById('mesh_width')?.value) || 6.8;
+        let isDouble = config === 'double';
+        
+        let pat = document.createElementNS('http://www.w3.org/2000/svg', 'pattern');
+        pat.setAttribute('id', 'meshGridPattern');
+        pat.setAttribute('width', '5');
+        pat.setAttribute('height', '5');
+        pat.setAttribute('patternUnits', 'userSpaceOnUse');
+        
+        let patPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        patPath.setAttribute('d', 'M 5 0 L 0 5 M 0 0 L 5 5');
+        patPath.setAttribute('stroke', '#a78bfa');
+        patPath.setAttribute('stroke-width', '0.7');
+        patPath.setAttribute('fill', 'none');
+        pat.appendChild(patPath);
+        defs.appendChild(pat);
+        
+        let glowGrad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+        glowGrad.setAttribute('id', 'meshGlow');
+        glowGrad.setAttribute('x1', '0%'); glowGrad.setAttribute('y1', '0%');
+        glowGrad.setAttribute('x2', '0%'); glowGrad.setAttribute('y2', '100%');
+        let stop1 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop1.setAttribute('offset', '0%'); stop1.setAttribute('stop-color', '#c084fc');
+        let stop2 = document.createElementNS('http://www.w3.org/2000/svg', 'stop');
+        stop2.setAttribute('offset', '100%'); stop2.setAttribute('stop-color', '#6366f1');
+        glowGrad.appendChild(stop1); glowGrad.appendChild(stop2);
+        defs.appendChild(glowGrad);
+        
+        let centers = isDouble ? [80, 220] : [150];
+        let scale = isDouble ? 0.75 : 1.0;
+        
+        let archHeight = Math.max(25, Math.min(65, l * 2.8)) * scale;
+        let meshWidthVisual = Math.max(15, Math.min(50, w * 4.5)) * scale;
+        
+        centers.forEach(cx => {
+            let cotton = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let cottonD = `M ${cx - 50 * scale} 125 C ${cx - 45 * scale} ${125 - archHeight * 0.95}, ${cx + 45 * scale} ${125 - archHeight * 0.95}, ${cx + 50 * scale} 125 Z`;
+            cotton.setAttribute('d', cottonD);
+            cotton.setAttribute('fill', '#f3f4f6');
+            cotton.setAttribute('opacity', '0.7');
+            cotton.setAttribute('stroke', '#e5e7eb');
+            cotton.setAttribute('stroke-width', '1.5');
+            svg.appendChild(cotton);
+            
+            let postL = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            postL.setAttribute('x', cx - 62 * scale); postL.setAttribute('y', '118');
+            postL.setAttribute('width', 16 * scale); postL.setAttribute('height', '18');
+            postL.setAttribute('rx', '2'); postL.setAttribute('fill', '#9ca3af');
+            svg.appendChild(postL);
+            
+            let postR = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            postR.setAttribute('x', cx + 46 * scale); postR.setAttribute('y', '118');
+            postR.setAttribute('width', 16 * scale); postR.setAttribute('height', '18');
+            postR.setAttribute('rx', '2'); postR.setAttribute('fill', '#9ca3af');
+            svg.appendChild(postR);
+            
+            let screwL = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            screwL.setAttribute('cx', cx - 54 * scale); screwL.setAttribute('cy', '127');
+            screwL.setAttribute('r', 4 * scale); screwL.setAttribute('fill', '#4b5563');
+            svg.appendChild(screwL);
+            
+            let screwR = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            screwR.setAttribute('cx', cx + 54 * scale); screwR.setAttribute('cy', '127');
+            screwR.setAttribute('r', 4 * scale); screwR.setAttribute('fill', '#4b5563');
+            svg.appendChild(screwR);
+            
+            let meshArch = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let xStart = cx - 52 * scale;
+            let xEnd = cx + 52 * scale;
+            let yBase = 120;
+            let d = `M ${xStart} ${yBase} 
+                     C ${xStart + 10 * scale} ${yBase - archHeight}, ${xEnd - 10 * scale} ${yBase - archHeight}, ${xEnd} ${yBase}
+                     L ${xEnd} ${yBase - meshWidthVisual}
+                     C ${xEnd - 10 * scale} ${yBase - meshWidthVisual - archHeight}, ${xStart + 10 * scale} ${yBase - meshWidthVisual - archHeight}, ${xStart} ${yBase - meshWidthVisual} Z`;
+                     
+            meshArch.setAttribute('d', d);
+            meshArch.setAttribute('fill', 'url(#meshGridPattern)');
+            meshArch.setAttribute('stroke', 'url(#meshGlow)');
+            meshArch.setAttribute('stroke-width', '1.5');
+            svg.appendChild(meshArch);
+        });
+        
+        container.appendChild(svg);
+        return;
+    }
+
+    let isDouble = config === 'double';
+    let scale = isDouble ? 0.7 : 1.0;
+    
+    let thickness = Math.max(7, Math.min(22, wireDia * 26)) * scale;
+    let coilRadius = Math.max(18, Math.min(45, id * 10)) * scale;
+    let legVisualLength = Math.max(8, Math.min(42, legs * 1.9)) * scale;
+    
+    let centers = isDouble ? [80, 220] : [150];
+    
+    centers.forEach(cx => {
+        // Jig rod
+        let jig = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        jig.setAttribute('x', cx - 65);
+        jig.setAttribute('y', 75 - (11 * scale));
+        jig.setAttribute('width', '130');
+        jig.setAttribute('height', 22 * scale);
+        jig.setAttribute('rx', '4');
+        jig.setAttribute('fill', '#4b5563');
+        jig.setAttribute('opacity', '0.12');
+        svg.appendChild(jig);
+        
+        let intWraps = Math.floor(wraps);
+        let isHalfWrap = (wraps % 1 !== 0);
+        
+        let startX = cx - (wraps * thickness) / 2;
+        
+        // 1. Back spires
+        for (let k = 0; k < intWraps; k++) {
+            let x = startX + k * thickness;
+            let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = `M ${x} ${75 - coilRadius} C ${x + thickness} ${75 - coilRadius - 6 * scale}, ${x + thickness} ${75 + coilRadius + 6 * scale}, ${x} ${75 + coilRadius}`;
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#374151');
+            path.setAttribute('stroke-width', thickness + 2);
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('opacity', '0.35');
+            svg.appendChild(path);
+        }
+        
+        if (isHalfWrap) {
+            let x = startX + intWraps * thickness;
+            let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = `M ${x} ${75 - coilRadius} C ${x + thickness/2} ${75 - coilRadius - 3 * scale}, ${x + thickness/2} ${75 + coilRadius + 3 * scale}, ${x} ${75 + coilRadius}`;
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', '#374151');
+            path.setAttribute('stroke-width', thickness + 2);
+            path.setAttribute('stroke-linecap', 'round');
+            path.setAttribute('opacity', '0.35');
+            svg.appendChild(path);
+        }
+        
+        // 2. Legs
+        let leftLeg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        leftLeg.setAttribute('d', `M ${startX} ${75 + coilRadius} L ${startX - 15 * scale} ${75 + coilRadius + legVisualLength}`);
+        leftLeg.setAttribute('fill', 'none');
+        leftLeg.setAttribute('stroke', 'url(#svgMetalCoil)');
+        leftLeg.setAttribute('stroke-width', thickness);
+        leftLeg.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(leftLeg);
+        
+        let rightLeg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        
+        if (isHalfWrap) {
+            let xEnd = startX + intWraps * thickness;
+            rightLeg.setAttribute('d', `M ${xEnd} ${75 + coilRadius} L ${xEnd + 15 * scale} ${75 + coilRadius + legVisualLength}`);
+        } else {
+            let xEnd = startX + (intWraps - 1) * thickness;
+            rightLeg.setAttribute('d', `M ${xEnd + thickness} ${75 - coilRadius} Q ${xEnd + thickness + 8 * scale} 75, ${xEnd + thickness + 15 * scale} ${75 + coilRadius + legVisualLength}`);
+        }
+        
+        rightLeg.setAttribute('fill', 'none');
+        rightLeg.setAttribute('stroke', 'url(#svgMetalCoil)');
+        rightLeg.setAttribute('stroke-width', thickness);
+        rightLeg.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(rightLeg);
+
+        // 3. Front spires
+        for (let k = 0; k < intWraps; k++) {
+            let x = startX + k * thickness;
+            
+            let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = `M ${x} ${75 + coilRadius} C ${x - thickness/2} ${75 + coilRadius - 5 * scale}, ${x - thickness/2} ${75 - coilRadius + 5 * scale}, ${x} ${75 - coilRadius}`;
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', 'url(#svgMetalCoil)');
+            path.setAttribute('stroke-width', thickness);
+            path.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(path);
+            
+            if (['clapton', 'fused2', 'fused3', 'fused4', 'staple', 'framed'].includes(struct)) {
+                let texPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                texPath.setAttribute('d', d);
+                texPath.setAttribute('fill', 'none');
+                texPath.setAttribute('stroke', '#111827');
+                texPath.setAttribute('stroke-width', thickness);
+                texPath.setAttribute('stroke-linecap', 'round');
+                texPath.setAttribute('opacity', '0.22');
+                texPath.setAttribute('stroke-dasharray', '2,2');
+                svg.appendChild(texPath);
+            }
+        }
+        
+        if (isHalfWrap) {
+            let x = startX + intWraps * thickness;
+            let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            let d = `M ${x} ${75 + coilRadius} C ${x - thickness/3} ${75 + coilRadius - 3 * scale}, ${x - thickness/3} 75, ${x - 4 * scale} 75`;
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', 'url(#svgMetalCoil)');
+            path.setAttribute('stroke-width', thickness);
+            path.setAttribute('stroke-linecap', 'round');
+            svg.appendChild(path);
+        }
+    });
+    
+    container.appendChild(svg);
+}
+
+function calculateCoil(isManualWatts = false) {
+    let config = currentCoilConfig;
+    let mat = document.getElementById('coil_material_core')?.value || 'ni80';
+    let materialCore = COIL_MATERIALS[mat] || COIL_MATERIALS.ni80;
+    let rho = materialCore.rho;
+    let density = materialCore.density;
+    let watts = parseFloat(document.getElementById('coil_watts')?.value) || 45;
+    
+    let rFinal = 0;
+    let totalSurfaceArea = 0;
+    let totalCoilWeight = 0;
+    let dieselText = "Instantanée ⚡";
+    
+    // Déclarer les variables en dehors des blocs conditionnels pour éviter les ReferenceErrors en mode Mesh
+    let struct = 'simple';
+    let innerDia = 3.0;
+    let wraps = 6;
+    let legs = 8;
+    let wireEffectiveDia = 0.40;
+
+    if (currentCoilType === 'mesh') {
+        let meshType = document.getElementById('mesh_type')?.value || 'weave_200';
+        let l = parseFloat(document.getElementById('mesh_length')?.value) || 16.0;
+        let w = parseFloat(document.getElementById('mesh_width')?.value) || 6.8;
+        
+        let specs = MESH_CATALOG[meshType] || MESH_CATALOG.weave_200;
+        let thickness = specs.thickness;
+        let porosity = specs.porosity;
+        let weaveMultiplier = specs.weaveMultiplier;
+        
+        let sectionEffective = w * thickness * (1 - porosity);
+        let rSingle = (rho * (l / 1000)) / sectionEffective;
+        rFinal = config === 'double' ? rSingle / 2 : rSingle;
+        
+        let singleSurface = 2 * l * w * (1 - porosity) * weaveMultiplier;
+        totalSurfaceArea = singleSurface * (config === 'double' ? 2 : 1);
+        
+        let singleWeight = l * w * thickness * (1 - porosity) * density * 1e-3;
+        totalCoilWeight = singleWeight * (config === 'double' ? 2 : 1);
+    } else {
+        struct = document.getElementById('coil_structure')?.value || 'simple';
+        innerDia = parseFloat(document.getElementById('coil_inner_dia')?.value) || 3.0;
+        wraps = parseFloat(document.getElementById('coil_wraps')?.value) || 6;
+        legs = parseFloat(document.getElementById('coil_legs')?.value) || 8;
+        
+        let coreDiaMm = parseFloat(document.getElementById('coil_core_mm')?.value) || 0.40;
+        let ribbonW = parseFloat(document.getElementById('coil_ribbon_w')?.value) || 0.5;
+        let ribbonH = parseFloat(document.getElementById('coil_ribbon_h')?.value) || 0.1;
+        let ribbonCount = parseInt(document.getElementById('coil_ribbon_count')?.value) || 6;
+        if (ribbonCount < 2) {
+            ribbonCount = 2;
+            let el = document.getElementById('coil_ribbon_count');
+            if (el) el.value = 2;
+        } else if (ribbonCount > 12) {
+            ribbonCount = 12;
+            let el = document.getElementById('coil_ribbon_count');
+            if (el) el.value = 12;
+        }
+        let frameDiaMm = parseFloat(document.getElementById('coil_frame_mm')?.value) || 0.32;
+        
+        let hasWrap = ['clapton', 'fused2', 'fused3', 'fused4', 'staple', 'framed'].includes(struct);
+        let wrapMatName = document.getElementById('coil_material_wrap')?.value || 'ni80';
+        let materialWrap = COIL_MATERIALS[wrapMatName] || COIL_MATERIALS.ni80;
+        let wrapDiaMm = parseFloat(document.getElementById('coil_wrap_mm')?.value) || 0.13;
+        
+        let totalCoreArea = 0;
+        wireEffectiveDia = coreDiaMm;
+        
+        if (struct === 'simple' || struct === 'clapton') {
+            totalCoreArea = Math.PI * Math.pow(coreDiaMm / 2, 2);
+            wireEffectiveDia = coreDiaMm;
+        } else if (struct === 'fused2') {
+            totalCoreArea = 2 * Math.PI * Math.pow(coreDiaMm / 2, 2);
+            wireEffectiveDia = coreDiaMm * 1.4;
+        } else if (struct === 'fused3') {
+            totalCoreArea = 3 * Math.PI * Math.pow(coreDiaMm / 2, 2);
+            wireEffectiveDia = coreDiaMm * 1.8;
+        } else if (struct === 'fused4') {
+            totalCoreArea = 4 * Math.PI * Math.pow(coreDiaMm / 2, 2);
+            wireEffectiveDia = coreDiaMm * 2.1;
+        } else if (struct === 'ribbon') {
+            totalCoreArea = ribbonW * ribbonH;
+            wireEffectiveDia = ribbonW;
+        } else if (struct === 'staple') {
+            totalCoreArea = ribbonCount * ribbonW * ribbonH;
+            wireEffectiveDia = ribbonW * 1.25;
+        } else if (struct === 'framed') {
+            let ribbonsArea = ribbonCount * ribbonW * ribbonH;
+            let framesArea = 2 * Math.PI * Math.pow(frameDiaMm / 2, 2);
+            totalCoreArea = ribbonsArea + framesArea;
+            wireEffectiveDia = ribbonW + frameDiaMm * 2;
+        }
+        
+        let loopDiameter = innerDia + (struct.includes('ribbon') || struct.includes('staple') ? ribbonH * 2 : coreDiaMm);
+        let loopPerimeter = Math.PI * loopDiameter;
+        let singleCoilCoreLength = (wraps * loopPerimeter) + legs;
+        
+        let rSingle = rho * (singleCoilCoreLength / 1000) / totalCoreArea;
+        rFinal = config === 'double' ? rSingle / 2 : rSingle;
+        
+        let singleCoilWrapLength = 0;
+        let singleCoilWrapWeight = 0;
+        let singleCoilCoreWeight = singleCoilCoreLength * totalCoreArea * (density / 1000);
+        
+        let singleCoilCoreSurface = 0;
+        let singleCoilWrapSurface = 0;
+        
+        if (struct.includes('ribbon') || struct.includes('staple')) {
+            let perimeter = (ribbonW + ribbonH) * 2;
+            singleCoilCoreSurface = singleCoilCoreLength * perimeter;
+        } else {
+            singleCoilCoreSurface = singleCoilCoreLength * Math.PI * coreDiaMm;
+        }
+        
+        if (hasWrap) {
+            let bundlePerimeter = 0;
+            if (struct === 'clapton') {
+                bundlePerimeter = Math.PI * coreDiaMm;
+            } else if (struct === 'fused2') {
+                bundlePerimeter = Math.PI * (coreDiaMm * 2);
+            } else if (struct === 'fused3') {
+                bundlePerimeter = Math.PI * (coreDiaMm * 3);
+            } else if (struct === 'fused4') {
+                bundlePerimeter = Math.PI * (coreDiaMm * 4);
+            } else if (struct === 'staple') {
+                bundlePerimeter = (ribbonW + (ribbonH * ribbonCount)) * 2;
+            } else if (struct === 'framed') {
+                bundlePerimeter = (ribbonW + frameDiaMm * 2 + Math.max(ribbonH * ribbonCount, frameDiaMm)) * 2;
+            }
+            
+            let wrapTurns = singleCoilCoreLength / wrapDiaMm;
+            singleCoilWrapLength = wrapTurns * (bundlePerimeter + Math.PI * wrapDiaMm);
+            let wrapArea = Math.PI * Math.pow(wrapDiaMm / 2, 2);
+            singleCoilWrapWeight = singleCoilWrapLength * wrapArea * (materialWrap.density / 1000);
+            singleCoilWrapSurface = singleCoilWrapLength * Math.PI * wrapDiaMm;
+        }
+        
+        totalCoilWeight = (singleCoilCoreWeight + singleCoilWrapWeight) * (config === 'double' ? 2 : 1);
+        totalSurfaceArea = (singleCoilCoreSurface + singleCoilWrapSurface) * (config === 'double' ? 2 : 1);
+        
+        if (totalCoilWeight > 0.6) {
+            dieselText = "Lent (Diesel) 🐢";
+        } else if (totalCoilWeight > 0.3) {
+            dieselText = "Modérée ⏳";
+        } else if (totalCoilWeight > 0.15) {
+            dieselText = "Rapide 🚀";
+        }
+    }
+    
+    // Auto-calibration de la puissance de vape sur le sweet spot (200 mW/mm²) (Mod Électro uniquement, sauf si modification manuelle des watts)
+    if (!isManualWatts && currentCoilMode === 'electro') {
+        let idealWatts = Math.round(totalSurfaceArea / 5);
+        idealWatts = Math.max(5, Math.min(150, idealWatts));
+        
+        let slider = document.getElementById('coil_watts');
+        let disp = document.getElementById('coil_watts_disp');
+        if (slider) slider.value = idealWatts;
+        if (disp) disp.innerText = idealWatts + ' W';
+        
+        watts = idealWatts;
+    }
+    
+    let ohmsEl = document.getElementById('coil_ohms');
+    if (ohmsEl) ohmsEl.innerText = rFinal.toFixed(3) + ' Ω';
+    
+    let weightEl = document.getElementById('coil_weight');
+    if (weightEl) weightEl.innerText = totalCoilWeight.toFixed(3) + ' g';
+    
+    let dieselEl = document.getElementById('coil_diesel');
+    if (dieselEl) dieselEl.innerText = dieselText;
+    
+    let voltsInp = document.getElementById('coil_volts');
+    let ampsVal = document.getElementById('coil_amps');
+    let wattsSlider = document.getElementById('coil_watts');
+    let wattsDisp = document.getElementById('coil_watts_disp');
+    
+    if (currentCoilMode === 'meca') {
+        let u = parseFloat(voltsInp?.value) || 3.7;
+        if (u < 0.1) { u = 0.1; if (voltsInp) voltsInp.value = "0.1"; }
+        else if (u > 12.6) { u = 12.6; if (voltsInp) voltsInp.value = "12.6"; }
+        let i = u / rFinal;
+        let p = (u * u) / rFinal;
+        
+        watts = p;
+        
+        if (ampsVal) ampsVal.innerText = i.toFixed(2);
+        if (wattsSlider) {
+            wattsSlider.value = Math.max(5, Math.min(150, Math.round(p)));
+            wattsSlider.disabled = true;
+        }
+        if (wattsDisp) wattsDisp.innerText = Math.round(p) + ' W';
+    } else {
+        if (wattsSlider) wattsSlider.disabled = false;
+        if (!isOhmSolving) {
+            isOhmSolving = true;
+            let u = Math.sqrt(watts * rFinal);
+            let i = Math.sqrt(watts / rFinal);
+            if (voltsInp) voltsInp.value = u.toFixed(2);
+            if (ampsVal) ampsVal.innerText = i.toFixed(2);
+            isOhmSolving = false;
+        }
+    }
+    
+    let heatFlux = (watts * 1000) / totalSurfaceArea;
+    let hFluxValEl = document.getElementById('coil_heatflux_val');
+    if (hFluxValEl) hFluxValEl.innerText = Math.round(heatFlux) + ' mW/mm²';
+    
+    let bar = document.getElementById('coil_heatflux_bar');
+    if (bar) {
+        let percent = Math.min(100, Math.max(5, (heatFlux / 400) * 100));
+        bar.style.width = percent + '%';
+        
+        let statusCold = document.getElementById('flux_status_cold');
+        let statusIdeal = document.getElementById('flux_status_ideal');
+        let statusHot = document.getElementById('flux_status_hot');
+        
+        statusCold.className = "text-stone-400 dark:text-stone-500 font-bold";
+        statusIdeal.className = "text-stone-400 dark:text-stone-500 font-bold";
+        statusHot.className = "text-stone-400 dark:text-stone-500 font-bold";
+        bar.className = "h-full rounded-full transition-all duration-300 ";
+        
+        if (heatFlux < 120) {
+            statusCold.className = "text-blue-500 font-bold";
+            bar.classList.add('bg-blue-400');
+        } else if (heatFlux >= 120 && heatFlux <= 280) {
+            statusIdeal.className = "text-emerald-500 font-bold";
+            bar.classList.add('bg-emerald-500');
+        } else {
+            statusHot.className = "text-red-500 font-bold animate-pulse";
+            bar.classList.add('bg-red-500');
+        }
+    }
+    
+    drawCoilSVG(wraps, innerDia, wireEffectiveDia, struct, config, legs);
+}
+
+let currentCoilMode = 'electro';
+function setCoilMode(mode) {
+    currentCoilMode = mode;
+    let btnElectro = document.getElementById('coil_mode_electro');
+    let btnMeca = document.getElementById('coil_mode_meca');
+    let presetPanel = document.getElementById('coil_meca_presets');
+    let wattsSlider = document.getElementById('coil_watts');
+    let wattsLabel = document.getElementById('coil_watts_label');
+    let btnMinus = document.getElementById('coil_volts_minus');
+    let btnPlus = document.getElementById('coil_volts_plus');
+    let voltsInp = document.getElementById('coil_volts');
+    let voltsWrapper = document.getElementById('coil_volts_wrapper');
+    
+    if (!btnElectro || !btnMeca) return;
+    
+    let activeClass = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm transition-all";
+    let inactiveClass = "flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all";
+    
+    if (mode === 'electro') {
+        btnElectro.className = activeClass;
+        btnMeca.className = inactiveClass;
+        if (presetPanel) presetPanel.classList.add('hidden');
+        if (wattsSlider) wattsSlider.disabled = false;
+        if (wattsLabel) wattsLabel.innerText = "Puissance de Vape (Watts)";
+        if (btnMinus) btnMinus.classList.add('hidden');
+        if (btnPlus) btnPlus.classList.add('hidden');
+        if (voltsInp) voltsInp.disabled = true;
+        if (voltsWrapper) {
+            voltsWrapper.className = "flex-1 flex items-center justify-center min-w-0 bg-stone-100/50 dark:bg-stone-900/50 border border-stone-200/40 dark:border-stone-700/50 rounded-xl h-10 px-1";
+        }
+    } else {
+        btnMeca.className = activeClass;
+        btnElectro.className = inactiveClass;
+        if (presetPanel) presetPanel.classList.remove('hidden');
+        if (wattsSlider) wattsSlider.disabled = true;
+        if (wattsLabel) wattsLabel.innerText = "Puissance Estimée (Watts) [Méca]";
+        if (btnMinus) { btnMinus.disabled = false; btnMinus.classList.remove('hidden'); }
+        if (btnPlus) { btnPlus.disabled = false; btnPlus.classList.remove('hidden'); }
+        if (voltsInp) voltsInp.disabled = false;
+        if (voltsWrapper) {
+            voltsWrapper.className = "flex-1 flex items-center justify-center min-w-0 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl h-10 px-1";
+        }
+        setCoilVoltagePreset(3.7); // reset par défaut à 3.7V
+    }
+    calculateCoil();
+}
+
+function setCoilVoltagePreset(volts) {
+    let voltsInp = document.getElementById('coil_volts');
+    if (voltsInp) voltsInp.value = volts;
+    
+    // Gérer les styles des boutons presets
+    ['32', '37', '42'].forEach(preset => {
+        let btn = document.getElementById('preset_btn_' + preset);
+        if (btn) {
+            if (preset === (volts * 10).toString()) {
+                btn.className = "py-2 bg-brand-500 text-white dark:bg-brand-600 rounded-xl text-[10px] font-bold transition-all border border-brand-500 dark:border-brand-600 shadow-sm";
+            } else {
+                btn.className = "py-2 bg-stone-50 hover:bg-brand-500 hover:text-white dark:bg-stone-800 dark:hover:bg-brand-600 rounded-xl text-[10px] font-bold transition-all text-stone-600 dark:text-stone-300 border border-stone-200/40 dark:border-stone-700 shadow-sm";
+            }
+        }
+    });
+    
+    syncCoilOhmSolver('volts');
 }
