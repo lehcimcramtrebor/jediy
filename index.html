@@ -1514,6 +1514,10 @@
             <button onclick="openJediModal()" class="w-full py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-bold transition-all flex justify-between px-4 items-center">
                 <span>I.D. Jedi</span> <span class="text-xl">🥷</span>
             </button>
+
+            <button onclick="openAuditModal()" class="w-full py-3 bg-stone-100 dark:bg-stone-700 hover:bg-stone-200 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 rounded-xl font-bold transition-all flex justify-between px-4 items-center">
+                <span>Rapports d'Audit</span> <span class="text-xl">📊</span>
+            </button>
             
             <button id="modal_install_btn" onclick="installApp()" class="hidden w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl font-bold transition-all justify-between px-4 items-center">
                 <span>Installer l'App</span> 
@@ -1600,6 +1604,29 @@
         <div class="flex justify-end gap-3">
             <button onclick="closeJediModal()" class="px-5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-stone-300 dark:hover:bg-stone-600 text-stone-800 dark:text-stone-100 font-bold text-sm rounded-xl transition-colors">Annuler</button>
             <button onclick="saveJediIdentity()" class="px-5 py-2.5 bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm rounded-xl transition-colors shadow-sm">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
+<div id="audit_modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
+    <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeAuditModal()"></div>
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-2xl border border-stone-200 dark:border-stone-700 flex flex-col transition-colors max-h-[85vh]">
+        <button onclick="closeAuditModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+        <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-4 flex items-center gap-2 pr-6">
+            <span>📋</span> Rapports d'Audit Scientifique
+        </h3>
+        
+        <!-- Onglets audit -->
+        <div class="flex bg-stone-100 dark:bg-stone-700 p-1 rounded-xl gap-1 mb-4">
+            <button id="btn_audit_electric" onclick="switchAuditTab('electric')" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all bg-white dark:bg-stone-600 text-stone-800 dark:text-stone-100 shadow-sm border border-stone-200/40 dark:border-stone-500/30">⚡ Audit Électrique</button>
+            <button id="btn_audit_liquide" onclick="switchAuditTab('liquide')" class="flex-1 py-2 rounded-lg text-xs font-bold transition-all text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300">🧪 Audit Liquides</button>
+        </div>
+        
+        <!-- Scroller de contenu -->
+        <div id="audit_content_scroller" class="flex-1 overflow-y-auto pr-1 text-left text-sm text-stone-600 dark:text-stone-300 font-medium select-text hide-scrollbar max-h-[60vh] pb-2">
+            <div id="audit_html_content" class="space-y-3 prose dark:prose-invert"></div>
         </div>
     </div>
 </div>

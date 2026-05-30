@@ -1,9 +1,12 @@
-const CACHE_NAME = 'je-diy-v9.01';
+const CACHE_NAME = 'je-diy-v9.02';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
+  './yoda.png',
+  './Audit_Electric.md',
+  './Audit_Liquide.md',
   './app.js',
   './tailwind.config.js',
   './assets/js/tailwind.js',
