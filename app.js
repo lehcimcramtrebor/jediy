@@ -1328,7 +1328,10 @@ function calcBoostSimple(prefix, containerId) {
 function generateCheckboxes(prefix) {
     let baseContainer = document.getElementById(`${prefix}_bases_list`); let boostContainer = document.getElementById(`${prefix}_boosters_list`);
     let baseHtml = '', boostHtml = '';
-    let defaultsBase = [100, 0]; let defaultsBoost = ['t1', 'wiz'].includes(prefix) ? [50] : [];
+    
+    let defaultsBase = JSON.parse(localStorage.getItem('jediy_hw_bases') || '[100, 0]');
+    let savedBoosts = localStorage.getItem('jediy_hw_boosts');
+    let defaultsBoost = savedBoosts ? JSON.parse(savedBoosts) : (['t1', 'wiz'].includes(prefix) ? [50] : []);
 
     RATIOS.forEach(pg => {
         let isBaseChecked = defaultsBase.includes(pg); let isBoostChecked = defaultsBoost.includes(pg);
@@ -1351,6 +1354,32 @@ function toggleCheckBtn(input) {
     } else {
         label.classList.add('border-stone-200', 'dark:border-stone-700'); label.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'dark:border-emerald-500'); icon.classList.add('hidden');
     }
+
+    // Sauvegarde et synchro inter-onglets
+    let isBase = input.classList.contains('t1_base_chk') || input.classList.contains('t2_base_chk') || input.classList.contains('wiz_base_chk');
+    let val = parseInt(input.value);
+    let storageKey = isBase ? 'jediy_hw_bases' : 'jediy_hw_boosts';
+    
+    let arr = JSON.parse(localStorage.getItem(storageKey) || (isBase ? '[100, 0]' : '[50]'));
+    if (input.checked && !arr.includes(val)) arr.push(val);
+    else if (!input.checked) arr = arr.filter(x => x !== val);
+    
+    localStorage.setItem(storageKey, JSON.stringify(arr));
+    setNeedsExport(true); // Active la pastille rouge d'export
+
+    // Synchro visuelle sur les autres onglets sans boucle infinie
+    let selector = isBase ? '.t1_base_chk, .t2_base_chk, .wiz_base_chk' : '.t1_boost_chk, .wiz_boost_chk';
+    document.querySelectorAll(selector).forEach(el => {
+        if (parseInt(el.value) === val && el.checked !== input.checked) {
+            el.checked = input.checked;
+            let l = el.parentElement; let i = l.querySelector('.check-icon');
+            if(el.checked) {
+                l.classList.remove('border-stone-200', 'dark:border-stone-700'); l.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'dark:border-emerald-500'); i.classList.remove('hidden');
+            } else {
+                l.classList.add('border-stone-200', 'dark:border-stone-700'); l.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'dark:border-emerald-500'); i.classList.add('hidden');
+            }
+        }
+    });
 }
 
 function renderMixes(prefix, exact, alt) {
@@ -2137,7 +2166,14 @@ function deleteCompo(id) {
 }
 
 async function exportSettingsJson() {
-    let data = { jediIdentity: localStorage.getItem('jediIdentity') || "", theme: localStorage.getItem('theme') || "", mixes: savedMixes, compos: savedCompos };
+    let data = { 
+        jediIdentity: localStorage.getItem('jediIdentity') || "", 
+        theme: localStorage.getItem('theme') || "", 
+        mixes: savedMixes, 
+        compos: savedCompos,
+        hw_bases: JSON.parse(localStorage.getItem('jediy_hw_bases') || '[100, 0]'),
+        hw_boosts: JSON.parse(localStorage.getItem('jediy_hw_boosts') || '[50]')
+    };
     let jsonStr = JSON.stringify(data, null, 2);
     let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
     let start = new Date(now.getFullYear(), 0, 0); let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
@@ -2179,6 +2215,8 @@ function handleImport(e) {
             if(data.compos) { savedCompos = data.compos; localStorage.setItem('jediy_compos', JSON.stringify(savedCompos)); }
             if(data.jediIdentity !== undefined) { if(data.jediIdentity) localStorage.setItem('jediIdentity', data.jediIdentity); else localStorage.removeItem('jediIdentity'); }
             if(data.theme) localStorage.setItem('theme', data.theme);
+            if(data.hw_bases) localStorage.setItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
+            if(data.hw_boosts) localStorage.setItem('jediy_hw_boosts', JSON.stringify(data.hw_boosts));
             showAlert("Importation réussie !"); setTimeout(() => window.location.reload(), 1000);
         } catch(err) { showAlert("Fichier invalide !"); }
     };
