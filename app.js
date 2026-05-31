@@ -2114,8 +2114,25 @@ function handlePreleveChange(selectEl) {
     updateSim(selectEl);
 }
 function adjustCustomPreleve(btn, step) { let input = btn.parentElement.querySelector('input'); input.value = Math.max(0, (parseFloat(input.value) || 0) + step); updateSim(input); }
-function adjustSimBoosters(btn, step) { let input = btn.parentElement.querySelector('input'); input.value = Math.max(0, (parseFloat(input.value) || 0) + step); syncSimInputs(input, 'boosters'); }
-function adjustSimMl(btn, step) { let input = btn.parentElement.querySelector('input'); input.value = Math.max(0, (parseFloat(input.value) || 0) + step); syncSimInputs(input, 'ml'); }
+function adjustSimBoosters(btn, step) {
+    let input = btn.parentElement.querySelector('input');
+    let val = parseFloat(input.value) || 0;
+    val = parseFloat(val.toFixed(5)); // Élimine le bruit de virgule flottante pour un calage d'arrondi parfait
+    let newVal;
+    if (step > 0) {
+        newVal = Math.floor(val) + 1;
+    } else {
+        newVal = Math.max(0, Math.ceil(val) - 1);
+    }
+    input.value = newVal;
+    syncSimInputs(input, 'boosters');
+}
+function adjustSimMl(btn, step) {
+    let input = btn.parentElement.querySelector('input');
+    let val = parseFloat(input.value) || 0;
+    input.value = Math.max(0, round1(val + step));
+    syncSimInputs(input, 'ml');
+}
 function syncSimInputs(inputEl, source) {
     let container = inputEl.closest('.sim-container'); let bInput = container.querySelector('.sim-b-count'); let mlInput = container.querySelector('.sim-ml-count');
     if (source === 'boosters') mlInput.value = (parseFloat(bInput.value) || 0) * 10; else bInput.value = (parseFloat(mlInput.value) || 0) / 10;
