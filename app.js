@@ -177,7 +177,7 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('button[id^="btn_tab_"]').forEach(el => {
         const activeClasses = ["bg-white", "dark:bg-stone-700", "text-brand-600", "dark:text-brand-400", "shadow-md", "transform", "-translate-y-0.5", "ring-1", "ring-black/5", "dark:ring-white/10"];
-        const inactiveClasses = ["text-stone-500", "dark:text-stone-400", "hover:text-stone-700", "dark:hover:text-stone-300", "hover:bg-stone-200", "dark:hover:bg-stone-850/50"];
+        const inactiveClasses = ["text-stone-500", "dark:text-stone-400", "hover:text-stone-700", "dark:hover:text-stone-300", "hover:bg-stone-200", "dark:hover:bg-stone-800/50"];
         
         if (el.id === 'btn_' + tabId) {
             inactiveClasses.forEach(c => el.classList.remove(c));
@@ -206,7 +206,7 @@ function switchTab(tabId) {
                 opt.className = "mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-brand-600 dark:text-brand-400 bg-stone-50 dark:bg-stone-800/40 rounded-xl";
                 if (checkIcon) checkIcon.classList.remove('hidden');
             } else {
-                opt.className = "mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-850 rounded-xl";
+                opt.className = "mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-800 rounded-xl";
                 if (checkIcon) checkIcon.classList.add('hidden');
             }
         });
@@ -1144,6 +1144,8 @@ function findBaseMixes(targetVol, targetPgMl, basesObj) {
 function calcTab1() {
     let finalVol, aromaVol; 
     let isMulti = state.t1.aroma_mode === 'multi';
+    if (isMulti && state.t1.multi.length === 0) { renderMixes('t1', [], [{err: "Ajoutez au moins un arôme dans votre composition."}]); return; }
+    
     let aromaPgVal = parseInt(document.getElementById('t1_aroma_pg').value); 
     let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
     
@@ -1163,6 +1165,7 @@ function calcTab1() {
 
     let targetPgRatio = 100 - parseInt(document.getElementById('t1_ratio_pg').value);
     let bStr = parseFloat(document.getElementById('t1_booster_str').value) || 20;
+    if (bStr <= 0) bStr = 20;
     
     let nicVol = 0;
     if(state.t1.nic_mode === 'mg') { let mg = parseFloat(document.getElementById('t1_nic_mg').value) || 0; nicVol = (finalVol * mg) / bStr; } 
@@ -1209,6 +1212,7 @@ function calcTab1() {
 function calcTab2() {
     let finalVolAfterBoost, prepVol, aromaVol;
     let isMulti = state.t2.aroma_mode === 'multi';
+    if (isMulti && state.t2.multi.length === 0) { renderMixes('t2', [], [{err: "Ajoutez au moins un arôme dans votre composition."}]); return; }
     
     let originalTotalMulti = isMulti ? state.t2.multi.reduce((acc, v) => acc + v.perc, 0) : 0;
     let targetAromaPerc = isMulti ? (parseFloat(document.getElementById('t2_multi_global_perc').value) || originalTotalMulti) : (parseFloat(document.getElementById('t2_aroma_perc').value) || 15);
@@ -1216,6 +1220,7 @@ function calcTab2() {
     
     let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
     let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
+    if (bStr <= 0) bStr = 20;
 
     if(state.t2.vol_mode === 'defined') {
         prepVol = parseFloat(document.getElementById('t2_vol').value) || 0;
@@ -1268,6 +1273,10 @@ function calcTab2() {
 
 function calcTab3() {
     let isMulti = state.t3.aroma_mode === 'multi';
+    if (isMulti && state.t3.multi.length === 0) {
+        document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in text-red-500 font-bold p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl text-center text-sm shadow-inner">Ajoutez au moins un arôme dans votre composition.</div>`;
+        return;
+    }
     let aVol = isMulti ? (parseFloat(document.getElementById('t3_aroma_vol_multi').value)||0) : (parseFloat(document.getElementById('t3_aroma_vol').value)||0); 
     
     let aPgVal = parseFloat(document.getElementById('t3_aroma_pg').value); 
