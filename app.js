@@ -114,7 +114,7 @@ function adjustVal(id, step) {
     }
     let prefix = id.substring(0, 2); 
     if (prefix === 't1' || prefix === 't2' || prefix === 't3') { 
-        if(id === 't3_aroma_vol_multi') syncT3MultiVol(el.value);
+        if(id === 't3_aroma_vol_multi') syncMultiVolBreakdown('t3');
         if(prefix !== 't3') updateAromaPreview(prefix); 
         triggerCalc(); 
     } 
@@ -357,21 +357,57 @@ function syncAromaFromMl(prefix) {
     }
 }
 
-function syncT3MultiVol(val) {
-    let aVol = parseFloat(val) || 0;
-    let compoBreakdown = document.getElementById('t3_compo_breakdown');
-    if(state.t3.aroma_mode === 'multi' && state.t3.multi.length > 0) {
-        let totalPerc = state.t3.multi.reduce((acc, v)=>acc+v.perc, 0);
+function syncMultiVolBreakdown(prefix) {
+    let compoBreakdown = document.getElementById(`${prefix}_compo_breakdown`);
+    if (!compoBreakdown) return;
+    
+    if (state[prefix].aroma_mode === 'multi' && state[prefix].multi.length > 0) {
+        let aVol = 0;
+        if (prefix === 't3') {
+            aVol = parseFloat(document.getElementById('t3_aroma_vol_multi')?.value || 0) || 0;
+        } else if (prefix === 't1') {
+            let volMode = state.t1.vol_mode;
+            let rawP = parseFloat(document.getElementById('t1_multi_global_perc')?.value || 0) || 0;
+            if (volMode === 'defined') {
+                let finalVol = parseFloat(document.getElementById('t1_vol')?.value || 0) || 0;
+                aVol = finalVol * (rawP / 100);
+            } else {
+                aVol = parseFloat(document.getElementById('t1_aroma_avail')?.value || 0) || 0;
+            }
+        } else if (prefix === 't2') {
+            let volMode = state.t2.vol_mode;
+            let rawP = parseFloat(document.getElementById('t2_multi_global_perc')?.value || 0) || 0;
+            if (volMode === 'defined') {
+                let prepVol = parseFloat(document.getElementById('t2_vol')?.value || 0) || 0;
+                let maxNic = parseFloat(document.getElementById('t2_max_nic')?.value || 0) || 0;
+                let bStr = parseFloat(document.getElementById('t2_booster_str')?.value || 20) || 20;
+                if (bStr <= 0) bStr = 20;
+                let finalVolAfterBoost = prepVol / (1 - maxNic / bStr);
+                aVol = finalVolAfterBoost * (rawP / 100);
+            } else {
+                aVol = parseFloat(document.getElementById('t2_aroma_avail')?.value || 0) || 0;
+            }
+        }
+        
+        let totalPerc = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
         if (totalPerc > 0) {
             let html = '';
-            state.t3.multi.forEach(item => {
+            state[prefix].multi.forEach(item => {
                 let v_i = aVol * (item.perc / totalPerc);
-                html += `<div class="bg-stone-100 dark:bg-stone-700 p-1.5 rounded text-center"><span class="block font-bold text-stone-700 dark:text-stone-200 truncate">${item.name}</span><span class="text-brand-600 dark:text-brand-400 font-black">${round1(v_i)}ml</span></div>`;
+                let w_i = getLiquidWeight(item.type, v_i, item.pg, item.degree);
+                html += `<div class="bg-stone-100 dark:bg-stone-700 p-1.5 rounded text-center">
+                    <span class="block font-bold text-stone-700 dark:text-stone-200 truncate">${item.name}</span>
+                    <span class="text-brand-600 dark:text-brand-400 font-black">${round1(v_i)} ml
+                        <span class="block font-medium text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">(${round2(w_i)} g)</span>
+                    </span>
+                </div>`;
             });
             compoBreakdown.innerHTML = html;
         } else {
             compoBreakdown.innerHTML = '<div class="col-span-2 text-stone-500 text-center">Dosage de la compo à 0%</div>';
         }
+    } else {
+        compoBreakdown.innerHTML = '';
     }
 }
 
@@ -388,11 +424,13 @@ function setAromaMode(prefix, mode) {
     if(mode === 'mono') {
         btnMono.className = activeClass; btnMulti.className = inactiveClass;
         document.getElementById(`${prefix}_aroma_mono_panel`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_multi_panel`).classList.add('hidden');
-        if(prefix === 't3') document.getElementById('t3_compo_breakdown').classList.add('hidden');
+        let bd = document.getElementById(`${prefix}_compo_breakdown`);
+        if(bd) bd.classList.add('hidden');
     } else {
         btnMulti.className = activeClass; btnMono.className = inactiveClass;
         document.getElementById(`${prefix}_aroma_multi_panel`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_mono_panel`).classList.add('hidden');
-        if(prefix === 't3') document.getElementById('t3_compo_breakdown').classList.remove('hidden');
+        let bd = document.getElementById(`${prefix}_compo_breakdown`);
+        if(bd) bd.classList.remove('hidden');
         
         let wrap = document.getElementById(`${prefix}_aroma_fold_panel`);
         if(wrap) {
@@ -683,7 +721,9 @@ function renderMultiList(prefix) {
         if(prefix !== 'edit_compo') checkCompoSave(prefix);
     }
     
-    if(prefix === 't3') syncT3MultiVol(document.getElementById('t3_aroma_vol_multi').value);
+    if(prefix === 't3' || prefix === 't1' || prefix === 't2') {
+        syncMultiVolBreakdown(prefix);
+    }
     
     checkMultiAddButtons(prefix);
     
@@ -1352,6 +1392,7 @@ function findBaseMixes(targetVol, targetPgMl, basesObj) {
 function calcTab1() {
     let finalVol, aromaVol; 
     let isMulti = state.t1.aroma_mode === 'multi';
+    if (isMulti) syncMultiVolBreakdown('t1');
     if (isMulti && state.t1.multi.length === 0) { renderMixes('t1', [], [{err: "Ajoutez au moins un arôme dans votre composition."}]); return; }
     
     let aromaPgVal = parseInt(document.getElementById('t1_aroma_pg').value); 
@@ -1431,6 +1472,7 @@ function calcTab1() {
 function calcTab2() {
     let finalVolAfterBoost, prepVol, aromaVol;
     let isMulti = state.t2.aroma_mode === 'multi';
+    if (isMulti) syncMultiVolBreakdown('t2');
     if (isMulti && state.t2.multi.length === 0) { renderMixes('t2', [], [{err: "Ajoutez au moins un arôme dans votre composition."}]); return; }
     
     let originalTotalMulti = isMulti ? state.t2.multi.reduce((acc, v) => acc + v.perc, 0) : 0;
@@ -1496,6 +1538,7 @@ function calcTab2() {
 
 function calcTab3() {
     let isMulti = state.t3.aroma_mode === 'multi';
+    if (isMulti) syncMultiVolBreakdown('t3');
     if (isMulti && state.t3.multi.length === 0) {
         document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in text-red-500 font-bold p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl text-center text-sm shadow-inner">Ajoutez au moins un arôme dans votre composition.</div>`;
         return;
