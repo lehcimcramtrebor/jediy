@@ -663,13 +663,22 @@
                             </select>
                         </div>
                         
-                        <div id="t1_multi_list" class="space-y-2 mb-4 w-full">
-                            </div>
+                        <!-- Fold Aroma Trigger -->
+                        <div class="flex items-center justify-between py-2.5 px-4 bg-brand-50/50 dark:bg-brand-900/10 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20 border border-brand-100 dark:border-brand-800/50 transition-colors mb-4 select-none" onclick="toggleFoldCompo('t1')">
+                            <span class="text-xs font-black text-brand-700 dark:text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                🎨 Liste des arômes & additifs
+                            </span>
+                            <svg id="t1_aroma_fold_icon" class="w-4 h-4 text-brand-500 transform transition-transform duration-300 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
 
-                        <div class="grid grid-cols-3 gap-2 mb-4">
-                            <button onclick="addMultiLine('t1', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
-                            <button onclick="addMultiLine('t1', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
-                            <button onclick="addMultiLine('t1', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                        <div id="t1_aroma_fold_panel" class="space-y-4">
+                            <div id="t1_multi_list" class="space-y-2 mb-4 w-full"></div>
+
+                            <div class="grid grid-cols-3 gap-2 mb-4">
+                                <button onclick="addMultiLine('t1', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                                <button onclick="addMultiLine('t1', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                                <button onclick="addMultiLine('t1', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                            </div>
                         </div>
 
                         <div id="t1_multi_global_wrapper" class="hidden flex-col p-4 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4 transition-colors">
@@ -732,19 +741,28 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors">
-                <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
-                </h2>
-                
-                <div class="mb-6">
-                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Bases Neutres</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="t1_bases_list"></div>
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors mb-6">
+                <div class="flex items-center justify-between cursor-pointer" onclick="toggleFoldMaterial('t1')">
+                    <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 flex items-center gap-2 select-none">
+                        <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">📦</span> Matériel dispo
+                    </h2>
+                    <div class="flex items-center gap-3">
+                        <span id="t1_material_compact" class="text-xs font-bold text-brand-600 dark:text-brand-400"></span>
+                        <svg id="t1_material_fold_icon" class="w-5 h-5 text-stone-500 transform transition-transform duration-300 rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Boosters</h3>
-                    <div class="grid grid-cols-2 gap-2" id="t1_boosters_list"></div>
+
+                <div id="t1_material_fold_panel" class="hidden mt-6 animate-fade-in space-y-6">
+                    <div>
+                        <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Bases Neutres</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="t1_bases_list"></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Boosters</h3>
+                        <div class="grid grid-cols-2 gap-2" id="t1_boosters_list"></div>
+                    </div>
                 </div>
+            </div>
             </div>
 
             <div id="t1_results_header" class="hidden flex-col w-full max-w-3xl mx-auto mt-4 mb-2">
@@ -856,13 +874,22 @@
                             </select>
                         </div>
                         
-                        <div id="t2_multi_list" class="space-y-2 mb-4 w-full">
-                            </div>
+                        <!-- Fold Aroma Trigger -->
+                        <div class="flex items-center justify-between py-2.5 px-4 bg-brand-50/50 dark:bg-brand-900/10 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20 border border-brand-100 dark:border-brand-800/50 transition-colors mb-4 select-none" onclick="toggleFoldCompo('t2')">
+                            <span class="text-xs font-black text-brand-700 dark:text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                🎨 Liste des arômes & additifs
+                            </span>
+                            <svg id="t2_aroma_fold_icon" class="w-4 h-4 text-brand-500 transform transition-transform duration-300 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
 
-                        <div class="grid grid-cols-3 gap-2 mb-4">
-                            <button onclick="addMultiLine('t2', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
-                            <button onclick="addMultiLine('t2', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
-                            <button onclick="addMultiLine('t2', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                        <div id="t2_aroma_fold_panel" class="space-y-4">
+                            <div id="t2_multi_list" class="space-y-2 mb-4 w-full"></div>
+
+                            <div class="grid grid-cols-3 gap-2 mb-4">
+                                <button onclick="addMultiLine('t2', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                                <button onclick="addMultiLine('t2', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                                <button onclick="addMultiLine('t2', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                            </div>
                         </div>
 
                        <div id="t2_multi_global_wrapper" class="hidden flex-col p-4 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4 transition-colors">
@@ -897,14 +924,24 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors">
-                <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                    <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🎒</span> Matériel dispo
-                </h2>
-                <div>
-                    <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Bases Neutres</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="t2_bases_list"></div>
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors mb-6">
+                <div class="flex items-center justify-between cursor-pointer" onclick="toggleFoldMaterial('t2')">
+                    <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 flex items-center gap-2 select-none">
+                        <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">📦</span> Matériel dispo
+                    </h2>
+                    <div class="flex items-center gap-3">
+                        <span id="t2_material_compact" class="text-xs font-bold text-brand-600 dark:text-brand-400"></span>
+                        <svg id="t2_material_fold_icon" class="w-5 h-5 text-stone-500 transform transition-transform duration-300 rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
                 </div>
+
+                <div id="t2_material_fold_panel" class="hidden mt-6 animate-fade-in space-y-6">
+                    <div>
+                        <h3 class="text-xs font-bold text-stone-400 uppercase tracking-wider mb-3">Bases Neutres</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="t2_bases_list"></div>
+                    </div>
+                </div>
+            </div>
             </div>
 
             <div id="t2_results_header" class="hidden flex-col w-full max-w-3xl mx-auto mt-4 mb-2">
@@ -964,12 +1001,22 @@
                             </select>
                         </div>
                         
-                        <div id="t3_multi_list" class="space-y-2 mb-4 w-full"></div>
+                        <!-- Fold Aroma Trigger -->
+                        <div class="flex items-center justify-between py-2.5 px-4 bg-brand-50/50 dark:bg-brand-900/10 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20 border border-brand-100 dark:border-brand-800/50 transition-colors mb-4 select-none" onclick="toggleFoldCompo('t3')">
+                            <span class="text-xs font-black text-brand-700 dark:text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
+                                🎨 Liste des arômes & additifs
+                            </span>
+                            <svg id="t3_aroma_fold_icon" class="w-4 h-4 text-brand-500 transform transition-transform duration-300 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
 
-                        <div class="grid grid-cols-3 gap-2 mb-4">
-                            <button onclick="addMultiLine('t3', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
-                            <button onclick="addMultiLine('t3', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
-                            <button onclick="addMultiLine('t3', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                        <div id="t3_aroma_fold_panel" class="space-y-4">
+                            <div id="t3_multi_list" class="space-y-2 mb-4 w-full"></div>
+
+                            <div class="grid grid-cols-3 gap-2 mb-4">
+                                <button onclick="addMultiLine('t3', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                                <button onclick="addMultiLine('t3', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                                <button onclick="addMultiLine('t3', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                            </div>
                         </div>
 
                         <div class="flex items-center gap-3 mb-4 pt-4 border-t border-brand-200/50 dark:border-brand-800/50">

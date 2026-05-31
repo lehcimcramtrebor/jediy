@@ -67,11 +67,14 @@ function init() {
     updateRatioDisp('t1'); updateRatioDisp('t2'); 
     updateAromaPreview('t1'); updateAromaPreview('t2');
     syncCompoSelects();
+    updateMaterialCompact('t1');
+    updateMaterialCompact('t2');
     triggerCalc(); 
     wizUpdateView();
     updateSettingsBadge();
     if(typeof setCoilType === 'function') setCoilType('wire');
     if(typeof setCoilMode === 'function') setCoilMode('electro');
+    if(typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
 }
 window.onload = () => { init(); };
 
@@ -390,9 +393,90 @@ function setAromaMode(prefix, mode) {
         btnMulti.className = activeClass; btnMono.className = inactiveClass;
         document.getElementById(`${prefix}_aroma_multi_panel`).classList.remove('hidden'); document.getElementById(`${prefix}_aroma_mono_panel`).classList.add('hidden');
         if(prefix === 't3') document.getElementById('t3_compo_breakdown').classList.remove('hidden');
+        
+        let wrap = document.getElementById(`${prefix}_aroma_fold_panel`);
+        if(wrap) {
+            wrap.classList.remove('hidden');
+            let icon = document.getElementById(`${prefix}_aroma_fold_icon`);
+            if(icon) {
+                icon.classList.remove('rotate-0');
+                icon.classList.add('rotate-180');
+            }
+        }
+        
         renderMultiList(prefix);
     }
     updateAromaPreview(prefix); triggerCalc();
+}
+
+function toggleFoldCompo(prefix) {
+    let panel = document.getElementById(`${prefix}_aroma_fold_panel`);
+    let icon = document.getElementById(`${prefix}_aroma_fold_icon`);
+    if(panel) {
+        let isHidden = panel.classList.toggle('hidden');
+        if(icon) {
+            if(isHidden) {
+                icon.classList.remove('rotate-180');
+                icon.classList.add('rotate-0');
+            } else {
+                icon.classList.remove('rotate-0');
+                icon.classList.add('rotate-180');
+            }
+        }
+    }
+}
+
+function toggleFoldMaterial(prefix) {
+    let panel = document.getElementById(`${prefix}_material_fold_panel`);
+    let icon = document.getElementById(`${prefix}_material_fold_icon`);
+    if(panel) {
+        let isHidden = panel.classList.toggle('hidden');
+        if(icon) {
+            if(isHidden) {
+                icon.classList.remove('rotate-180');
+                icon.classList.add('rotate-0');
+            } else {
+                icon.classList.remove('rotate-0');
+                icon.classList.add('rotate-180');
+            }
+        }
+        updateMaterialCompact(prefix);
+    }
+}
+
+function updateMaterialCompact(prefix) {
+    let bases = [];
+    document.querySelectorAll(`.${prefix}_base_chk:checked`).forEach(el => {
+        bases.push(formatRatioStr(parseInt(el.value), true));
+    });
+    
+    let boosters = [];
+    if (prefix === 't1') {
+        document.querySelectorAll(`.${prefix}_boost_chk:checked`).forEach(el => {
+            boosters.push(formatRatioStr(parseInt(el.value), true));
+        });
+    }
+    
+    let text = "";
+    if (bases.length > 0) {
+        text += "Bases : " + bases.join(', ');
+    } else {
+        text += "Aucune base sélectionnée";
+    }
+    
+    if (prefix === 't1') {
+        if (boosters.length > 0) {
+            text += " | Boosters : " + boosters.join(', ');
+        } else {
+            text += " | Aucun booster";
+        }
+    }
+    
+    let el = document.getElementById(`${prefix}_material_compact`);
+    if (el) {
+        let isHidden = document.getElementById(`${prefix}_material_fold_panel`)?.classList.contains('hidden');
+        el.innerText = isHidden ? text : "";
+    }
 }
 
 function checkMultiAddButtons(prefix) {
@@ -496,15 +580,21 @@ function updateGlobalMultiPerc(prefix, val) {
     
     if (label) {
         if (currentVal === originalTotal) {
-            label.innerText = "Concentration originale";
+            label.innerText = `Concentration originale (${round1(originalTotal)}%)`;
             label.className = "text-[10px] font-bold text-center mt-2 text-stone-500 uppercase tracking-widest transition-colors";
         } else if (currentVal > originalTotal) {
-            label.innerText = "Supérieure à l'original";
+            let diff = currentVal - originalTotal;
+            label.innerText = `Supérieure à l'original (+${round1(diff)}%)`;
             label.className = "text-[10px] font-bold text-center mt-2 text-brand-600 uppercase tracking-widest transition-colors";
         } else {
-            label.innerText = "Inférieure à l'original";
+            let diff = originalTotal - currentVal;
+            label.innerText = `Inférieure à l'original (-${round1(diff)}%)`;
             label.className = "text-[10px] font-bold text-center mt-2 text-amber-500 uppercase tracking-widest transition-colors";
         }
+    }
+    
+    if (prefix !== 'edit_compo') {
+        updateAromaPreview(prefix);
     }
 }
 
@@ -622,16 +712,57 @@ function _doSaveCompo(name, prefix) {
 
 function syncCompoSelects() {
     let options = `<option value="">-- Choisir une composition --</option>`;
+    options += `<option value="reset_all" class="text-rose-500 font-bold">✨ -- Nouvelle composition (RAZ) --</option>`;
     savedCompos.forEach(c => options += `<option value="${c.id}">${c.name}</option>`);
     ['t1', 't2', 't3', 'wiz'].forEach(p => {
         let sel = document.getElementById(`${p}_compo_select`);
-        if(sel) { let val = sel.value; sel.innerHTML = options; sel.value = val; }
+        if(sel) {
+            let val = sel.value;
+            sel.innerHTML = options;
+            sel.value = val;
+            if (typeof sel.refreshCustom === 'function') sel.refreshCustom();
+        }
     });
     if(document.getElementById('tab_mes_donnees').classList.contains('active')) renderMesCompos();
 }
 
 function loadCompo(prefix, idStr) {
     if(!idStr) return;
+    if(idStr === 'reset_all') {
+        openHtmlConfirm(`<strong>Réinitialiser la composition ?</strong><br><br>Tous les arômes et pourcentages actuellement saisis seront effacés de cet écran.`, () => {
+            state[prefix].multi = [];
+            let nameInp = document.getElementById(`${prefix}_compo_name`);
+            if(nameInp) nameInp.value = '';
+            
+            let sel = document.getElementById(`${prefix}_compo_select`);
+            if(sel) {
+                sel.value = '';
+                if(typeof sel.refreshCustom === 'function') sel.refreshCustom();
+            }
+            
+            let wrap = document.getElementById(`${prefix}_aroma_fold_panel`);
+            if(wrap) {
+                wrap.classList.remove('hidden');
+                let icon = document.getElementById(`${prefix}_aroma_fold_icon`);
+                if(icon) {
+                    icon.classList.remove('rotate-0');
+                    icon.classList.add('rotate-180');
+                }
+            }
+            
+            renderMultiList(prefix);
+            if(prefix !== 't3') updateAromaPreview(prefix);
+            triggerCalc();
+        }, () => {
+            let sel = document.getElementById(`${prefix}_compo_select`);
+            if(sel) {
+                sel.value = '';
+                if(typeof sel.refreshCustom === 'function') sel.refreshCustom();
+            }
+        });
+        return;
+    }
+    
     let id = parseInt(idStr); let compo = savedCompos.find(c => c.id === id);
     if(compo) {
         state[prefix].multi = JSON.parse(JSON.stringify(compo.items));
@@ -639,8 +770,17 @@ function loadCompo(prefix, idStr) {
         let nameInp = document.getElementById(`${prefix}_compo_name`);
         if(nameInp) nameInp.value = compo.name;
         
-        // Force le reset du slider au chargement d'une nouvelle compo
         state[prefix].resetSlider = true;
+        
+        let wrap = document.getElementById(`${prefix}_aroma_fold_panel`);
+        if(wrap) {
+            wrap.classList.add('hidden');
+            let icon = document.getElementById(`${prefix}_aroma_fold_icon`);
+            if(icon) {
+                icon.classList.remove('rotate-180');
+                icon.classList.add('rotate-0');
+            }
+        }
         
         renderMultiList(prefix); if(prefix !== 't3') updateAromaPreview(prefix); triggerCalc();
     }
@@ -1454,16 +1594,17 @@ function calcBoostSimple(prefix, containerId) {
     if (advChecked) { if(jWeightEl) { jWeightEl.innerText = round2(jWeight) + " g"; jWeightEl.classList.remove('hidden'); } if(bWeightEl) { bWeightEl.innerText = round2(bWeight) + " g"; bWeightEl.classList.remove('hidden'); } } 
     else { if(jWeightEl) jWeightEl.classList.add('hidden'); if(bWeightEl) bWeightEl.classList.add('hidden'); }
 
-    let finalPgRatio = 50; let btnHtml = ""; let hiddenCardHtml = "";
+    let finalPgRatio = 50;
     if (advChecked) {
         let totalPgMl = (vol * (pg / 100)) + (bVol * (bPg / 100)); finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 50;
         ratioHtml = `<div class="bg-white dark:bg-stone-800 p-4 rounded-2xl shadow-sm border border-stone-100 dark:border-stone-700/50 flex flex-col justify-center text-center transition-colors"><span class="text-[10px] text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider mb-1">Ratio Final</span><span class="text-sm font-black text-brand-600 dark:text-brand-400 mt-1">${formatRatioStr(finalPgRatio, true)}</span></div>`;
-        let c = { type: 'boost', vol, bVol, advChecked, pg, bPg, bStr };
-        hiddenCardHtml = `<div id="t_boost_hidden_card" class="hidden">${buildBoostCardHtml(c, false, false)}</div>`;
-        btnHtml = `<button onclick="openModalFromCard(document.querySelector('#t_boost_hidden_card .recipe-card-wrapper'))" class="mt-5 w-full py-3 bg-white dark:bg-stone-700 hover:bg-brand-50 dark:hover:bg-stone-600 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-stone-600 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Voir la fiche Mix
-        </button>`;
     }
+    
+    let c = { type: 'boost', vol, bVol, advChecked, pg, bPg, bStr };
+    let hiddenCardHtml = `<div id="t_boost_hidden_card" class="hidden">${buildBoostCardHtml(c, false, false)}</div>`;
+    let btnHtml = `<button onclick="openModalFromCard(document.querySelector('#t_boost_hidden_card .recipe-card-wrapper'))" class="mt-5 w-full py-3 bg-white dark:bg-stone-700 hover:bg-brand-50 dark:hover:bg-stone-600 text-brand-600 dark:text-brand-400 border border-brand-200 dark:border-stone-600 rounded-xl font-bold shadow-sm transition-all flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> Voir la fiche Mix
+    </button>`;
 
     let visualCap = finalVol * 1.1; let hJuice = (vol / visualCap) * 100; let hBoost = (bVol / visualCap) * 100; let hAir = 100 - hJuice - hBoost;
     let weightHtmlFinal = advChecked ? `<span class="text-base text-brand-600 dark:text-brand-400 font-black block mt-1">(${round2(totalWeight)} g)</span>` : '';
@@ -1482,7 +1623,7 @@ function calcBoostSimple(prefix, containerId) {
                     <span class="text-xs text-stone-500 dark:text-stone-400 font-bold uppercase tracking-wider mb-1">Volume Final</span>
                     <span class="text-3xl font-black text-stone-800 dark:text-stone-100">${round1(finalVol)} ml ${weightHtmlFinal}</span>
                 </div>
-                <div class="bg-brand-50 dark:bg-brand-900 p-4 rounded-2xl border border-brand-100 dark:border-brand-700 flex flex-col justify-center text-center transition-colors">
+                <div class="${advChecked ? '' : 'col-span-2'} bg-brand-50 dark:bg-brand-900 p-4 rounded-2xl border border-brand-100 dark:border-brand-700 flex flex-col justify-center text-center transition-colors">
                     <span class="text-[10px] text-brand-700/70 dark:text-brand-400/70 font-bold uppercase tracking-wider mb-1">Nicotine</span>
                     <span class="text-xl font-black text-brand-600 dark:text-brand-400">${round1(finalNic)} <span class="text-xs">mg</span></span>
                 </div>
@@ -1554,6 +1695,9 @@ function toggleCheckBtn(input) {
             }
         }
     });
+    
+    updateMaterialCompact('t1');
+    updateMaterialCompact('t2');
 }
 
 function renderMixes(prefix, exact, alt) {
@@ -2003,7 +2147,7 @@ function openResetConfirm() { closeSettingsModal(); document.getElementById('res
 function closeResetConfirm() { document.getElementById('reset_confirm_modal').classList.add('hidden'); }
 function showAlert(msg) { let m = document.getElementById('alert_modal'); document.getElementById('alert_text').innerText = msg; m.classList.remove('hidden'); setTimeout(() => m.classList.add('hidden'), 2500); }
 function openHtmlConfirm(msg, callback) {
-    document.getElementById('html_confirm_msg').innerText = msg;
+    document.getElementById('html_confirm_msg').innerHTML = msg;
     let btnOk = document.getElementById('html_confirm_btn_ok');
     btnOk.onclick = () => {
         closeHtmlConfirm();
@@ -4046,4 +4190,214 @@ document.addEventListener('click', function(event) {
         menu.classList.remove('scale-100', 'opacity-100');
         arrow.classList.remove('rotate-180');
     }
+});
+
+/* ========================================== */
+/* 10. SÉLECTEURS PREMIUM CUSTOM HTML        */
+/* ========================================== */
+
+(function() {
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    const originalSet = descriptor.set;
+    Object.defineProperty(HTMLSelectElement.prototype, 'value', {
+        set: function(val) {
+            originalSet.call(this, val);
+            if (typeof this.refreshCustom === 'function') {
+                this.refreshCustom();
+            }
+        },
+        get: descriptor.get,
+        configurable: true
+    });
+
+    const descriptorIdx = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
+    const originalSetIdx = descriptorIdx.set;
+    Object.defineProperty(HTMLSelectElement.prototype, 'selectedIndex', {
+        set: function(val) {
+            originalSetIdx.call(this, val);
+            if (typeof this.refreshCustom === 'function') {
+                this.refreshCustom();
+            }
+        },
+        get: descriptorIdx.get,
+        configurable: true
+    });
+})();
+
+function makeAllSelectsCustom() {
+    const selects = document.querySelectorAll('select');
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            const select = mutation.target;
+            const wrapper = select.nextSibling;
+            if (wrapper && wrapper.classList.contains('custom-select-wrapper')) {
+                if (mutation.attributeName === 'class') {
+                    const isHidden = select.classList.contains('hidden');
+                    wrapper.classList.toggle('hidden', isHidden);
+                }
+                if (mutation.attributeName === 'disabled') {
+                    const trigger = wrapper.querySelector('button');
+                    if (trigger) {
+                        trigger.disabled = select.disabled;
+                        if (select.disabled) {
+                            trigger.classList.add('opacity-50', 'cursor-not-allowed');
+                        } else {
+                            trigger.classList.remove('opacity-50', 'cursor-not-allowed');
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    selects.forEach(select => {
+        if (select.id === 'mobile_tab_select' || select.dataset.customized === 'true') {
+            if (select.refreshCustom) select.refreshCustom();
+            return;
+        }
+
+        const isCurrentlyHidden = select.classList.contains('hidden');
+        select.style.display = 'none';
+        select.dataset.customized = 'true';
+
+        const wrapper = document.createElement('div');
+        wrapper.className = 'relative w-full custom-select-wrapper';
+        select.parentNode.insertBefore(wrapper, select.nextSibling);
+
+        const trigger = document.createElement('button');
+        trigger.type = 'button';
+        trigger.className = 'w-full py-3 px-4 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-2xl shadow-md border border-stone-200 dark:border-stone-800 flex items-center justify-between font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/55';
+
+        const triggerSpan = document.createElement('span');
+        triggerSpan.className = 'flex items-center gap-2 truncate text-stone-800 dark:text-stone-100';
+
+        const arrowSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        arrowSvg.setAttribute('class', 'w-5 h-5 text-stone-400 dark:text-stone-500 transition-transform duration-200 shrink-0 ml-2');
+        arrowSvg.setAttribute('fill', 'none');
+        arrowSvg.setAttribute('viewBox', '0 0 24 24');
+        arrowSvg.setAttribute('stroke', 'currentColor');
+        arrowSvg.setAttribute('stroke-width', '2.5');
+
+        const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arrowPath.setAttribute('stroke-linecap', 'round');
+        arrowPath.setAttribute('stroke-linejoin', 'round');
+        arrowPath.setAttribute('d', 'M19 9l-7 7-7-7');
+        arrowSvg.appendChild(arrowPath);
+
+        trigger.appendChild(triggerSpan);
+        trigger.appendChild(arrowSvg);
+        wrapper.appendChild(trigger);
+
+        const menu = document.createElement('div');
+        menu.className = 'absolute left-0 right-0 mt-2 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200 dark:border-stone-700 z-50 py-1.5 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top max-h-60 overflow-y-auto';
+        wrapper.appendChild(menu);
+
+        function toggleMenu() {
+            const isOpen = !menu.classList.contains('pointer-events-none');
+            if (isOpen) {
+                closeMenu();
+            } else {
+                document.querySelectorAll('.custom-select-wrapper div').forEach(m => {
+                    if (m !== menu) {
+                        m.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
+                        m.classList.remove('scale-100', 'opacity-100');
+                        const otherArrow = m.previousSibling.querySelector('svg');
+                        if (otherArrow) otherArrow.classList.remove('rotate-180');
+                    }
+                });
+
+                menu.classList.remove('pointer-events-none', 'scale-95', 'opacity-0');
+                menu.classList.add('scale-100', 'opacity-100');
+                arrowSvg.classList.add('rotate-180');
+            }
+        }
+
+        function closeMenu() {
+            menu.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
+            menu.classList.remove('scale-100', 'opacity-100');
+            arrowSvg.classList.remove('rotate-180');
+        }
+
+        trigger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (!trigger.disabled) {
+                toggleMenu();
+            }
+        });
+
+        function populateOptions() {
+            menu.innerHTML = '';
+            const options = select.options;
+            const selectedValue = select.value;
+            let selectedText = "";
+
+            for (let i = 0; i < options.length; i++) {
+                const opt = options[i];
+                const optVal = opt.value;
+                const optText = opt.innerText;
+                const isSelected = optVal === selectedValue;
+
+                if (isSelected) {
+                    selectedText = optText;
+                }
+
+                const optBtn = document.createElement('button');
+                optBtn.type = 'button';
+                optBtn.className = 'w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-left ' +
+                    (isSelected 
+                        ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20' 
+                        : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-800 rounded-xl');
+
+                const span = document.createElement('span');
+                span.className = 'truncate';
+                span.innerText = optText;
+                optBtn.appendChild(span);
+
+                const check = document.createElement('span');
+                check.className = 'text-emerald-500 shrink-0 ml-2' + (isSelected ? '' : ' hidden');
+                check.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                optBtn.appendChild(check);
+
+                optBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    select.value = optVal;
+                    select.dispatchEvent(new Event('change'));
+                    closeMenu();
+                    populateOptions();
+                });
+
+                menu.appendChild(optBtn);
+            }
+
+            triggerSpan.innerText = selectedText || (select.options[0] ? select.options[0].innerText : "");
+        }
+
+        select.refreshCustom = () => {
+            populateOptions();
+        };
+
+        populateOptions();
+
+        if (select.disabled) {
+            trigger.disabled = true;
+            trigger.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        observer.observe(select, { attributes: true, attributeFilter: ['class', 'disabled'] });
+        wrapper.classList.toggle('hidden', isCurrentlyHidden);
+    });
+}
+
+document.addEventListener('click', function(event) {
+    document.querySelectorAll('.custom-select-wrapper').forEach(wrapper => {
+        if (!wrapper.contains(event.target)) {
+            const menu = wrapper.querySelector('div');
+            const arrow = wrapper.querySelector('button svg');
+            if (menu && !menu.classList.contains('pointer-events-none')) {
+                menu.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
+                menu.classList.remove('scale-100', 'opacity-100');
+                if (arrow) arrow.classList.remove('rotate-180');
+            }
+        }
+    });
 });
