@@ -4363,6 +4363,12 @@ function makeAllSelectsCustom() {
         } else if (select.classList.contains('sim-b-ratio')) {
             wrapperClass += ' max-w-[110px] inline-block';
         }
+        if (select.classList.contains('flex-1')) {
+            wrapperClass += ' flex-1';
+        }
+        if (select.classList.contains('min-w-0')) {
+            wrapperClass += ' min-w-0';
+        }
         wrapper.className = wrapperClass;
         select.parentNode.insertBefore(wrapper, select.nextSibling);
 
