@@ -1009,7 +1009,24 @@ function wizUpdateView() {
     document.getElementById('wiz_btn_next').innerText = (wizState.step === wizState.path.length - 2) ? "Calculer 🚀" : "Suivant";
 }
 
-function wizNext() { if(wizState.step < wizState.path.length - 1) { if(wizState.step === wizState.path.length - 2) runWizCalculation(); wizState.step++; wizUpdateView(); } }
+function wizNext() {
+    if(wizState.step < wizState.path.length - 1) {
+        let curStepId = wizState.path[wizState.step];
+        if (curStepId === 's3') {
+            let useCompo = document.getElementById('wiz_use_compo').checked;
+            if (useCompo) {
+                let cid = document.getElementById('wiz_compo_select').value;
+                if (!cid || cid === "") {
+                    showAlert("Choisis une composition ou décoche l'option !");
+                    return;
+                }
+            }
+        }
+        if(wizState.step === wizState.path.length - 2) runWizCalculation();
+        wizState.step++;
+        wizUpdateView();
+    }
+}
 function wizPrev() { if(wizState.step > 1) { wizState.step--; wizUpdateView(); } else if (wizState.step === 1) { wizState.step = 0; wizUpdateView(); } }
 function wizRestart() { wizState.step = 0; document.getElementById('wiz_results_container').innerHTML = ''; wizUpdateView(); }
 
