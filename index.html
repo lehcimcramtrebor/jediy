@@ -1432,12 +1432,12 @@
                             <div class="bg-stone-50 dark:bg-stone-800 p-3 rounded-2xl border border-stone-200/20 dark:border-stone-700 flex flex-col justify-between min-h-[84px]">
                                 <span class="block text-[10px] font-bold text-stone-400 uppercase tracking-wider mb-2 text-center">Tension (Volts)</span>
                                 <div class="flex items-center justify-between gap-1.5 w-full">
-                                    <button id="coil_volts_minus" onclick="adjustVal('coil_volts', -0.1);" class="btn-adjust-sm hidden" disabled>-</button>
+                                    <button id="coil_volts_minus" onclick="adjustVal('coil_volts', -0.1);" class="w-8 md:w-10 h-10 shrink-0 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-brand-100 dark:hover:bg-stone-700 hover:border-brand-300 dark:hover:border-stone-600 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all shadow-sm active:scale-95 hidden" disabled>-</button>
                                     <div class="flex-1 flex items-center justify-center min-w-0 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl h-10 px-1" id="coil_volts_wrapper">
-                                        <input type="number" id="coil_volts" step="0.1" value="3.7" oninput="syncCoilOhmSolver('volts');" class="hide-arrows w-full text-center bg-transparent border-none focus:outline-none focus:ring-0 p-0 font-bold text-base text-stone-800 dark:text-stone-100" disabled>
+                                        <input type="number" id="coil_volts" step="0.1" value="3.7" oninput="syncCoilOhmSolver('volts');" class="hide-arrows w-full text-center bg-transparent border-none focus:outline-none focus:ring-0 p-0 font-bold text-sm md:text-base text-stone-800 dark:text-stone-100" disabled>
                                         <span class="text-xs text-stone-400 font-bold ml-0.5 select-none">V</span>
                                     </div>
-                                    <button id="coil_volts_plus" onclick="adjustVal('coil_volts', 0.1);" class="btn-adjust-sm hidden" disabled>+</button>
+                                    <button id="coil_volts_plus" onclick="adjustVal('coil_volts', 0.1);" class="w-8 md:w-10 h-10 shrink-0 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-brand-100 dark:hover:bg-stone-700 hover:border-brand-300 dark:hover:border-stone-600 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all shadow-sm active:scale-95 hidden" disabled>+</button>
                                 </div>
                             </div>
                             <div class="bg-stone-50 dark:bg-stone-800 p-3 rounded-2xl border border-stone-200/20 dark:border-stone-700 flex flex-col justify-between min-h-[84px]">
