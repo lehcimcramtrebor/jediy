@@ -2844,7 +2844,7 @@ function prepareCardForExport() {
     else if (c.type === 'boost') prepType = "Mélange Boosté";
 
     let totalVol = c.type === 't1' ? c.finalVol : (c.type === 't2' ? c.prepVol : (c.type === 'boost' ? c.vol+c.bVol : c.aVol+c.bVol+c.nVol));
-    let pgRatioNum = c.type === 't3' ? parseFloat(clone.getAttribute('data-ratio')) : (c.realPgRatio !== undefined ? c.realPgRatio : c.pg);
+    let pgRatioNum = (c.type === 't3' || c.type === 'boost') ? parseFloat(clone.getAttribute('data-ratio')) : (c.realPgRatio !== undefined ? c.realPgRatio : c.pg);
     let ratioStr = formatRatioStr(pgRatioNum || 50, true);
 
     let headerDiv = document.createElement('div'); headerDiv.className = 'export-title mb-5 border-b border-stone-200 pb-4 flex justify-between items-start';
