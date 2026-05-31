@@ -1,4 +1,4 @@
-const CACHE_NAME = 'je-diy-v9.05';
+const CACHE_NAME = 'je-diy-v9.08';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

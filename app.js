@@ -176,11 +176,15 @@ function switchTab(tabId) {
     }
     document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('button[id^="btn_tab_"]').forEach(el => {
-        const baseClasses = "py-2.5 px-3.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap ";
+        const activeClasses = ["bg-white", "dark:bg-stone-700", "text-brand-600", "dark:text-brand-400", "shadow-md", "transform", "-translate-y-0.5", "ring-1", "ring-black/5", "dark:ring-white/10"];
+        const inactiveClasses = ["text-stone-500", "dark:text-stone-400", "hover:text-stone-700", "dark:hover:text-stone-300", "hover:bg-stone-200", "dark:hover:bg-stone-850/50"];
+        
         if (el.id === 'btn_' + tabId) {
-            el.className = baseClasses + "bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10";
+            inactiveClasses.forEach(c => el.classList.remove(c));
+            activeClasses.forEach(c => el.classList.add(c));
         } else {
-            el.className = baseClasses + "text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-850/50";
+            activeClasses.forEach(c => el.classList.remove(c));
+            inactiveClasses.forEach(c => el.classList.add(c));
         }
     });
 
