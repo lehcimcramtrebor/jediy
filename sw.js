@@ -48,12 +48,63 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Interception des requêtes réseau (Mode "Cache First, fallback to Network")
+// Interception des requêtes réseau
+// Utilise "Network-First (avec repli sur cache et mise à jour dynamique)" pour les documents/scripts clés
+// Utilise "Cache-First (avec repli sur réseau)" pour les ressources statiques et immuables (images, polices, bibliothèques tierces)
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Retourne la version en cache si elle existe, sinon fait la requête réseau
-      return response || fetch(event.request);
-    })
-  );
+  // Ignorer les requêtes non-GET (ex: POST, PUT, DELETE, etc.)
+  if (event.request.method !== 'GET') return;
+
+  const url = new URL(event.request.url);
+
+  // Identifier si la ressource fait partie du noyau dynamique de l'application
+  const isNetworkFirst = 
+    event.request.mode === 'navigate' || 
+    url.pathname.endsWith('/') ||
+    url.pathname.endsWith('index.html') || 
+    url.pathname.endsWith('manifest.json') ||
+    url.pathname.endsWith('app.js') ||
+    url.pathname.endsWith('tailwind.config.js') ||
+    url.pathname.endsWith('.md');
+
+  if (isNetworkFirst) {
+    // Stratégie Network-First
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          // Si la requête réseau réussit, on met à jour le cache
+          if (response.status === 200) {
+            const responseCopy = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseCopy);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // En cas de panne réseau ou de mode hors-ligne, on utilise le cache
+          return caches.match(event.request);
+        })
+    );
+  } else {
+    // Stratégie Cache-First pour les images, polices, et librairies statiques
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        
+        return fetch(event.request).then((networkResponse) => {
+          // Si on doit charger depuis le réseau, on l'ajoute au cache pour les fois suivantes
+          if (networkResponse.status === 200) {
+            const responseCopy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseCopy);
+            });
+          }
+          return networkResponse;
+        });
+      })
+    );
+  }
 });

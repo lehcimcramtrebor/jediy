@@ -5,6 +5,21 @@ function safeSetItem(key, value) {
         console.warn("Storage write blocked or full:", e);
     }
 }
+function safeGetItem(key) {
+    try {
+        return localStorage.getItem(key);
+    } catch (e) {
+        console.warn("Storage read blocked:", e);
+        return null;
+    }
+}
+function safeRemoveItem(key) {
+    try {
+        localStorage.removeItem(key);
+    } catch (e) {
+        console.warn("Storage delete blocked:", e);
+    }
+}
 
 /* ========================================== */
 /* 1. INITIALISATION ET VARIABLES GLOBALES    */
@@ -33,8 +48,10 @@ const WIZ_PATH_MAIN = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7'];
 const ALL_WIZ_STEPS = ['s0', 's1', 's2', 's3', 's4', 's5', 's6', 's7'];
 let wizState = { step: 0, path: WIZ_PATH_MAIN, type: 't1', volMode: 'defined' };
 
-let savedMixes = JSON.parse(localStorage.getItem('jediy_mixes') || '[]');
-let savedCompos = JSON.parse(localStorage.getItem('jediy_compos') || '[]');
+let savedMixes = [];
+try { savedMixes = JSON.parse(safeGetItem('jediy_mixes') || '[]'); } catch(e) { savedMixes = []; }
+let savedCompos = [];
+try { savedCompos = JSON.parse(safeGetItem('jediy_compos') || '[]'); } catch(e) { savedCompos = []; }
 let currentMixCard = null;
 let currentEditCompoId = null;
 let groupMixes = false;
@@ -43,7 +60,7 @@ let unreadNotification = false;
 /* ========================================== */
 /* I.D. JEDI                                  */
 /* ========================================== */
-let jediIdentity = localStorage.getItem('jediIdentity') || "";
+let jediIdentity = safeGetItem('jediIdentity') || "";
 
 function openJediModal() { 
     closeSettingsModal(); 
@@ -54,7 +71,7 @@ function closeJediModal() { document.getElementById('jedi_identity_modal').class
 function saveJediIdentity() {
     jediIdentity = document.getElementById('jedi_identity_input').value.trim();
     if (jediIdentity) safeSetItem('jediIdentity', jediIdentity);
-    else localStorage.removeItem('jediIdentity');
+    else safeRemoveItem('jediIdentity');
     closeJediModal();
     showAlert("Identité Jedi enregistrée !");
 }
@@ -170,7 +187,8 @@ const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"
 const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
 
 function applyTheme() {
-    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    let themeVal = safeGetItem('theme');
+    if (themeVal === 'dark' || (!themeVal && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark'); document.getElementById('theme_toggle_btn').innerHTML = sunIcon;
         let metaTheme = document.getElementById('meta-theme-color'); if(metaTheme) metaTheme.content = '#0c0a09';
     } else {
@@ -179,8 +197,8 @@ function applyTheme() {
     }
 }
 function toggleTheme() {
-    if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); localStorage.theme = 'light'; document.getElementById('theme_toggle_btn').innerHTML = moonIcon; } 
-    else { document.documentElement.classList.add('dark'); localStorage.theme = 'dark'; document.getElementById('theme_toggle_btn').innerHTML = sunIcon; }
+    if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); safeSetItem('theme', 'light'); document.getElementById('theme_toggle_btn').innerHTML = moonIcon; } 
+    else { document.documentElement.classList.add('dark'); safeSetItem('theme', 'dark'); document.getElementById('theme_toggle_btn').innerHTML = sunIcon; }
 }
 
 function switchTab(tabId) {
@@ -1263,12 +1281,22 @@ function wizNext() {
         if (curStepId === 's6') {
             let selectedBases = getChecked('wiz_base_chk');
             if (selectedBases.length === 0) {
+                let list = document.getElementById('wiz_bases_list');
+                if (list) {
+                    list.classList.add('ring-2', 'ring-red-500', 'rounded-xl', 'animate-shake');
+                    setTimeout(() => list.classList.remove('ring-2', 'ring-red-500', 'rounded-xl', 'animate-shake'), 400);
+                }
                 showAlert("Coche au moins une base neutre dans tes placards pour continuer !");
                 return;
             }
             if (wizState.type === 't1') {
                 let selectedBoosters = getChecked('wiz_boost_chk');
                 if (selectedBoosters.length === 0) {
+                    let list = document.getElementById('wiz_boosters_list');
+                    if (list) {
+                        list.classList.add('ring-2', 'ring-red-500', 'rounded-xl', 'animate-shake');
+                        setTimeout(() => list.classList.remove('ring-2', 'ring-red-500', 'rounded-xl', 'animate-shake'), 400);
+                    }
                     showAlert("Coche au moins un booster dans tes placards pour continuer !");
                     return;
                 }
@@ -1736,9 +1764,11 @@ function generateCheckboxes(prefix) {
     let baseContainer = document.getElementById(`${prefix}_bases_list`); let boostContainer = document.getElementById(`${prefix}_boosters_list`);
     let baseHtml = '', boostHtml = '';
     
-    let defaultsBase = JSON.parse(localStorage.getItem('jediy_hw_bases') || '[100, 0]');
-    let savedBoosts = localStorage.getItem('jediy_hw_boosts');
-    let defaultsBoost = savedBoosts ? JSON.parse(savedBoosts) : (['t1', 'wiz'].includes(prefix) ? [50] : []);
+    let defaultsBase = [];
+    try { defaultsBase = JSON.parse(safeGetItem('jediy_hw_bases') || '[100, 0]'); } catch(e) { defaultsBase = [100, 0]; }
+    let savedBoosts = safeGetItem('jediy_hw_boosts');
+    let defaultsBoost = [];
+    try { defaultsBoost = savedBoosts ? JSON.parse(savedBoosts) : (['t1', 'wiz'].includes(prefix) ? [50] : []); } catch(e) { defaultsBoost = [50]; }
 
     RATIOS.forEach(pg => {
         let isBaseChecked = defaultsBase.includes(pg); let isBoostChecked = defaultsBoost.includes(pg);
@@ -1767,7 +1797,8 @@ function toggleCheckBtn(input) {
     let val = parseInt(input.value);
     let storageKey = isBase ? 'jediy_hw_bases' : 'jediy_hw_boosts';
     
-    let arr = JSON.parse(localStorage.getItem(storageKey) || (isBase ? '[100, 0]' : '[50]'));
+    let arr = [];
+    try { arr = JSON.parse(safeGetItem(storageKey) || (isBase ? '[100, 0]' : '[50]')); } catch(e) { arr = isBase ? [100, 0] : [50]; }
     if (input.checked && !arr.includes(val)) arr.push(val);
     else if (!input.checked) arr = arr.filter(x => x !== val);
     
@@ -1856,8 +1887,9 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     if (r.multi) {
         let compoPgMl = 0;
         aromaWeight = 0;
+        let totalMultiPerc = r.multi.reduce((acc, v) => acc + v.perc, 0);
         r.multi.forEach(item => {
-            let vol = r.finalVol * (item.perc/100);
+            let vol = totalMultiPerc > 0 ? r.aroma * (item.perc / totalMultiPerc) : 0;
             if (item.type === 'aroma') compoPgMl += vol * (item.pg/100);
             aromaWeight += getLiquidWeight(item.type, vol, item.pg, item.degree);
         });
@@ -1885,7 +1917,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
                 <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
         
         r.multi.forEach(item => {
-            let vol = r.finalVol * (item.perc/100); 
+            let vol = totalMultiPerc > 0 ? r.aroma * (item.perc / totalMultiPerc) : 0; 
             let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
             let details = item.type === 'aroma' ? `${item.pg}PG` : (item.type === 'alcohol' ? `${item.degree}°` : 'Densité 1.0');
@@ -1981,7 +2013,11 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
     let aWeight = 0;
     if (c.multi) {
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
-        c.multi.forEach(i => { aWeight += getLiquidWeight(i.type, c.aVol * (i.perc/tPerc), i.pg, i.degree); });
+        if (tPerc > 0) {
+            c.multi.forEach(i => { aWeight += getLiquidWeight(i.type, c.aVol * (i.perc/tPerc), i.pg, i.degree); });
+        } else {
+            aWeight = getWeight(c.aVol, c.aPg);
+        }
     } else { aWeight = getWeight(c.aVol, c.aPg); }
     let bWeight = getWeight(c.bVol, c.bPg); let nWeight = getWeight(c.nVol, c.nPg);
     let tVol = c.aVol + c.bVol + c.nVol; let tWeight = aWeight + bWeight + nWeight;
@@ -1990,7 +2026,11 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
         let totalPg = 0;
         if(c.multi) {
             let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
-            c.multi.forEach(i => { if(i.type==='aroma') totalPg += (c.aVol * (i.perc/tPerc)) * (i.pg/100); });
+            if (tPerc > 0) {
+                c.multi.forEach(i => { if(i.type==='aroma') totalPg += (c.aVol * (i.perc/tPerc)) * (i.pg/100); });
+            } else {
+                totalPg += c.aVol*(c.aPg/100);
+            }
         } else { totalPg += c.aVol*(c.aPg/100); }
         totalPg += (c.bVol*(c.bPg/100)) + (c.nVol*(c.nPg/100));
         pgRatio = (totalPg / tVol) * 100; aRatio = (c.aVol / tVol) * 100; finalNic = (c.nVol * c.str) / tVol;
@@ -2032,7 +2072,7 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
         
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
         c.multi.forEach(item => {
-            let vol = c.aVol * (item.perc/tPerc); 
+            let vol = tPerc > 0 ? c.aVol * (item.perc/tPerc) : 0; 
             let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
             let details = item.type === 'aroma' ? `${item.pg}PG` : (item.type === 'alcohol' ? `${item.degree}°` : 'Densité 1.0');
@@ -2612,12 +2652,12 @@ function deleteCompo(id) {
 
 async function exportSettingsJson() {
     let data = { 
-        jediIdentity: localStorage.getItem('jediIdentity') || "", 
-        theme: localStorage.getItem('theme') || "", 
+        jediIdentity: safeGetItem('jediIdentity') || "", 
+        theme: safeGetItem('theme') || "", 
         mixes: savedMixes, 
         compos: savedCompos,
-        hw_bases: JSON.parse(localStorage.getItem('jediy_hw_bases') || '[100, 0]'),
-        hw_boosts: JSON.parse(localStorage.getItem('jediy_hw_boosts') || '[50]')
+        hw_bases: JSON.parse(safeGetItem('jediy_hw_bases') || '[100, 0]'),
+        hw_boosts: JSON.parse(safeGetItem('jediy_hw_boosts') || '[50]')
     };
     let jsonStr = JSON.stringify(data, null, 2);
     let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
@@ -2658,7 +2698,7 @@ function handleImport(e) {
             let data = JSON.parse(ev.target.result);
             if(data.mixes) { savedMixes = data.mixes; safeSetItem('jediy_mixes', JSON.stringify(savedMixes)); }
             if(data.compos) { savedCompos = data.compos; safeSetItem('jediy_compos', JSON.stringify(savedCompos)); }
-            if(data.jediIdentity !== undefined) { if(data.jediIdentity) safeSetItem('jediIdentity', data.jediIdentity); else localStorage.removeItem('jediIdentity'); }
+            if(data.jediIdentity !== undefined) { if(data.jediIdentity) safeSetItem('jediIdentity', data.jediIdentity); else safeRemoveItem('jediIdentity'); }
             if(data.theme) safeSetItem('theme', data.theme);
             if(data.hw_bases) safeSetItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
             if(data.hw_boosts) safeSetItem('jediy_hw_boosts', JSON.stringify(data.hw_boosts));
@@ -2764,10 +2804,10 @@ function getRecipeText() {
     if (c.multi) {
         let originalText = c.originalCompoTotal ? ` (Recette originale: ${round1(c.originalCompoTotal)}%)` : '';
         text += `\n📝 COMPOSITION : ${c.compoName || 'Multi-arômes'}${originalText}\n`;
-        let totalVol = (c.type === 't1' || c.type === 't2') ? c.finalVol : c.aVol;
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
+        let totalAromaVol = (c.type === 't1' || c.type === 't2') ? c.aroma : c.aVol;
         c.multi.forEach(i => {
-            let v = totalVol * (i.perc/ (c.type === 't1' || c.type === 't2' ? 100 : tPerc));
+            let v = tPerc > 0 ? totalAromaVol * (i.perc / tPerc) : 0;
             let w = getLiquidWeight(i.type, v, i.pg, i.degree);
             text += `- ${i.name} (${i.perc}%): ${round1(v)} ml (${round2(w)} g)\n`;
         });
