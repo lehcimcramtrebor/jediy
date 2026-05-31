@@ -618,33 +618,67 @@ function renderMultiList(prefix) {
 
         let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
 
-        html += `
-        <div class="flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
-            <div class="w-full">
-                <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
-            </div>
-            
-            <div class="flex items-center gap-2 w-full">
-                <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 shrink-0 flex items-center justify-center transition-colors">✕</button>
-                
-                <div class="flex-1 min-w-0">
-                    ${selectHtml}
+        if (prefix === 'edit_compo') {
+            html += `
+            <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
+                <div class="w-full">
+                    <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
                 </div>
                 
-                <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-32 h-8 shrink-0">
-                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
+                <div class="flex items-center gap-2 w-full">
+                    <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 shrink-0 flex items-center justify-center transition-colors">✕</button>
                     
-                    <div class="flex-1 relative flex items-center h-full">
-                        <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
-                        <span class="absolute right-1 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                    <div class="flex-1 min-w-0">
+                        ${selectHtml}
                     </div>
+                    
+                    <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-32 h-8 shrink-0">
+                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
+                        
+                        <div class="flex-1 relative flex items-center h-full">
+                            <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
+                            <span class="absolute right-1 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                        </div>
 
-                    <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
+                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
+                    </div>
                 </div>
-            </div>
-        </div>`;
+            </div>`;
+        } else {
+            html += `
+            <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
+                <div class="w-full">
+                    <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+                </div>
+                
+                <div class="flex gap-2.5 items-center w-full">
+                    <!-- Left Column: delete button (taking up ~15%) -->
+                    <div class="w-[15%] flex justify-start shrink-0">
+                        <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
+                    </div>
+                    
+                    <!-- Right Column: select dropdown and dosage aligned to the right (taking up ~85%) -->
+                    <div class="flex-1 flex flex-col gap-2 min-w-0">
+                        <div class="w-full">
+                            ${selectHtml}
+                        </div>
+                        
+                        <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full h-8">
+                            <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
+                            
+                            <div class="flex-1 relative flex items-center h-full">
+                                <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
+                                <span class="absolute right-2.5 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                            </div>
+
+                            <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }
     });
-container.innerHTML = html;
+    container.innerHTML = html;
     
     let wrapper = document.getElementById(`${prefix}_multi_global_wrapper`);
     let slider = document.getElementById(`${prefix}_multi_global_perc`);
@@ -680,6 +714,8 @@ container.innerHTML = html;
     if(prefix === 't3') syncT3MultiVol(document.getElementById('t3_aroma_vol_multi').value);
     
     checkMultiAddButtons(prefix);
+    
+    if (typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
 }
 
 function checkCompoSave(prefix) {
@@ -1148,6 +1184,14 @@ function toggleWizCompo() {
     document.getElementById('wiz_compo_select').classList.toggle('hidden', !use);
     document.getElementById('wiz_aroma_perc_container').classList.toggle('hidden', use);
     document.getElementById('wiz_adv_aroma_container').classList.toggle('hidden', use);
+    if (!use) {
+        let slider = document.getElementById('wiz_aroma_perc');
+        if (slider) {
+            document.getElementById('wiz_aroma_perc_disp').innerText = slider.value + '%';
+        }
+    } else {
+        wizUpdateCompo();
+    }
 }
 
 function wizUpdateCompo() {
@@ -1762,7 +1806,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     let titleText = r.globalName ? r.globalName : (prefix==='t1'?'Liquide Prêt':'Base Shortfill');
     let titleHtml = `<div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg truncate pr-2" style="line-height:1.2;">${titleText} <span class="text-brand-600 dark:text-brand-400">${round1(totalVol)} ml</span></div>`;
 
-    let html = `<div data-theme="${theme}" data-config="${cfgStr}" ${dataAttrs} class="${compactClass} animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">
+    let html = `<div data-theme="${theme}" data-config="${cfgStr}" ${dataAttrs} class="${compactClass} relative animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">
         <div class="flex-1">
             <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700 transition-colors">
                 <div class="overflow-hidden">
@@ -2794,6 +2838,7 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
 
 function prepareCardForExport() {
     let clone = document.getElementById('recipe_modal_content').querySelector('.export-card'); if (!clone) return null;
+    let pristineCard = clone.cloneNode(true);
     
     clone.querySelectorAll('.truncate').forEach(el => {
         el.classList.remove('truncate');
@@ -2907,13 +2952,23 @@ function prepareCardForExport() {
             document.body.classList.remove('exporting'); 
             document.documentElement.dataset.theme = document.documentElement.dataset.originalTheme;
             applyTheme(); 
-            let addedTitle = clone.querySelector('.export-title'); if (addedTitle) addedTitle.remove();
-            let addedFooter = clone.querySelector('.export-footer'); if (addedFooter) addedFooter.remove();
-            clone.classList.remove('border-2', 'border-stone-200', 'rounded-3xl', 'p-6');
-            clone.classList.add('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar', 'shadow-2xl');
-            clone.style.width = ''; clone.style.margin = ''; clone.style.backgroundColor = '';
-            if (originalHeader) originalHeader.style.display = '';
-            if (cleanSimDiv) cleanSimDiv.remove(); if (simContainer) simContainer.style.display = ''; if (buttons) buttons.style.display = ''; 
+            
+            let parent = clone.parentNode;
+            if (parent) {
+                let restoredCard = pristineCard.cloneNode(true);
+                // Remove all custom select wrappers so they can be re-created and re-bound
+                restoredCard.querySelectorAll('.custom-select-wrapper').forEach(w => w.remove());
+                restoredCard.querySelectorAll('select').forEach(s => {
+                    s.style.display = '';
+                    delete s.dataset.customized;
+                    s.removeAttribute('data-customized');
+                    s.classList.remove('hidden');
+                });
+                parent.replaceChild(restoredCard, clone);
+                if (typeof makeAllSelectsCustom === 'function') {
+                    makeAllSelectsCustom();
+                }
+            }
         }
     };
 }
@@ -4345,18 +4400,27 @@ function makeAllSelectsCustom() {
             if (isOpen) {
                 closeMenu();
             } else {
-                document.querySelectorAll('.custom-select-wrapper div').forEach(m => {
-                    if (m !== menu) {
+                document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+                    const m = w.querySelector('div');
+                    if (m && m !== menu) {
                         m.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
                         m.classList.remove('scale-100', 'opacity-100');
-                        const otherArrow = m.previousSibling.querySelector('svg');
+                        const otherArrow = w.querySelector('button svg');
                         if (otherArrow) otherArrow.classList.remove('rotate-180');
+                        w.classList.remove('z-50');
+                        
+                        const otherCard = w.closest('.animate-fade-in') || w.closest('.recipe-card-wrapper');
+                        if (otherCard) otherCard.classList.remove('z-30');
                     }
                 });
 
                 menu.classList.remove('pointer-events-none', 'scale-95', 'opacity-0');
                 menu.classList.add('scale-100', 'opacity-100');
                 arrowSvg.classList.add('rotate-180');
+                wrapper.classList.add('z-50');
+                
+                const parentCard = wrapper.closest('.animate-fade-in') || wrapper.closest('.recipe-card-wrapper');
+                if (parentCard) parentCard.classList.add('z-30');
             }
         }
 
@@ -4364,6 +4428,10 @@ function makeAllSelectsCustom() {
             menu.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
             menu.classList.remove('scale-100', 'opacity-100');
             arrowSvg.classList.remove('rotate-180');
+            wrapper.classList.remove('z-50');
+            
+            const parentCard = wrapper.closest('.animate-fade-in') || wrapper.closest('.recipe-card-wrapper');
+            if (parentCard) parentCard.classList.remove('z-30');
         }
 
         trigger.addEventListener('click', (e) => {
@@ -4452,6 +4520,10 @@ document.addEventListener('click', function(event) {
                 menu.classList.add('pointer-events-none', 'scale-95', 'opacity-0');
                 menu.classList.remove('scale-100', 'opacity-100');
                 if (arrow) arrow.classList.remove('rotate-180');
+                wrapper.classList.remove('z-50');
+                
+                const parentCard = wrapper.closest('.animate-fade-in') || wrapper.closest('.recipe-card-wrapper');
+                if (parentCard) parentCard.classList.remove('z-30');
             }
         }
     });
