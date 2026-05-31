@@ -1140,15 +1140,24 @@ function exportCompoMedia(format, action = 'download') {
             backgroundColor: '#ffffff'
         };
 
+        const cleanupExport = () => {
+            document.body.classList.remove('exporting');
+            const w = document.getElementById("temp_compo_pdf_wrapper");
+            if (w) w.remove();
+            closeExportCompoPrompt();
+        };
+
         if (format === 'png') {
             html2canvas(wrapper, html2canvasOpts).then(canvas => {
                 let link = document.createElement('a');
                 link.download = `Compo_${safeName}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
-                document.body.classList.remove('exporting');
-                wrapper.remove();
-                closeExportCompoPrompt();
+                cleanupExport();
+            }).catch(err => {
+                console.error("Erreur PNG composition :", err);
+                showAlert("Erreur lors de la capture PNG.");
+                cleanupExport();
             });
         } else {
             let opt = { 
@@ -1163,15 +1172,15 @@ function exportCompoMedia(format, action = 'download') {
             
             if (action === 'download') {
                 worker.save().then(() => { 
-                    document.body.classList.remove('exporting');
-                    wrapper.remove(); 
-                    closeExportCompoPrompt(); 
+                    cleanupExport(); 
+                }).catch(err => {
+                    console.error("Erreur PDF composition :", err);
+                    showAlert("Erreur lors de la génération du PDF.");
+                    cleanupExport();
                 });
             } else {
                 worker.output('blob').then(pdfBlob => {
-                    document.body.classList.remove('exporting');
-                    wrapper.remove();
-                    closeExportCompoPrompt();
+                    cleanupExport();
                     
                     let file = new File([pdfBlob], `Compo_${safeName}.pdf`, { type: 'application/pdf' });
                     if (navigator.canShare && navigator.canShare({ files: [file] })) { 
@@ -1188,6 +1197,10 @@ function exportCompoMedia(format, action = 'download') {
                         link.download = `Compo_${safeName}.pdf`;
                         link.click();
                     }
+                }).catch(err => {
+                    console.error("Erreur partage PDF composition :", err);
+                    showAlert("Erreur de partage du PDF.");
+                    cleanupExport();
                 });
             }
         }
@@ -2163,7 +2176,7 @@ function updateSim(el) {
 
     if(preleveWeightEl) preleveWeightEl.innerText = preleveVol > 0 ? round2(getWeight(preleveVol, basePg)) + " g" : "";
     
-    let bVol = bCount * 10; let finalVol = preleveVol + bVol; let aromaInSample = preleveVol * (totalAroma / prepVolAttr);
+    let bVol = bCount * 10; let finalVol = preleveVol + bVol; let aromaInSample = prepVolAttr > 0 ? preleveVol * (totalAroma / prepVolAttr) : 0;
     
     if (finalVol > 0) {
         let finalNic = (bVol * bStr) / finalVol; let finalAromaPerc = (aromaInSample / finalVol) * 100;
@@ -2549,7 +2562,7 @@ function editMix(id) {
     let m = savedMixes.find(x => x.id === id); if(!m) return; let c = m.config;
     if(c.type === 't1') {
         switchTab('tab_complet'); document.getElementById('t1_vol').value = c.finalVol;
-        if(c.multi) { setAromaMode('t1', 'multi'); state.t1.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t1_compo_name').value = c.compoName || ""; renderMultiList('t1'); }
+        if(c.multi) { setAromaMode('t1', 'multi'); state.t1.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t1_compo_name').value = c.compoName || ""; state.t1.resetSlider = true; renderMultiList('t1'); }
         else { setAromaMode('t1', 'mono'); document.getElementById('t1_aroma_perc').value = (c.aroma/c.finalVol)*100; document.getElementById('t1_adv_aroma').checked = c.aromaPg !== 100; document.getElementById('t1_aroma_pg').value = 100 - c.aromaPg; toggleAdvAroma('t1'); }
         document.getElementById('t1_ratio_pg').value = 100 - c.realPgRatio;
         let bStr = c.bStr || parseFloat(document.getElementById('t1_booster_str').value) || 20; document.getElementById('t1_nic_mg').value = round1((c.nic * bStr) / c.finalVol);
@@ -2557,7 +2570,7 @@ function editMix(id) {
         if(c.globalName) document.getElementById('t1_global_name').value = c.globalName;
     } else if (c.type === 't2') {
         switchTab('tab_booster'); document.getElementById('t2_vol').value = c.prepVol; document.getElementById('t2_max_nic').value = c.nicMax; document.getElementById('t2_ratio_pg').value = 100 - c.realPgRatio;
-        if(c.multi) { setAromaMode('t2', 'multi'); state.t2.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t2_compo_name').value = c.compoName || ""; renderMultiList('t2'); }
+        if(c.multi) { setAromaMode('t2', 'multi'); state.t2.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t2_compo_name').value = c.compoName || ""; state.t2.resetSlider = true; renderMultiList('t2'); }
         else { setAromaMode('t2', 'mono'); document.getElementById('t2_aroma_perc').value = (c.aroma/c.finalVol)*100; document.getElementById('t2_adv_aroma').checked = c.aromaPg !== 100; document.getElementById('t2_aroma_pg').value = 100 - c.aromaPg; toggleAdvAroma('t2'); }
         toggleVolMode('t2','defined');
         if(c.globalName) document.getElementById('t2_global_name').value = c.globalName;
@@ -3126,6 +3139,20 @@ function exportRecipePNG() {
             
             ctx.restore();
             cancelExport();
+        }).catch(err => {
+            console.error("Erreur PNG recette :", err);
+            showAlert("Erreur lors de la capture PNG.");
+            if (nextSibling) {
+                parent.insertBefore(ctx.card, nextSibling);
+            } else {
+                parent.appendChild(ctx.card);
+            }
+            a4Wrapper.remove();
+            ctx.card.style.width = oldWidth;
+            ctx.card.style.margin = oldMargin;
+            ctx.card.classList.add('h-full');
+            ctx.restore();
+            cancelExport();
         });
     }, 600);
 }
@@ -3674,9 +3701,9 @@ function calculateCoil(isManualWatts = false) {
         let rawLegs = parseFloat(document.getElementById('coil_legs')?.value);
         legs = isNaN(rawLegs) ? 8 : Math.max(0, rawLegs);
         
-        let coreDiaMm = parseFloat(document.getElementById('coil_core_mm')?.value) || 0.40;
-        let ribbonW = parseFloat(document.getElementById('coil_ribbon_w')?.value) || 0.5;
-        let ribbonH = parseFloat(document.getElementById('coil_ribbon_h')?.value) || 0.1;
+        let coreDiaMm = Math.max(0.01, parseFloat(document.getElementById('coil_core_mm')?.value) || 0.40);
+        let ribbonW = Math.max(0.01, parseFloat(document.getElementById('coil_ribbon_w')?.value) || 0.5);
+        let ribbonH = Math.max(0.005, parseFloat(document.getElementById('coil_ribbon_h')?.value) || 0.1);
         let ribbonCount = parseInt(document.getElementById('coil_ribbon_count')?.value) || 6;
         if (ribbonCount < 2) {
             ribbonCount = 2;
@@ -3687,12 +3714,12 @@ function calculateCoil(isManualWatts = false) {
             let el = document.getElementById('coil_ribbon_count');
             if (el) el.value = 12;
         }
-        let frameDiaMm = parseFloat(document.getElementById('coil_frame_mm')?.value) || 0.32;
+        let frameDiaMm = Math.max(0.01, parseFloat(document.getElementById('coil_frame_mm')?.value) || 0.32;
         
         let hasWrap = ['clapton', 'fused2', 'fused3', 'fused4', 'staple', 'framed'].includes(struct);
         let wrapMatName = document.getElementById('coil_material_wrap')?.value || 'ni80';
         let materialWrap = COIL_MATERIALS[wrapMatName] || COIL_MATERIALS.ni80;
-        let wrapDiaMm = parseFloat(document.getElementById('coil_wrap_mm')?.value) || 0.13;
+        let wrapDiaMm = Math.max(0.01, parseFloat(document.getElementById('coil_wrap_mm')?.value) || 0.13);
         
         let totalCoreArea = 0;
         wireEffectiveDia = coreDiaMm;
