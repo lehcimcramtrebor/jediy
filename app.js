@@ -3714,7 +3714,7 @@ function calculateCoil(isManualWatts = false) {
             let el = document.getElementById('coil_ribbon_count');
             if (el) el.value = 12;
         }
-        let frameDiaMm = Math.max(0.01, parseFloat(document.getElementById('coil_frame_mm')?.value) || 0.32;
+        let frameDiaMm = Math.max(0.01, parseFloat(document.getElementById('coil_frame_mm')?.value) || 0.32);
         
         let hasWrap = ['clapton', 'fused2', 'fused3', 'fused4', 'staple', 'framed'].includes(struct);
         let wrapMatName = document.getElementById('coil_material_wrap')?.value || 'ni80';
