@@ -1117,6 +1117,7 @@
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Taille de l'Ame</label>
                                 <div class="flex gap-2">
                                     <select id="coil_core_awg" onchange="syncCoilSize('core', 'awg'); calculateCoil();" class="flex-1 min-w-0 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
+                                        <option value="">-- Custom --</option>
                                         <option value="20">20G (0.81mm)</option>
                                         <option value="21">21G (0.72mm)</option>
                                         <option value="22">22G (0.64mm)</option>
@@ -1173,6 +1174,7 @@
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Taille du Cadre</label>
                                 <div class="flex gap-2">
                                     <select id="coil_frame_awg" onchange="syncCoilSize('frame', 'awg'); calculateCoil();" class="flex-1 min-w-0 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
+                                        <option value="">-- Custom --</option>
                                         <option value="26">26G (0.40mm)</option>
                                         <option value="28" selected>28G (0.32mm)</option>
                                         <option value="30">30G (0.25mm)</option>
@@ -1204,6 +1206,7 @@
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Taille de l'Enrobage</label>
                                 <div class="flex gap-2">
                                     <select id="coil_wrap_awg" onchange="syncCoilSize('wrap', 'awg'); calculateCoil();" class="flex-1 min-w-0 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
+                                        <option value="">-- Custom --</option>
                                         <option value="32">32G (0.20mm)</option>
                                         <option value="34">34G (0.16mm)</option>
                                         <option value="36" selected>36G (0.13mm)</option>

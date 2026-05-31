@@ -1,10 +1,11 @@
-const CACHE_NAME = 'je-diy-v9.12';
+const CACHE_NAME = 'je-diy-v9.13';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
   './yoda.png',
+  './jediy.png',
   './Audit_Electric.md',
   './Audit_Liquide.md',
   './app.js',
@@ -12,7 +13,13 @@ const ASSETS_TO_CACHE = [
   './assets/js/tailwind.js',
   './assets/js/html2canvas.min.js',
   './assets/js/html2pdf.bundle.min.js',
-  './assets/css/inter.css'
+  './assets/css/inter.css',
+  './assets/fonts/inter-v20-latin-regular.woff2',
+  './assets/fonts/inter-v20-latin-500.woff2',
+  './assets/fonts/inter-v20-latin-600.woff2',
+  './assets/fonts/inter-v20-latin-700.woff2',
+  './assets/fonts/inter-v20-latin-800.woff2',
+  './assets/fonts/inter-v20-latin-900.woff2'
 ];
 
 // Installation du service worker et mise en cache des fichiers

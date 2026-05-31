@@ -9,7 +9,7 @@ const DENSITY_VG = 1.261;
 function getLiquidWeight(type, vol, pgRatio = 100, degree = 40) {
     if (vol <= 0) return 0;
     if (type === 'water') return vol * 1.0;
-    if (type === 'alcohol') return vol * (1.0 - (degree * 0.00211)); 
+    if (type === 'alcohol') return vol * (1.0 - (degree * 0.0016) - (degree * degree * 0.000005)); 
     return (vol * (pgRatio / 100) * DENSITY_PG) + (vol * ((100 - pgRatio) / 100) * DENSITY_VG);
 }
 
@@ -80,8 +80,17 @@ window.onload = () => { init(); };
 /* ========================================== */
 
 function getWeight(vol, pgRatio) { return getLiquidWeight('aroma', vol, pgRatio); }
-function formatRatioStr(pg, labels = false) {
+function formatRatioStr(pg, labels = false, vg = null, water = 0, alcohol = 0) {
     let p = Math.round(pg);
+    if (vg !== null) {
+        let v = Math.round(vg);
+        let w = Math.round(water + alcohol);
+        if (w > 0) {
+            return labels ? `${p}PG / ${v}VG / ${w}Tiers` : `${p}/${v}/${w}`;
+        }
+        let rest = 100 - p;
+        return labels ? `${p}PG / ${rest}VG` : `${p}/${rest}`;
+    }
     if (p === 100) return labels ? "Full PG" : "100% PG";
     if (p === 0) return labels ? "Full VG" : "100% VG";
     return labels ? `${p}PG / ${100-p}VG` : `${p}/${100-p}`;
@@ -1022,6 +1031,20 @@ function wizNext() {
                 }
             }
         }
+        if (curStepId === 's6') {
+            let selectedBases = getChecked('wiz_base_chk');
+            if (selectedBases.length === 0) {
+                showAlert("Coche au moins une base neutre dans tes placards pour continuer !");
+                return;
+            }
+            if (wizState.type === 't1') {
+                let selectedBoosters = getChecked('wiz_boost_chk');
+                if (selectedBoosters.length === 0) {
+                    showAlert("Coche au moins un booster dans tes placards pour continuer !");
+                    return;
+                }
+            }
+        }
         if(wizState.step === wizState.path.length - 2) runWizCalculation();
         wizState.step++;
         wizUpdateView();
@@ -1167,13 +1190,17 @@ function calcTab1() {
     let aromaPg = isNaN(aromaPgVal) ? 100 : (100 - aromaPgVal);
     
     let originalTotalMulti = isMulti ? state.t1.multi.reduce((acc, v) => acc + v.perc, 0) : 0;
-    let p = isMulti ? (parseFloat(document.getElementById('t1_multi_global_perc').value) || originalTotalMulti) : (parseFloat(document.getElementById('t1_aroma_perc').value) || 0);
+    let rawP = isMulti ? parseFloat(document.getElementById('t1_multi_global_perc').value) : parseFloat(document.getElementById('t1_aroma_perc').value);
+    let p = isNaN(rawP) ? (isMulti ? originalTotalMulti : 0) : Math.max(0, rawP);
     let ratioScale = (isMulti && originalTotalMulti > 0) ? (p / originalTotalMulti) : 1;
 
     if(state.t1.vol_mode === 'defined') {
-        finalVol = parseFloat(document.getElementById('t1_vol').value) || 0; aromaVol = finalVol * (p/100);
+        let rawFinalVol = parseFloat(document.getElementById('t1_vol').value);
+        finalVol = isNaN(rawFinalVol) ? 0 : Math.max(0, rawFinalVol);
+        aromaVol = finalVol * (p/100);
     } else {
-        aromaVol = parseFloat(document.getElementById('t1_aroma_avail').value) || 0; 
+        let rawAromaVol = parseFloat(document.getElementById('t1_aroma_avail').value);
+        aromaVol = isNaN(rawAromaVol) ? 0 : Math.max(0, rawAromaVol);
         if(p <= 0) { renderMixes('t1', [], [{err: "Le pourcentage d'arôme doit être > 0."}]); return; }
         finalVol = aromaVol / (p/100);
     }
@@ -1185,8 +1212,15 @@ function calcTab1() {
     if (bStr <= 0) bStr = 20;
     
     let nicVol = 0;
-    if(state.t1.nic_mode === 'mg') { let mg = parseFloat(document.getElementById('t1_nic_mg').value) || 0; nicVol = (finalVol * mg) / bStr; } 
-    else { let bCount = parseFloat(document.getElementById('t1_nic_boost').value) || 0; nicVol = bCount * 10; }
+    if(state.t1.nic_mode === 'mg') {
+        let rawMg = parseFloat(document.getElementById('t1_nic_mg').value);
+        let mg = isNaN(rawMg) ? 0 : Math.max(0, rawMg);
+        nicVol = (finalVol * mg) / bStr;
+    } else {
+        let rawBCount = parseFloat(document.getElementById('t1_nic_boost').value);
+        let bCount = isNaN(rawBCount) ? 0 : Math.max(0, rawBCount);
+        nicVol = bCount * 10;
+    }
 
     let baseVol = finalVol - aromaVol - nicVol; if (Math.abs(baseVol) < 1e-6) baseVol = 0; 
     if(baseVol < 0) { renderMixes('t1', [], [{err: "Pas de place pour la base ! Réduisez l'arôme ou la nicotine."}]); return; }
@@ -1232,19 +1266,23 @@ function calcTab2() {
     if (isMulti && state.t2.multi.length === 0) { renderMixes('t2', [], [{err: "Ajoutez au moins un arôme dans votre composition."}]); return; }
     
     let originalTotalMulti = isMulti ? state.t2.multi.reduce((acc, v) => acc + v.perc, 0) : 0;
-    let targetAromaPerc = isMulti ? (parseFloat(document.getElementById('t2_multi_global_perc').value) || originalTotalMulti) : (parseFloat(document.getElementById('t2_aroma_perc').value) || 15);
+    let rawAromaPerc = isMulti ? parseFloat(document.getElementById('t2_multi_global_perc').value) : parseFloat(document.getElementById('t2_aroma_perc').value);
+    let targetAromaPerc = isNaN(rawAromaPerc) ? (isMulti ? originalTotalMulti : 15) : Math.max(0, rawAromaPerc);
     let ratioScale = (isMulti && originalTotalMulti > 0) ? (targetAromaPerc / originalTotalMulti) : 1;
     
-    let maxNic = parseFloat(document.getElementById('t2_max_nic').value) || 0;
+    let rawMaxNic = parseFloat(document.getElementById('t2_max_nic').value);
+    let maxNic = isNaN(rawMaxNic) ? 0 : Math.max(0, rawMaxNic);
     let bStr = parseFloat(document.getElementById('t2_booster_str').value) || 20;
     if (bStr <= 0) bStr = 20;
 
     if(state.t2.vol_mode === 'defined') {
-        prepVol = parseFloat(document.getElementById('t2_vol').value) || 0;
+        let rawPrepVol = parseFloat(document.getElementById('t2_vol').value);
+        prepVol = isNaN(rawPrepVol) ? 0 : Math.max(0, rawPrepVol);
         if(1 - maxNic/bStr <= 0) { renderMixes('t2', [], [{err: "Taux max nicotine impossible."}]); return; }
         finalVolAfterBoost = prepVol / (1 - maxNic/bStr); aromaVol = finalVolAfterBoost * (targetAromaPerc / 100);
     } else {
-        aromaVol = parseFloat(document.getElementById('t2_aroma_avail').value) || 0;
+        let rawAromaVol = parseFloat(document.getElementById('t2_aroma_avail').value);
+        aromaVol = isNaN(rawAromaVol) ? 0 : Math.max(0, rawAromaVol);
         if(targetAromaPerc <= 0) { renderMixes('t2', [], [{err: "Pourcentage d'arôme > 0 requis."}]); return; }
         finalVolAfterBoost = aromaVol / (targetAromaPerc / 100);
         let boosterMaxVol = (finalVolAfterBoost * maxNic) / bStr; prepVol = finalVolAfterBoost - boosterMaxVol;
@@ -1294,7 +1332,8 @@ function calcTab3() {
         document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in text-red-500 font-bold p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-2xl text-center text-sm shadow-inner">Ajoutez au moins un arôme dans votre composition.</div>`;
         return;
     }
-    let aVol = isMulti ? (parseFloat(document.getElementById('t3_aroma_vol_multi').value)||0) : (parseFloat(document.getElementById('t3_aroma_vol').value)||0); 
+    let rawAVol = isMulti ? parseFloat(document.getElementById('t3_aroma_vol_multi').value) : parseFloat(document.getElementById('t3_aroma_vol').value);
+    let aVol = isNaN(rawAVol) ? 0 : Math.max(0, rawAVol);
     
     let aPgVal = parseFloat(document.getElementById('t3_aroma_pg').value); 
     let aPg = isNaN(aPgVal) ? 100 : (100 - aPgVal);
@@ -1320,9 +1359,18 @@ function calcTab3() {
         aWeight = getWeight(aVol, aPg);
     }
 
-    let bVol = parseFloat(document.getElementById('t3_base_vol').value)||0; let bPgVal = parseFloat(document.getElementById('t3_base_pg').value); let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
-    let nVol = parseFloat(document.getElementById('t3_boost_vol').value)||0; let nPgVal = parseFloat(document.getElementById('t3_boost_pg').value); let nPg = isNaN(nPgVal) ? 50 : (100 - nPgVal);
-    let strVal = parseFloat(document.getElementById('t3_boost_str').value); let str = isNaN(strVal) ? 20 : strVal;
+    let rawBVol = parseFloat(document.getElementById('t3_base_vol').value);
+    let bVol = isNaN(rawBVol) ? 0 : Math.max(0, rawBVol);
+    let bPgVal = parseFloat(document.getElementById('t3_base_pg').value);
+    let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
+    
+    let rawNVol = parseFloat(document.getElementById('t3_boost_vol').value);
+    let nVol = isNaN(rawNVol) ? 0 : Math.max(0, rawNVol);
+    let nPgVal = parseFloat(document.getElementById('t3_boost_pg').value);
+    let nPg = isNaN(nPgVal) ? 50 : (100 - nPgVal);
+    
+    let strVal = parseFloat(document.getElementById('t3_boost_str').value);
+    let str = isNaN(strVal) ? 20 : Math.max(0, strVal);
 
     let bWeight = getWeight(bVol, bPg); let nWeight = getWeight(nVol, nPg);
     document.getElementById('t3_aroma_w').innerText = `${round2(aWeight)} g`; document.getElementById('t3_base_w').innerText = `${round2(bWeight)} g`; document.getElementById('t3_boost_w').innerText = `${round2(nWeight)} g`;
@@ -1331,6 +1379,32 @@ function calcTab3() {
     if(tVol === 0) { document.getElementById('t3_results').innerHTML = `<div class="animate-fade-in">Aucun volume.</div>`; return; }
 
     let totalPg = isMulti ? (totalAromaPgMl + (bVol*(bPg/100)) + (nVol*(nPg/100))) : ((aVol*(aPg/100)) + (bVol*(bPg/100)) + (nVol*(nPg/100)));
+    let totalWater = 0;
+    if (isMulti && state.t3.multi.length > 0) {
+        let totalPerc = state.t3.multi.reduce((acc, v) => acc + v.perc, 0);
+        if (totalPerc > 0) {
+            state.t3.multi.forEach(item => {
+                if (item.type === 'water') {
+                    totalWater += aVol * (item.perc / totalPerc);
+                }
+            });
+        }
+    }
+    let totalAlcohol = 0;
+    if (isMulti && state.t3.multi.length > 0) {
+        let totalPerc = state.t3.multi.reduce((acc, v) => acc + v.perc, 0);
+        if (totalPerc > 0) {
+            state.t3.multi.forEach(item => {
+                if (item.type === 'alcohol') {
+                    totalAlcohol += aVol * (item.perc / totalPerc);
+                }
+            });
+        }
+    }
+    let vgRatio = ((tVol - totalPg - totalWater - totalAlcohol) / tVol) * 100;
+    let waterRatio = (totalWater / tVol) * 100;
+    let alcoholRatio = (totalAlcohol / tVol) * 100;
+
     let pgRatio = (totalPg / tVol) * 100; let aRatio = (aVol / tVol) * 100; let finalNic = (nVol * str) / tVol;
     
     let originalCompoTotal = isMulti ? state.t3.multi.reduce((acc, v)=>acc+v.perc, 0) : 0;
@@ -1346,7 +1420,7 @@ function calcTab3() {
         <div class="animate-fade-in">
             <div class="text-sm font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider mb-2">Volume Total : <span class="text-2xl text-stone-800 dark:text-stone-100 block">${round1(tVol)} ml <span class="text-base text-brand-600 dark:text-brand-400 font-black">(${round2(tWeight)} g)</span></span></div>
             <div class="grid grid-cols-3 gap-2 mt-4 text-left">
-                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio)}</span></div>
+                <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Ratio PG/VG</span><span class="font-bold text-stone-800 dark:text-stone-200">${formatRatioStr(pgRatio, false, vgRatio, waterRatio, alcoholRatio)}</span></div>
                 <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Dosage Arôme</span><span class="font-bold text-brand-600 dark:text-brand-400">${round1(aRatio)} %</span></div>
                 <div class="bg-white dark:bg-stone-800 p-3 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors"><span class="text-[10px] text-stone-400 block uppercase">Nicotine</span><span class="font-bold text-stone-800 dark:text-stone-200">${round1(finalNic)} mg</span></div>
             </div>
@@ -1359,10 +1433,15 @@ function calcTab3() {
 }
 
 function calcBoostSimple(prefix, containerId) {
-    let vol = parseFloat(document.getElementById(prefix + '_vol').value) || 0; let bVol = parseFloat(document.getElementById('tab_boost_ml').value) || 0;
+    let rawVol = parseFloat(document.getElementById(prefix + '_vol').value);
+    let vol = isNaN(rawVol) ? 0 : Math.max(0, rawVol);
+    let rawBVol = parseFloat(document.getElementById('tab_boost_ml').value);
+    let bVol = isNaN(rawBVol) ? 0 : Math.max(0, rawBVol);
+    
     let advChecked = document.getElementById(prefix + '_adv').checked;
     let pgVal = parseFloat(document.getElementById(prefix + '_pg').value); let pg = isNaN(pgVal) ? 50 : (100 - pgVal);
-    let strEl = document.getElementById(prefix + '_str'); let strVal = strEl ? parseFloat(strEl.value) : 20; let bStr = isNaN(strVal) ? 20 : strVal;
+    let strEl = document.getElementById(prefix + '_str'); let strVal = strEl ? parseFloat(strEl.value) : 20;
+    let bStr = isNaN(strVal) ? 20 : Math.max(0, strVal);
     let bPgVal = parseFloat(document.getElementById(prefix + '_bpg').value); let bPg = isNaN(bPgVal) ? 50 : (100 - bPgVal);
     let finalVol = vol + bVol;
     
@@ -3185,7 +3264,7 @@ function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
         
         if (isHalfWrap) {
             let xEnd = startX + intWraps * thickness;
-            rightLeg.setAttribute('d', `M ${xEnd} ${75 + coilRadius} L ${xEnd + 15 * scale} ${75 + coilRadius + legVisualLength}`);
+            rightLeg.setAttribute('d', `M ${xEnd - 4 * scale} 75 L ${xEnd + 15 * scale} ${75 + coilRadius + legVisualLength}`);
         } else {
             let xEnd = startX + (intWraps - 1) * thickness;
             rightLeg.setAttribute('d', `M ${xEnd + thickness} ${75 - coilRadius} Q ${xEnd + thickness + 8 * scale} 75, ${xEnd + thickness + 15 * scale} ${75 + coilRadius + legVisualLength}`);
@@ -3245,7 +3324,8 @@ function calculateCoil(isManualWatts = false) {
     let materialCore = COIL_MATERIALS[mat] || COIL_MATERIALS.ni80;
     let rho = materialCore.rho;
     let density = materialCore.density;
-    let watts = parseFloat(document.getElementById('coil_watts')?.value) || 45;
+    let rawWatts = parseFloat(document.getElementById('coil_watts')?.value);
+    let watts = isNaN(rawWatts) ? 45 : Math.max(1.0, rawWatts);
     
     let rFinal = 0;
     let totalSurfaceArea = 0;
@@ -3261,8 +3341,10 @@ function calculateCoil(isManualWatts = false) {
 
     if (currentCoilType === 'mesh') {
         let meshType = document.getElementById('mesh_type')?.value || 'weave_200';
-        let l = parseFloat(document.getElementById('mesh_length')?.value) || 16.0;
-        let w = parseFloat(document.getElementById('mesh_width')?.value) || 6.8;
+        let rawL = parseFloat(document.getElementById('mesh_length')?.value);
+        let l = isNaN(rawL) ? 16.0 : Math.max(1.0, rawL);
+        let rawW = parseFloat(document.getElementById('mesh_width')?.value);
+        let w = isNaN(rawW) ? 6.8 : Math.max(1.0, rawW);
         
         let specs = MESH_CATALOG[meshType] || MESH_CATALOG.weave_200;
         let thickness = specs.thickness;
@@ -3280,9 +3362,12 @@ function calculateCoil(isManualWatts = false) {
         totalCoilWeight = singleWeight * (config === 'double' ? 2 : 1);
     } else {
         struct = document.getElementById('coil_structure')?.value || 'simple';
-        innerDia = parseFloat(document.getElementById('coil_inner_dia')?.value) || 3.0;
-        wraps = parseFloat(document.getElementById('coil_wraps')?.value) || 6;
-        legs = parseFloat(document.getElementById('coil_legs')?.value) || 8;
+        let rawInnerDia = parseFloat(document.getElementById('coil_inner_dia')?.value);
+        innerDia = isNaN(rawInnerDia) ? 3.0 : Math.max(0.1, rawInnerDia);
+        let rawWraps = parseFloat(document.getElementById('coil_wraps')?.value);
+        wraps = isNaN(rawWraps) ? 6 : Math.max(0.5, rawWraps);
+        let rawLegs = parseFloat(document.getElementById('coil_legs')?.value);
+        legs = isNaN(rawLegs) ? 8 : Math.max(0, rawLegs);
         
         let coreDiaMm = parseFloat(document.getElementById('coil_core_mm')?.value) || 0.40;
         let ribbonW = parseFloat(document.getElementById('coil_ribbon_w')?.value) || 0.5;
