@@ -1064,11 +1064,37 @@ function runWizCalculation() {
     if (prefix === 't1') { setNicMode('t1', 'mg'); document.getElementById('t1_nic_mg').value = document.getElementById('wiz_nic_mg').value; } 
     else document.getElementById('t2_max_nic').value = document.getElementById('wiz_max_nic').value;
 
-    document.querySelectorAll('.' + prefix + '_base_chk').forEach(el => { el.checked = false; toggleCheckBtn(el); });
-    if (prefix === 't1') document.querySelectorAll('.t1_boost_chk').forEach(el => { el.checked = false; toggleCheckBtn(el); });
+    let selectedBases = getChecked('wiz_base_chk');
+    document.querySelectorAll('.' + prefix + '_base_chk').forEach(el => {
+        let val = parseInt(el.value);
+        let checked = selectedBases.includes(val);
+        el.checked = checked;
+        let l = el.parentElement; let i = l.querySelector('.check-icon');
+        if (l && i) {
+            if (checked) {
+                l.classList.remove('border-stone-200', 'dark:border-stone-700'); l.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'dark:border-emerald-500'); i.classList.remove('hidden');
+            } else {
+                l.classList.add('border-stone-200', 'dark:border-stone-700'); l.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'dark:border-emerald-500'); i.classList.add('hidden');
+            }
+        }
+    });
 
-    getChecked('wiz_base_chk').forEach(val => { let el = document.querySelector(`.${prefix}_base_chk[value="${val}"]`); if(el) { el.checked = true; toggleCheckBtn(el); } });
-    if (prefix === 't1') getChecked('wiz_boost_chk').forEach(val => { let el = document.querySelector(`.t1_boost_chk[value="${val}"]`); if(el) { el.checked = true; toggleCheckBtn(el); } });
+    if (prefix === 't1') {
+        let selectedBoosts = getChecked('wiz_boost_chk');
+        document.querySelectorAll('.t1_boost_chk').forEach(el => {
+            let val = parseInt(el.value);
+            let checked = selectedBoosts.includes(val);
+            el.checked = checked;
+            let l = el.parentElement; let i = l.querySelector('.check-icon');
+            if (l && i) {
+                if (checked) {
+                    l.classList.remove('border-stone-200', 'dark:border-stone-700'); l.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'dark:border-emerald-500'); i.classList.remove('hidden');
+                } else {
+                    l.classList.add('border-stone-200', 'dark:border-stone-700'); l.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-900/20', 'dark:border-emerald-500'); i.classList.add('hidden');
+                }
+            }
+        });
+    }
 
     if (prefix === 't1') calcTab1(); else calcTab2();
     document.getElementById('wiz_results_container').innerHTML = document.getElementById(prefix + '_results_container').innerHTML;
