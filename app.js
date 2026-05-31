@@ -1605,7 +1605,6 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     let titleText = r.globalName ? r.globalName : (prefix==='t1'?'Liquide Prêt':'Base Shortfill');
     let titleHtml = `<div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg truncate pr-2" style="line-height:1.2;">${titleText} <span class="text-brand-600 dark:text-brand-400">${round1(totalVol)} ml</span></div>`;
 
-
     let html = `<div data-theme="${theme}" data-config="${cfgStr}" ${dataAttrs} class="${compactClass} animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">
         <div class="flex-1">
             <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700 transition-colors">
@@ -1667,6 +1666,13 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         });
         multiHtml += `</div></div></div>`;
         html += multiHtml;
+    } else if (r.aroma > 0) {
+        aromaWeight = getWeight(r.aroma, r.aromaPg);
+        totalWeight += aromaWeight;
+        html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
+                <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(r.aromaPg, false)}</span></span>
+                <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.aroma)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aromaWeight)} g</span></div>
+            </div>`;
     }
     
     r.bases.forEach(b => {
@@ -1730,7 +1736,6 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
                 <div class="mt-3 text-center bg-stone-100 dark:bg-stone-900 p-2 rounded w-full border border-stone-200 dark:border-stone-700 transition-colors"><div class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Résultat estimé :</div><div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result">...</div></div>
             </div>
         </div>`;
-
     }
     html += `</div>`; return html;
 }
