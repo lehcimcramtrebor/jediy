@@ -1,3 +1,11 @@
+function safeSetItem(key, value) {
+    try {
+        localStorage.setItem(key, value);
+    } catch (e) {
+        console.warn("Storage write blocked or full:", e);
+    }
+}
+
 /* ========================================== */
 /* 1. INITIALISATION ET VARIABLES GLOBALES    */
 /* ========================================== */
@@ -45,7 +53,7 @@ function openJediModal() {
 function closeJediModal() { document.getElementById('jedi_identity_modal').classList.add('hidden'); }
 function saveJediIdentity() {
     jediIdentity = document.getElementById('jedi_identity_input').value.trim();
-    if (jediIdentity) localStorage.setItem('jediIdentity', jediIdentity);
+    if (jediIdentity) safeSetItem('jediIdentity', jediIdentity);
     else localStorage.removeItem('jediIdentity');
     closeJediModal();
     showAlert("Identité Jedi enregistrée !");
@@ -754,7 +762,7 @@ function saveCompo(prefix) {
 
 function _doSaveCompo(name, prefix) {
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state[prefix].multi)) });
-    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     syncCompoSelects(); setNeedsExport(true); showAlert("Composition sauvegardée !");
 }
 
@@ -899,14 +907,14 @@ function saveEditedCompo() {
 
 function _finalizeNewCompoSave(name) {
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
-    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     syncCompoSelects(); setNeedsExport(true); showAlert("Composition créée !"); closeCompoEditModal();
 }
 
 function _finalizeEditCompoSave(name) {
     let c = savedCompos.find(x => x.id === currentEditCompoId);
     if(c) { c.name = name; c.items = JSON.parse(JSON.stringify(state.edit_compo.multi)); }
-    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     syncCompoSelects(); setNeedsExport(true); showAlert("Composition mise à jour !"); closeCompoEditModal();
 }
 
@@ -918,7 +926,7 @@ function saveAsNewCompo() {
         return; 
     }
     savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
-    localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+    safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     syncCompoSelects(); setNeedsExport(true); showAlert("Copie sauvegardée !"); closeCompoEditModal();
 }
 
@@ -956,11 +964,11 @@ function importCompoJson(e) {
             if (existingIdx >= 0) {
                 openHtmlConfirm(`La composition "${compo.name}" existe déjà. Importer comme copie ?`, () => {
                     compo.name += " (Import)";
-                    savedCompos.push(compo); localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+                    savedCompos.push(compo); safeSetItem('jediy_compos', JSON.stringify(savedCompos));
                     syncCompoSelects(); showAlert("Composition importée !");
                 });
             } else {
-                savedCompos.push(compo); localStorage.setItem('jediy_compos', JSON.stringify(savedCompos));
+                savedCompos.push(compo); safeSetItem('jediy_compos', JSON.stringify(savedCompos));
                 syncCompoSelects(); showAlert("Composition importée !");
             }
         } catch(err) { openHtmlConfirm("Erreur de lecture du fichier JSON."); }
@@ -1750,7 +1758,7 @@ function toggleCheckBtn(input) {
     if (input.checked && !arr.includes(val)) arr.push(val);
     else if (!input.checked) arr = arr.filter(x => x !== val);
     
-    localStorage.setItem(storageKey, JSON.stringify(arr));
+    safeSetItem(storageKey, JSON.stringify(arr));
     setNeedsExport(true); // Active la pastille rouge d'export
 
     // Synchro visuelle sur les autres onglets sans boucle infinie
@@ -2221,7 +2229,7 @@ function updateSettingsBadge() {
 }
 
 function setNeedsExport(state) {
-    if (state) localStorage.setItem('jediy_needs_export', 'true');
+    if (state) safeSetItem('jediy_needs_export', 'true');
     else localStorage.removeItem('jediy_needs_export');
     updateSettingsBadge();
 }
@@ -2285,7 +2293,7 @@ function saveCurrentMix() {
     let name = document.getElementById('mix_name_input').value.trim();
     if(name.length < 2) return;
     savedMixes.push({ id: Date.now(), name: name, config: cfg });
-    localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes));
+    safeSetItem('jediy_mixes', JSON.stringify(savedMixes));
     setNeedsExport(true);
     showAlert("Mix sauvegardé !"); cancelExport();
     if(document.getElementById('tab_mes_donnees').classList.contains('active')) renderMesMixes();
@@ -2567,13 +2575,13 @@ function editMix(id) {
 function deleteMix(id) {
     openHtmlConfirm("Supprimer ce mix ?", () => {
         savedMixes = savedMixes.filter(x => x.id !== id); 
-        localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes)); 
+        safeSetItem('jediy_mixes', JSON.stringify(savedMixes)); 
         renderMesMixes(); 
     });
 }
 function deleteCompo(id) { 
     openHtmlConfirm("Supprimer cette composition ?", () => {
-        savedCompos = savedCompos.filter(x => x.id !== id); localStorage.setItem('jediy_compos', JSON.stringify(savedCompos)); syncCompoSelects(); renderMesCompos(); 
+        savedCompos = savedCompos.filter(x => x.id !== id); safeSetItem('jediy_compos', JSON.stringify(savedCompos)); syncCompoSelects(); renderMesCompos(); 
     });
 }
 
@@ -2623,12 +2631,12 @@ function handleImport(e) {
     reader.onload = function(ev) {
         try {
             let data = JSON.parse(ev.target.result);
-            if(data.mixes) { savedMixes = data.mixes; localStorage.setItem('jediy_mixes', JSON.stringify(savedMixes)); }
-            if(data.compos) { savedCompos = data.compos; localStorage.setItem('jediy_compos', JSON.stringify(savedCompos)); }
-            if(data.jediIdentity !== undefined) { if(data.jediIdentity) localStorage.setItem('jediIdentity', data.jediIdentity); else localStorage.removeItem('jediIdentity'); }
-            if(data.theme) localStorage.setItem('theme', data.theme);
-            if(data.hw_bases) localStorage.setItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
-            if(data.hw_boosts) localStorage.setItem('jediy_hw_boosts', JSON.stringify(data.hw_boosts));
+            if(data.mixes) { savedMixes = data.mixes; safeSetItem('jediy_mixes', JSON.stringify(savedMixes)); }
+            if(data.compos) { savedCompos = data.compos; safeSetItem('jediy_compos', JSON.stringify(savedCompos)); }
+            if(data.jediIdentity !== undefined) { if(data.jediIdentity) safeSetItem('jediIdentity', data.jediIdentity); else localStorage.removeItem('jediIdentity'); }
+            if(data.theme) safeSetItem('theme', data.theme);
+            if(data.hw_bases) safeSetItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
+            if(data.hw_boosts) safeSetItem('jediy_hw_boosts', JSON.stringify(data.hw_boosts));
             showAlert("Importation réussie !"); setTimeout(() => window.location.reload(), 1000);
         } catch(err) { showAlert("Fichier invalide !"); }
     };
