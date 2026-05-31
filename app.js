@@ -1722,6 +1722,7 @@ function renderMixes(prefix, exact, alt) {
     if(exact.length === 0 && alt.length === 0) { allHtml = `<div class="animate-fade-in col-span-full p-4 bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-200 dark:border-stone-700 rounded-2xl font-bold text-sm text-center shadow-inner transition-colors">Aucun Mix possible.</div>`; }
     
     container.innerHTML = allHtml; container.querySelectorAll('select').forEach(s => updateSim(s));
+    if (typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
 }
 
 function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
@@ -2552,7 +2553,17 @@ function handleImport(e) {
 
 function openModalFromCard(element) {
     let card = element.classList.contains('recipe-card-wrapper') ? element : element.closest('.recipe-card-wrapper');
-    currentMixCard = card; let clone = card.cloneNode(true);
+    currentMixCard = card;
+    let clone = card.cloneNode(true);
+    clone.querySelectorAll('select').forEach(select => {
+        select.dataset.customized = 'false';
+        delete select.refreshCustom;
+        select.style.display = '';
+        let wrapper = select.nextSibling;
+        if (wrapper && wrapper.classList.contains('custom-select-wrapper')) {
+            wrapper.remove();
+        }
+    });
     let optBtn = clone.querySelector('button'); if(optBtn) optBtn.remove();
     clone.classList.remove('hover:shadow-xl', 'hover:-translate-y-1', 'h-full', 'compact-card');
     clone.classList.add('export-card', 'relative', 'w-full', 'shadow-2xl', 'max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
@@ -2604,6 +2615,7 @@ function openModalFromCard(element) {
     
     document.getElementById('recipe_modal').classList.remove('hidden');
     let sel = clone.querySelector('.sim-sel-vol'); if(sel) updateSim(sel);
+    if (typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
 }
 
 function closeRecipeModal() { document.getElementById('recipe_modal').classList.add('hidden'); currentMixCard = null; }
@@ -4260,19 +4272,39 @@ function makeAllSelectsCustom() {
         select.style.display = 'none';
         select.dataset.customized = 'true';
 
+        const isCompact = select.classList.contains('sim-sel-vol') || select.classList.contains('sim-b-ratio');
+
         const wrapper = document.createElement('div');
-        wrapper.className = 'relative w-full custom-select-wrapper';
+        let wrapperClass = 'relative w-full custom-select-wrapper';
+        if (select.classList.contains('sim-sel-vol')) {
+            wrapperClass += ' max-w-[180px]';
+        } else if (select.classList.contains('sim-b-ratio')) {
+            wrapperClass += ' max-w-[110px] inline-block';
+        }
+        wrapper.className = wrapperClass;
         select.parentNode.insertBefore(wrapper, select.nextSibling);
 
         const trigger = document.createElement('button');
         trigger.type = 'button';
-        trigger.className = 'w-full py-3 px-4 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-2xl shadow-md border border-stone-200 dark:border-stone-800 flex items-center justify-between font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/55';
+        if (isCompact) {
+            trigger.className = 'w-full py-1 px-2 bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded shadow-sm border border-stone-200 dark:border-stone-800 flex items-center justify-between font-bold text-xs transition-all focus:outline-none focus:ring-1 focus:ring-brand-500/55';
+        } else {
+            trigger.className = 'w-full py-3 px-4 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-2xl shadow-md border border-stone-200 dark:border-stone-800 flex items-center justify-between font-bold text-sm transition-all focus:outline-none focus:ring-2 focus:ring-brand-500/55';
+        }
 
         const triggerSpan = document.createElement('span');
-        triggerSpan.className = 'flex items-center gap-2 truncate text-stone-800 dark:text-stone-100';
+        if (isCompact) {
+            triggerSpan.className = 'flex items-center gap-1 truncate text-stone-800 dark:text-stone-100';
+        } else {
+            triggerSpan.className = 'flex items-center gap-2 truncate text-stone-800 dark:text-stone-100';
+        }
 
         const arrowSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        arrowSvg.setAttribute('class', 'w-5 h-5 text-stone-400 dark:text-stone-500 transition-transform duration-200 shrink-0 ml-2');
+        if (isCompact) {
+            arrowSvg.setAttribute('class', 'w-3 h-3 text-stone-400 dark:text-stone-500 transition-transform duration-200 shrink-0 ml-1');
+        } else {
+            arrowSvg.setAttribute('class', 'w-5 h-5 text-stone-400 dark:text-stone-500 transition-transform duration-200 shrink-0 ml-2');
+        }
         arrowSvg.setAttribute('fill', 'none');
         arrowSvg.setAttribute('viewBox', '0 0 24 24');
         arrowSvg.setAttribute('stroke', 'currentColor');
@@ -4289,7 +4321,11 @@ function makeAllSelectsCustom() {
         wrapper.appendChild(trigger);
 
         const menu = document.createElement('div');
-        menu.className = 'absolute left-0 right-0 mt-2 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200 dark:border-stone-700 z-50 py-1.5 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top max-h-60 overflow-y-auto';
+        if (isCompact) {
+            menu.className = 'absolute left-0 right-0 mt-1 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded border border-stone-200 dark:border-stone-700 z-50 py-1 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top max-h-40 overflow-y-auto';
+        } else {
+            menu.className = 'absolute left-0 right-0 mt-2 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200 dark:border-stone-700 z-50 py-1.5 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top max-h-60 overflow-y-auto';
+        }
         wrapper.appendChild(menu);
 
         function toggleMenu() {
@@ -4343,10 +4379,17 @@ function makeAllSelectsCustom() {
 
                 const optBtn = document.createElement('button');
                 optBtn.type = 'button';
-                optBtn.className = 'w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-left ' +
-                    (isSelected 
-                        ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20' 
-                        : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-800 rounded-xl');
+                if (isCompact) {
+                    optBtn.className = 'w-full px-2 py-1.5 flex items-center justify-between font-semibold text-[10px] transition-colors text-left ' +
+                        (isSelected 
+                            ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20' 
+                            : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-800 rounded');
+                } else {
+                    optBtn.className = 'w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-left ' +
+                        (isSelected 
+                            ? 'text-brand-600 dark:text-brand-400 bg-brand-50/50 dark:bg-brand-900/20' 
+                            : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-800 rounded-xl');
+                }
 
                 const span = document.createElement('span');
                 span.className = 'truncate';
@@ -4355,7 +4398,7 @@ function makeAllSelectsCustom() {
 
                 const check = document.createElement('span');
                 check.className = 'text-emerald-500 shrink-0 ml-2' + (isSelected ? '' : ' hidden');
-                check.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                check.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
                 optBtn.appendChild(check);
 
                 optBtn.addEventListener('click', (e) => {
