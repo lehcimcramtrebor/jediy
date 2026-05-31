@@ -618,65 +618,37 @@ function renderMultiList(prefix) {
 
         let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
 
-        if (prefix === 'edit_compo') {
-            html += `
-            <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
-                <div class="w-full">
-                    <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+        html += `
+        <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
+            <div class="w-full">
+                <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+            </div>
+            
+            <div class="flex gap-2.5 items-center w-full">
+                <!-- Left Column: delete button (taking up ~15%) -->
+                <div class="w-[15%] flex justify-start shrink-0">
+                    <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
                 </div>
                 
-                <div class="flex items-center gap-2 w-full">
-                    <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 shrink-0 flex items-center justify-center transition-colors">✕</button>
-                    
-                    <div class="flex-1 min-w-0">
+                <!-- Right Column: select dropdown and dosage aligned to the right (taking up ~85%) -->
+                <div class="flex-1 flex flex-col gap-2 min-w-0">
+                    <div class="w-full">
                         ${selectHtml}
                     </div>
                     
-                    <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-32 h-8 shrink-0">
-                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
+                    <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full h-8">
+                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
                         
                         <div class="flex-1 relative flex items-center h-full">
                             <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
-                            <span class="absolute right-1 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                            <span class="absolute right-2.5 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
                         </div>
 
-                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-7 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
+                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
                     </div>
                 </div>
-            </div>`;
-        } else {
-            html += `
-            <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
-                <div class="w-full">
-                    <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
-                </div>
-                
-                <div class="flex gap-2.5 items-center w-full">
-                    <!-- Left Column: delete button (taking up ~15%) -->
-                    <div class="w-[15%] flex justify-start shrink-0">
-                        <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
-                    </div>
-                    
-                    <!-- Right Column: select dropdown and dosage aligned to the right (taking up ~85%) -->
-                    <div class="flex-1 flex flex-col gap-2 min-w-0">
-                        <div class="w-full">
-                            ${selectHtml}
-                        </div>
-                        
-                        <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full h-8">
-                            <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
-                            
-                            <div class="flex-1 relative flex items-center h-full">
-                                <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
-                                <span class="absolute right-2.5 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
-                            </div>
-
-                            <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        }
+            </div>
+        </div>`;
     });
     container.innerHTML = html;
     
