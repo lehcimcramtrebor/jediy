@@ -711,14 +711,20 @@ function _doSaveCompo(name, prefix) {
 }
 
 function syncCompoSelects() {
-    let options = `<option value="">-- Choisir une composition --</option>`;
-    options += `<option value="reset_all" class="text-rose-500 font-bold">✨ -- Nouvelle composition (RAZ) --</option>`;
-    savedCompos.forEach(c => options += `<option value="${c.id}">${c.name}</option>`);
+    let baseOptions = `<option value="">-- Choisir une composition --</option>`;
+    let resetOption = `<option value="reset_all" class="text-rose-500 font-bold">✨ -- Nouvelle composition (RAZ) --</option>`;
+    let compoOptions = '';
+    savedCompos.forEach(c => compoOptions += `<option value="${c.id}">${c.name}</option>`);
+    
     ['t1', 't2', 't3', 'wiz'].forEach(p => {
         let sel = document.getElementById(`${p}_compo_select`);
         if(sel) {
             let val = sel.value;
-            sel.innerHTML = options;
+            if (p === 'wiz') {
+                sel.innerHTML = baseOptions + compoOptions;
+            } else {
+                sel.innerHTML = baseOptions + resetOption + compoOptions;
+            }
             sel.value = val;
             if (typeof sel.refreshCustom === 'function') sel.refreshCustom();
         }
@@ -780,6 +786,12 @@ function loadCompo(prefix, idStr) {
                 icon.classList.remove('rotate-180');
                 icon.classList.add('rotate-0');
             }
+        }
+        
+        let sel = document.getElementById(`${prefix}_compo_select`);
+        if(sel) {
+            sel.value = idStr;
+            if(typeof sel.refreshCustom === 'function') sel.refreshCustom();
         }
         
         renderMultiList(prefix); if(prefix !== 't3') updateAromaPreview(prefix); triggerCalc();
