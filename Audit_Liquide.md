@@ -26,7 +26,7 @@ Le calcul de poids en grammes s'appuie sur la masse volumique linéaire des comp
 *   **Propriété PG (Propylène Glycol)** : $\text{Density}_{\text{PG}} = 1,036\text{ g/ml}$
 *   **Propriété VG (Glycérine Végétale)** : $\text{Density}_{\text{VG}} = 1,261\text{ g/ml}$
 *   **Eau pure** : $\text{Density}_{\text{Water}} = 1,000\text{ g/ml}$
-*   **Alcool pur** : $\text{Density}_{\text{Alcohol}} = 1,0 - (\text{Degré} \cdot 0,00211)\text{ g/ml}$
+*   **Alcool pur** : $\text{Density}_{\text{Alcohol}} = 1,0 - (\text{Degré} \cdot 0,0016) - (\text{Degré}^2 \cdot 0,000005)\text{ g/ml}$
 
 #### Équation de Masse Totale d'un Mélange :
 Pour tout volume $V$ de ratio PG/VG donné, le poids en grammes $M$ est obtenu par :

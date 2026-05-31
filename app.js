@@ -2243,13 +2243,25 @@ function closeSettingsModal() { document.getElementById('settings_modal').classL
 function openResetConfirm() { closeSettingsModal(); document.getElementById('reset_confirm_modal').classList.remove('hidden'); }
 function closeResetConfirm() { document.getElementById('reset_confirm_modal').classList.add('hidden'); }
 function showAlert(msg) { let m = document.getElementById('alert_modal'); document.getElementById('alert_text').innerText = msg; m.classList.remove('hidden'); setTimeout(() => m.classList.add('hidden'), 2500); }
-function openHtmlConfirm(msg, callback) {
+function openHtmlConfirm(msg, callback, cancelCallback) {
     document.getElementById('html_confirm_msg').innerHTML = msg;
     let btnOk = document.getElementById('html_confirm_btn_ok');
     btnOk.onclick = () => {
         closeHtmlConfirm();
         if (callback) callback();
     };
+    let onCancel = () => {
+        closeHtmlConfirm();
+        if (cancelCallback) cancelCallback();
+    };
+    let btnCancel = document.getElementById('html_confirm_btn_cancel');
+    if (btnCancel) {
+        btnCancel.onclick = onCancel;
+    }
+    let backdrop = document.querySelector('#html_confirm_modal .absolute.inset-0');
+    if (backdrop) {
+        backdrop.onclick = onCancel;
+    }
     document.getElementById('html_confirm_modal').classList.remove('hidden');
 }
 
@@ -3151,11 +3163,36 @@ if ('serviceWorker' in navigator) {
 }
 
 function hardResetApp() {
-    localStorage.clear();
-    if ('caches' in window) caches.keys().then((names) => { for (let name of names) caches.delete(name); });
+    closeResetConfirm();
+    openHtmlConfirm(
+        `<strong>🚨 AVERTISSEMENT CRITIQUE 🚨</strong><br><br>Voulez-vous aussi supprimer définitivement TOUTES vos recettes et compositions d'arômes sauvegardées ?<br><br>Si vous choisissez "Annuler", seul le cache technique de l'application sera nettoyé (sans perte de recettes).`,
+        () => {
+            // L'utilisateur valide la suppression globale
+            localStorage.clear();
+            _clearCachesAndReload();
+        },
+        () => {
+            // L'utilisateur annule : on nettoie uniquement le cache et le SW
+            _clearCachesAndReload();
+        }
+    );
+}
+
+function _clearCachesAndReload() {
+    if ('caches' in window) {
+        caches.keys().then((names) => {
+            for (let name of names) caches.delete(name);
+        });
+    }
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then((registrations) => { for (let r of registrations) r.unregister(); }).then(() => { window.location.reload(true); });
-    } else window.location.reload(true);
+        navigator.serviceWorker.getRegistrations().then((registrations) => {
+            for (let r of registrations) r.unregister();
+        }).then(() => {
+            window.location.reload(true);
+        });
+    } else {
+        window.location.reload(true);
+    }
 }
 
 
@@ -3795,7 +3832,7 @@ function calculateCoil(isManualWatts = false) {
         }
     }
     
-    let heatFlux = (watts * 1000) / totalSurfaceArea;
+    let heatFlux = totalSurfaceArea > 0 ? (watts * 1000) / totalSurfaceArea : 0;
     let hFluxValEl = document.getElementById('coil_heatflux_val');
     if (hFluxValEl) hFluxValEl.innerText = Math.round(heatFlux) + ' mW/mm²';
     
@@ -4048,7 +4085,7 @@ Le calcul de poids en grammes s'appuie sur la masse volumique linéaire des comp
 *   **Propriété PG (Propylène Glycol)** : $\\text{Density}_{\\text{PG}} = 1,036\\text{ g/ml}$
 *   **Propriété VG (Glycérine Végétale)** : $\\text{Density}_{\\text{VG}} = 1,261\\text{ g/ml}$
 *   **Eau pure** : $\\text{Density}_{\\text{Water}} = 1,000\\text{ g/ml}$
-*   **Alcool pur** : $\\text{Density}_{\\text{Alcohol}} = 1,0 - (\\text{Degré} \\cdot 0,00211)\\text{ g/ml}$
+*   **Alcool pur** : $\\text{Density}_{\\text{Alcohol}} = 1,0 - (\\text{Degré} \\cdot 0,0016) - (\\text{Degré}^2 \\cdot 0,000005)\\text{ g/ml}$
 
 #### Équation de Masse Totale d'un Mélange :
 Pour tout volume $V$ de ratio PG/VG donné, le poids en grammes $M$ est obtenu par :
