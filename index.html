@@ -1463,10 +1463,14 @@
     <div id="tab_mes_donnees" class="tab-content">
         <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl max-w-5xl mx-auto w-full border border-stone-100 dark:border-stone-800 transition-colors">
             
-            <div class="flex gap-4 border-b border-stone-200 dark:border-stone-700 mb-6 overflow-x-auto hide-scrollbar">
-                <button id="tab_btn_mes_mixes" onclick="switchDataTab('mixes')" class="pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap shrink-0 transition-colors">🧴 Mes Mixes</button>
-                <button id="tab_btn_mes_compos" onclick="switchDataTab('compos')" class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap shrink-0 transition-colors">✍️ Mes Compositions</button>
-                <button id="tab_btn_mes_aromes" onclick="switchDataTab('aromes')" class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap shrink-0 transition-colors">🧪 Mon Stock d'Arômes</button>
+            <div class="relative">
+                <div class="flex gap-4 border-b border-stone-200 dark:border-stone-700 mb-6 overflow-x-auto hide-scrollbar pr-8">
+                    <button id="tab_btn_mes_mixes" onclick="switchDataTab('mixes')" class="pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap shrink-0 transition-colors">🧴 Mes Mixes</button>
+                    <button id="tab_btn_mes_compos" onclick="switchDataTab('compos')" class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap shrink-0 transition-colors">✍️ Mes Compositions</button>
+                    <button id="tab_btn_mes_aromes" onclick="switchDataTab('aromes')" class="pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap shrink-0 transition-colors">🧪 Mon Stock d'Arômes</button>
+                </div>
+                <!-- Indicateur visuel de défilement (dégradé de fondu sur mobile) -->
+                <div class="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-stone-900 to-transparent pointer-events-none z-10 sm:hidden"></div>
             </div>
 
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
