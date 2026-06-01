@@ -698,10 +698,10 @@ function renderMultiList(prefix) {
         let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
 
         html += `
-        <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
+        <div class="relative focus-within:z-30 flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
             <div class="aroma-autocomplete-wrapper relative w-full">
                 <input type="text" value="${item.name}" ${placeholder} onfocus="showAromaSuggestions('${prefix}', ${item.id}, this.value)" oninput="showAromaSuggestions('${prefix}', ${item.id}, this.value); updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
-                <div id="${prefix}_auto_${item.id}" class="aroma-autocomplete-box hidden absolute top-full left-0 right-0 mt-1 bg-white/95 dark:bg-stone-800/95 border border-stone-205 dark:border-stone-700 rounded-xl shadow-xl z-25 max-h-40 overflow-y-auto hide-scrollbar backdrop-blur-md"></div>
+                <div id="${prefix}_auto_${item.id}" class="aroma-autocomplete-box hidden absolute top-full left-0 right-0 mt-1 bg-white/95 dark:bg-stone-800/95 border border-stone-205 dark:border-stone-700 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto hide-scrollbar backdrop-blur-md"></div>
             </div>
             
             <div class="flex gap-2.5 items-center w-full">
