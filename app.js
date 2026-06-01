@@ -699,8 +699,9 @@ function renderMultiList(prefix) {
 
         html += `
         <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
-            <div class="w-full">
-                <input type="text" value="${item.name}" ${placeholder} list="${prefix}_aromas_datalist" oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+            <div class="aroma-autocomplete-wrapper relative w-full">
+                <input type="text" value="${item.name}" ${placeholder} onfocus="showAromaSuggestions('${prefix}', ${item.id}, this.value)" oninput="showAromaSuggestions('${prefix}', ${item.id}, this.value); updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+                <div id="${prefix}_auto_${item.id}" class="aroma-autocomplete-box hidden absolute top-full left-0 right-0 mt-1 bg-white/95 dark:bg-stone-800/95 border border-stone-205 dark:border-stone-700 rounded-xl shadow-xl z-25 max-h-40 overflow-y-auto hide-scrollbar backdrop-blur-md"></div>
             </div>
             
             <div class="flex gap-2.5 items-center w-full">
@@ -5097,3 +5098,75 @@ function deleteAroma(id) {
         renderMesAromes();
     });
 }
+
+function showAromaSuggestions(prefix, itemId, val) {
+    let box = document.getElementById(`${prefix}_auto_${itemId}`);
+    if (!box) return;
+    
+    // Close other suggestion boxes first
+    document.querySelectorAll('.aroma-autocomplete-box').forEach(b => {
+        if (b.id !== box.id) b.classList.add('hidden');
+    });
+    
+    if (savedAromas.length === 0) {
+        box.classList.add('hidden');
+        return;
+    }
+    
+    let query = val.trim().toLowerCase();
+    let matches = [];
+    if (query === '') {
+        // Show all aromas in stock (up to 8)
+        matches = savedAromas.slice(0, 8);
+    } else {
+        matches = savedAromas.filter(a => a.name.toLowerCase().includes(query)).slice(0, 8);
+    }
+    
+    if (matches.length === 0) {
+        box.classList.add('hidden');
+        return;
+    }
+    
+    let html = '';
+    matches.forEach(a => {
+        let escName = a.name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        html += `
+        <button type="button" onclick="selectAromaSuggestion('${prefix}', ${itemId}, '${escName}', ${a.pg})" class="w-full text-left px-3.5 py-2.5 hover:bg-brand-50/60 dark:hover:bg-brand-950/40 text-stone-850 dark:text-stone-200 font-bold text-xs transition-colors flex items-center justify-between border-b border-stone-100 dark:border-stone-700/50 last:border-0 cursor-pointer">
+            <span class="truncate pr-2">🧪 ${a.name}</span>
+            <span class="text-[9px] font-black text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-900/40 px-2 py-0.5 rounded-full shrink-0">${formatRatioStr(a.pg, true)}</span>
+        </button>`;
+    });
+    
+    box.innerHTML = html;
+    box.classList.remove('hidden');
+}
+
+function selectAromaSuggestion(prefix, itemId, name, pg) {
+    let item = state[prefix].multi.find(x => x.id === itemId);
+    if (item) {
+        item.name = name;
+        item.pg = pg;
+    }
+    
+    let box = document.getElementById(`${prefix}_auto_${itemId}`);
+    if (box) box.classList.add('hidden');
+    
+    renderMultiList(prefix);
+    
+    if(prefix !== 'edit_compo') {
+        updateAromaPreview(prefix);
+        triggerCalc();
+        checkCompoSave(prefix);
+    } else {
+        checkMultiAddButtons(prefix);
+    }
+}
+
+// Close suggestion boxes when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.aroma-autocomplete-wrapper')) {
+        document.querySelectorAll('.aroma-autocomplete-box').forEach(box => {
+            box.classList.add('hidden');
+        });
+    }
+});
