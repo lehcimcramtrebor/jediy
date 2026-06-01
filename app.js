@@ -52,6 +52,9 @@ let savedMixes = [];
 try { savedMixes = JSON.parse(safeGetItem('jediy_mixes') || '[]'); } catch(e) { savedMixes = []; }
 let savedCompos = [];
 try { savedCompos = JSON.parse(safeGetItem('jediy_compos') || '[]'); } catch(e) { savedCompos = []; }
+let savedAromas = [];
+try { savedAromas = JSON.parse(safeGetItem('jediy_aromas') || '[]'); } catch(e) { savedAromas = []; }
+let currentEditAromaId = null;
 let currentMixCard = null;
 let currentEditCompoId = null;
 let groupMixes = false;
@@ -87,6 +90,8 @@ document.addEventListener('touchmove', e => {
 
 function init() {
     applyTheme();
+    firstTimeAromaScan();
+    updateAromaDatalists();
     generateCheckboxes('t1'); generateCheckboxes('t2'); generateCheckboxes('wiz'); 
     document.getElementById('t1_aroma_pg_val').innerText = document.getElementById('t1_aroma_pg').value + '%';
     updateRatioDisp('t1'); updateRatioDisp('t2'); 
@@ -253,7 +258,7 @@ function switchTab(tabId) {
     document.getElementById(tabId).classList.add('active');
     
     if (tabId === 'tab_mes_donnees') {
-        renderMesMixes(); renderMesCompos();
+        switchDataTab('mixes');
     } else triggerCalc();
 }
 
@@ -598,7 +603,17 @@ function updateMulti(prefix, id, field, val) {
     }
     
     if(field === 'pg' || field === 'degree') val = parseFloat(val) || 0;
+    
+    let oldPg = item.pg;
     item[field] = val;
+    
+    if(field === 'name' && item.type === 'aroma') {
+        let matched = savedAromas.find(a => a.name.toLowerCase() === val.trim().toLowerCase());
+        if (matched && matched.pg !== oldPg) {
+            item.pg = matched.pg;
+            setTimeout(() => renderMultiList(prefix), 50);
+        }
+    }
     
     if(field === 'perc') { 
         renderMultiList(prefix); 
@@ -685,7 +700,7 @@ function renderMultiList(prefix) {
         html += `
         <div class="relative flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
             <div class="w-full">
-                <input type="text" value="${item.name}" ${placeholder} oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+                <input type="text" value="${item.name}" ${placeholder} list="${prefix}_aromas_datalist" oninput="updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
             </div>
             
             <div class="flex gap-2.5 items-center w-full">
@@ -779,8 +794,10 @@ function saveCompo(prefix) {
 }
 
 function _doSaveCompo(name, prefix) {
-    savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state[prefix].multi)) });
+    let items = JSON.parse(JSON.stringify(state[prefix].multi));
+    savedCompos.push({ id: Date.now(), name: name, items: items });
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
+    extractAndStoreAromas(items);
     syncCompoSelects(); setNeedsExport(true); showAlert("Composition sauvegardée !");
 }
 
@@ -924,8 +941,10 @@ function saveEditedCompo() {
 }
 
 function _finalizeNewCompoSave(name) {
-    savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
+    let items = JSON.parse(JSON.stringify(state.edit_compo.multi));
+    savedCompos.push({ id: Date.now(), name: name, items: items });
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
+    extractAndStoreAromas(items);
     syncCompoSelects(); setNeedsExport(true); showAlert("Composition créée !"); closeCompoEditModal();
 }
 
@@ -933,6 +952,7 @@ function _finalizeEditCompoSave(name) {
     let c = savedCompos.find(x => x.id === currentEditCompoId);
     if(c) { c.name = name; c.items = JSON.parse(JSON.stringify(state.edit_compo.multi)); }
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
+    if(c) { extractAndStoreAromas(c.items); }
     syncCompoSelects(); setNeedsExport(true); showAlert("Composition mise à jour !"); closeCompoEditModal();
 }
 
@@ -943,8 +963,10 @@ function saveAsNewCompo() {
         showAlert("Ingrédients valides requis."); 
         return; 
     }
-    savedCompos.push({ id: Date.now(), name: name, items: JSON.parse(JSON.stringify(state.edit_compo.multi)) });
+    let items = JSON.parse(JSON.stringify(state.edit_compo.multi));
+    savedCompos.push({ id: Date.now(), name: name, items: items });
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
+    extractAndStoreAromas(items);
     syncCompoSelects(); setNeedsExport(true); showAlert("Copie sauvegardée !"); closeCompoEditModal();
 }
 
@@ -2359,6 +2381,7 @@ function saveCurrentMix() {
     if(name.length < 2) return;
     savedMixes.push({ id: Date.now(), name: name, config: cfg });
     safeSetItem('jediy_mixes', JSON.stringify(savedMixes));
+    if (cfg.multi) { extractAndStoreAromas(cfg.multi); }
     setNeedsExport(true);
     showAlert("Mix sauvegardé !"); cancelExport();
     if(document.getElementById('tab_mes_donnees').classList.contains('active')) renderMesMixes();
@@ -2372,7 +2395,7 @@ function setSort(sortType) {
         if(b === sortType) el.className = "flex-1 sm:flex-none px-3 py-1.5 bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 rounded-lg text-xs font-bold shadow-sm transition-all";
         else el.className = "flex-1 sm:flex-none px-3 py-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 rounded-lg text-xs font-bold transition-all";
     });
-    renderMesMixes(); renderMesCompos();
+    renderMesMixes(); renderMesCompos(); renderMesAromes();
 }
 
 function toggleGroupMixes() {
@@ -2380,33 +2403,49 @@ function toggleGroupMixes() {
     let btn = document.getElementById('btn_group_mixes');
     if (groupMixes) { btn.classList.add('bg-green-100', 'text-green-700', 'border-green-300', 'dark:bg-green-900/30', 'dark:text-green-400'); btn.classList.remove('bg-stone-100', 'text-stone-500', 'dark:bg-stone-800', 'dark:text-stone-400'); } 
     else { btn.classList.remove('bg-green-100', 'text-green-700', 'border-green-300', 'dark:bg-green-900/30', 'dark:text-green-400'); btn.classList.add('bg-stone-100', 'text-stone-500', 'dark:bg-stone-800', 'dark:text-stone-400'); }
-    renderMesMixes(); renderMesCompos();
+    renderMesMixes(); renderMesCompos(); renderMesAromes();
 }
 
 function switchDataTab(tab) {
-    let btnCreate = document.getElementById('btn_create_compo');
-    let btnGroup = document.getElementById('btn_group_mixes'); // On cible le bouton Regrouper
+    let btnCreateCompo = document.getElementById('btn_create_compo');
+    let btnCreateArome = document.getElementById('btn_create_arome');
+    let btnImportCompo = document.getElementById('btn_import_compo');
+    let btnGroup = document.getElementById('btn_group_mixes');
+    
+    // Hide all lists first
+    document.getElementById('mes_mixes_list').classList.add('hidden');
+    document.getElementById('mes_compos_list').classList.add('hidden');
+    document.getElementById('mes_aromes_list').classList.add('hidden');
+    
+    // Inactivate all buttons
+    let activeBtnClasses = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
+    let inactiveBtnClasses = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
+    document.getElementById('tab_btn_mes_mixes').className = inactiveBtnClasses;
+    document.getElementById('tab_btn_mes_compos').className = inactiveBtnClasses;
+    document.getElementById('tab_btn_mes_aromes').className = inactiveBtnClasses;
+    
+    // Hide buttons by default
+    if(btnCreateCompo) btnCreateCompo.classList.add('hidden');
+    if(btnCreateArome) btnCreateArome.classList.add('hidden');
+    if(btnImportCompo) btnImportCompo.classList.add('hidden');
+    if(btnGroup) { btnGroup.classList.add('hidden'); btnGroup.classList.remove('flex'); }
     
     if(tab === 'mixes') {
-        document.getElementById('mes_mixes_list').classList.remove('hidden'); 
-        document.getElementById('mes_compos_list').classList.add('hidden');
-        document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
-        document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
-        document.getElementById('btn_import_compo').classList.add('hidden');
-        if(btnCreate) btnCreate.classList.add('hidden');
-        
-        // On affiche le bouton Regrouper
+        document.getElementById('mes_mixes_list').classList.remove('hidden');
+        document.getElementById('tab_btn_mes_mixes').className = activeBtnClasses;
         if(btnGroup) { btnGroup.classList.remove('hidden'); btnGroup.classList.add('flex'); }
-    } else {
-        document.getElementById('mes_compos_list').classList.remove('hidden'); 
-        document.getElementById('mes_mixes_list').classList.add('hidden');
-        document.getElementById('tab_btn_mes_compos').className = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
-        document.getElementById('tab_btn_mes_mixes').className = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
-        document.getElementById('btn_import_compo').classList.remove('hidden');
-        if(btnCreate) btnCreate.classList.remove('hidden');
-        
-        // On masque le bouton Regrouper
-        if(btnGroup) { btnGroup.classList.add('hidden'); btnGroup.classList.remove('flex'); }
+        renderMesMixes();
+    } else if(tab === 'compos') {
+        document.getElementById('mes_compos_list').classList.remove('hidden');
+        document.getElementById('tab_btn_mes_compos').className = activeBtnClasses;
+        if(btnCreateCompo) btnCreateCompo.classList.remove('hidden');
+        if(btnImportCompo) btnImportCompo.classList.remove('hidden');
+        renderMesCompos();
+    } else if(tab === 'aromes') {
+        document.getElementById('mes_aromes_list').classList.remove('hidden');
+        document.getElementById('tab_btn_mes_aromes').className = activeBtnClasses;
+        if(btnCreateArome) btnCreateArome.classList.remove('hidden');
+        renderMesAromes();
     }
 }
 
@@ -2656,6 +2695,7 @@ async function exportSettingsJson() {
         theme: safeGetItem('theme') || "", 
         mixes: savedMixes, 
         compos: savedCompos,
+        aromas: savedAromas,
         hw_bases: JSON.parse(safeGetItem('jediy_hw_bases') || '[100, 0]'),
         hw_boosts: JSON.parse(safeGetItem('jediy_hw_boosts') || '[50]')
     };
@@ -2698,6 +2738,7 @@ function handleImport(e) {
             let data = JSON.parse(ev.target.result);
             if(data.mixes) { savedMixes = data.mixes; safeSetItem('jediy_mixes', JSON.stringify(savedMixes)); }
             if(data.compos) { savedCompos = data.compos; safeSetItem('jediy_compos', JSON.stringify(savedCompos)); }
+            if(data.aromas) { savedAromas = data.aromas; safeSetItem('jediy_aromas', JSON.stringify(savedAromas)); }
             if(data.jediIdentity !== undefined) { if(data.jediIdentity) safeSetItem('jediIdentity', data.jediIdentity); else safeRemoveItem('jediIdentity'); }
             if(data.theme) safeSetItem('theme', data.theme);
             if(data.hw_bases) safeSetItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
@@ -4678,3 +4719,381 @@ document.addEventListener('click', function(event) {
         }
     });
 });
+
+/* ========================================== */
+/* 14. GESTION DU STOCK D'ARÔMES             */
+/* ========================================== */
+
+function firstTimeAromaScan() {
+    if (savedAromas.length === 0) {
+        let changed = false;
+        savedCompos.forEach(c => {
+            if (c.items && Array.isArray(c.items)) {
+                c.items.forEach(item => {
+                    if (item.type === 'aroma' && item.name && item.name.trim().length >= 2) {
+                        let name = item.name.trim();
+                        let pg = (item.pg !== undefined) ? item.pg : 100;
+                        let exists = savedAromas.some(a => a.name.toLowerCase() === name.toLowerCase());
+                        if (!exists) {
+                            savedAromas.push({ id: Date.now() + Math.floor(Math.random() * 10000), name: name, pg: pg });
+                            changed = true;
+                        }
+                    }
+                });
+            }
+        });
+        savedMixes.forEach(m => {
+            if (m.config && m.config.multi && Array.isArray(m.config.multi)) {
+                m.config.multi.forEach(item => {
+                    if (item.type === 'aroma' && item.name && item.name.trim().length >= 2) {
+                        let name = item.name.trim();
+                        let pg = (item.pg !== undefined) ? item.pg : 100;
+                        let exists = savedAromas.some(a => a.name.toLowerCase() === name.toLowerCase());
+                        if (!exists) {
+                            savedAromas.push({ id: Date.now() + Math.floor(Math.random() * 10000), name: name, pg: pg });
+                            changed = true;
+                        }
+                    }
+                });
+            }
+        });
+        if (changed) {
+            safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+        }
+    }
+}
+
+function extractAndStoreAromas(multiArray) {
+    if (!multiArray || !Array.isArray(multiArray)) return;
+    let changed = false;
+    multiArray.forEach(item => {
+        if (item.type === 'aroma' && item.name && item.name.trim().length >= 2) {
+            let name = item.name.trim();
+            let pg = (item.pg !== undefined) ? item.pg : 100;
+            let exists = savedAromas.some(a => a.name.toLowerCase() === name.toLowerCase());
+            if (!exists) {
+                savedAromas.push({
+                    id: Date.now() + Math.floor(Math.random() * 10000),
+                    name: name,
+                    pg: pg
+                });
+                changed = true;
+            }
+        }
+    });
+    if (changed) {
+        safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+        updateAromaDatalists();
+        if (document.getElementById('tab_mes_donnees').classList.contains('active')) {
+            renderMesAromes();
+        }
+    }
+}
+
+function updateAromaDatalists() {
+    ['t1', 't2', 't3', 'edit_compo'].forEach(prefix => {
+        let dl = document.getElementById(`${prefix}_aromas_datalist`);
+        if (!dl) {
+            dl = document.createElement('datalist');
+            dl.id = `${prefix}_aromas_datalist`;
+            document.body.appendChild(dl);
+        }
+        let html = '';
+        savedAromas.forEach(a => {
+            html += `<option value="${a.name}"></option>`;
+        });
+        dl.innerHTML = html;
+    });
+}
+
+function renderMesAromes() {
+    let container = document.getElementById('mes_aromes_list'); if(!container) return;
+    if(savedAromas.length === 0) {
+        container.innerHTML = '<div class="col-span-full p-6 bg-stone-100 dark:bg-stone-800 text-center text-stone-500 rounded-2xl">Aucun arôme dans le stock pour le moment. Créez-en un ou enregistrez des recettes !</div>';
+        return;
+    }
+    
+    let sort = document.getElementById('sort_mixes').value;
+    let arr = [...savedAromas];
+    if(sort === 'az') arr.sort((a,b)=>a.name.localeCompare(b.name));
+    else if(sort === 'za') arr.sort((a,b)=>b.name.localeCompare(a.name));
+    else arr.sort((a,b)=>b.id-a.id); // Default to recent
+    
+    let html = '';
+    arr.forEach(a => {
+        html += `
+        <div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col hover:shadow-xl transition-all duration-300">
+            <div class="flex justify-between items-center mb-3">
+                <div class="truncate pr-2">
+                    <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg truncate" title="${a.name}">🧪 ${a.name}</div>
+                    <div class="text-xs font-bold text-brand-600 mt-1">Ratio PG par défaut : <span class="font-extrabold text-brand-700 dark:text-brand-300">${formatRatioStr(a.pg, true)}</span></div>
+                </div>
+                <div class="flex gap-2 shrink-0">
+                    <button onclick="editAroma(${a.id})" class="w-8 h-8 flex items-center justify-center bg-stone-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300 rounded-lg shadow-sm border border-stone-200 dark:border-stone-600 hover:bg-stone-200 dark:hover:bg-stone-600 transition-colors" title="Éditer">✏️</button>
+                    <button onclick="deleteAroma(${a.id})" class="w-8 h-8 flex items-center justify-center bg-red-500 dark:bg-red-600 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-red-600 transition-colors" title="Supprimer">🗑️</button>
+                </div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function createNewAroma() {
+    currentEditAromaId = null;
+    document.getElementById('arome_modal_title').innerText = "Nouvel Arôme";
+    document.getElementById('edit_arome_name').value = "";
+    
+    let slider = document.getElementById('edit_arome_pg');
+    slider.value = 0;
+    document.getElementById('edit_arome_pg_val').innerText = "100% PG";
+    
+    document.getElementById('arome_propagate_container').classList.add('hidden');
+    document.getElementById('arome_propagate_check').checked = false;
+    
+    document.getElementById('arome_edit_modal').classList.remove('hidden');
+}
+
+function editAroma(id) {
+    let a = savedAromas.find(x => x.id === id);
+    if (!a) return;
+    currentEditAromaId = id;
+    document.getElementById('arome_modal_title').innerText = "Éditer l'Arôme";
+    document.getElementById('edit_arome_name').value = a.name;
+    
+    let slider = document.getElementById('edit_arome_pg');
+    slider.value = 100 - a.pg;
+    document.getElementById('edit_arome_pg_val').innerText = formatRatioStr(a.pg, false);
+    
+    // Count usage of this aroma
+    let countCompos = 0;
+    let countMixes = 0;
+    savedCompos.forEach(c => {
+        if (c.items) {
+            let hasAroma = c.items.some(item => item.type === 'aroma' && item.name.toLowerCase() === a.name.toLowerCase());
+            if (hasAroma) countCompos++;
+        }
+    });
+    savedMixes.forEach(m => {
+        if (m.config && m.config.multi) {
+            let hasAroma = m.config.multi.some(item => item.type === 'aroma' && item.name.toLowerCase() === a.name.toLowerCase());
+            if (hasAroma) countMixes++;
+        }
+    });
+    
+    let usageText = "";
+    let btnPropagate = document.getElementById('btn_propagate_arome');
+    if (countCompos === 0 && countMixes === 0) {
+        usageText = "Cet arôme n'est utilisé dans aucune recette existante.";
+        if (btnPropagate) btnPropagate.classList.add('hidden');
+    } else {
+        let parts = [];
+        if (countCompos > 0) parts.push(`${countCompos} composition(s)`);
+        if (countMixes > 0) parts.push(`${countMixes} mélange(s)`);
+        usageText = `Cet arôme est utilisé dans ${parts.join(' et ')}.`;
+        if (btnPropagate) btnPropagate.classList.remove('hidden');
+    }
+    document.getElementById('arome_usage_info').innerText = usageText;
+    
+    document.getElementById('arome_propagate_container').classList.remove('hidden');
+    document.getElementById('arome_propagate_check').checked = true;
+    
+    document.getElementById('arome_edit_modal').classList.remove('hidden');
+}
+
+function closeAromaEditModal() {
+    document.getElementById('arome_edit_modal').classList.add('hidden');
+    currentEditAromaId = null;
+}
+
+function saveAromaEdit() {
+    let name = document.getElementById('edit_arome_name').value.trim();
+    let pg = 100 - (parseInt(document.getElementById('edit_arome_pg').value) || 0);
+    let propagate = document.getElementById('arome_propagate_check').checked;
+    
+    if (name.length < 2) {
+        showAlert("Nom d'arôme invalide (min. 2 lettres).");
+        return;
+    }
+    
+    let exists = savedAromas.some(a => a.name.toLowerCase() === name.toLowerCase() && a.id !== currentEditAromaId);
+    if (exists) {
+        showAlert("Un arôme portant ce nom existe déjà dans votre stock.");
+        return;
+    }
+    
+    if (currentEditAromaId === null) {
+        savedAromas.push({ id: Date.now(), name: name, pg: pg });
+        showAlert("Arôme créé !");
+    } else {
+        let a = savedAromas.find(x => x.id === currentEditAromaId);
+        if (a) {
+            let oldName = a.name;
+            let oldPg = a.pg;
+            a.name = name;
+            a.pg = pg;
+            
+            let updatedRecipesCount = 0;
+            
+            if (oldName.toLowerCase() !== name.toLowerCase() || (propagate && oldPg !== pg)) {
+                savedCompos.forEach(c => {
+                    let compoChanged = false;
+                    if (c.items) {
+                        c.items.forEach(item => {
+                            if (item.type === 'aroma' && item.name.toLowerCase() === oldName.toLowerCase()) {
+                                if (item.name !== name) {
+                                    item.name = name;
+                                    compoChanged = true;
+                                }
+                                if (propagate && item.pg !== pg) {
+                                    item.pg = pg;
+                                    compoChanged = true;
+                                }
+                            }
+                        });
+                    }
+                    if (compoChanged) updatedRecipesCount++;
+                });
+                if (updatedRecipesCount > 0) {
+                    safeSetItem('jediy_compos', JSON.stringify(savedCompos));
+                    syncCompoSelects();
+                }
+                
+                let updatedMixes = 0;
+                savedMixes.forEach(m => {
+                    let mixChanged = false;
+                    if (m.config && m.config.multi) {
+                        m.config.multi.forEach(item => {
+                            if (item.type === 'aroma' && item.name.toLowerCase() === oldName.toLowerCase()) {
+                                if (item.name !== name) {
+                                    item.name = name;
+                                    mixChanged = true;
+                                }
+                                if (propagate && item.pg !== pg) {
+                                    item.pg = pg;
+                                    mixChanged = true;
+                                }
+                            }
+                        });
+                    }
+                    if (mixChanged) {
+                        updatedMixes++;
+                        updatedRecipesCount++;
+                    }
+                });
+                if (updatedMixes > 0) {
+                    safeSetItem('jediy_mixes', JSON.stringify(savedMixes));
+                }
+            }
+            
+            if (updatedRecipesCount > 0) {
+                showAlert(`Arôme mis à jour et appliqué dans ${updatedRecipesCount} recette(s) !`);
+            } else {
+                showAlert("Arôme mis à jour !");
+            }
+        }
+    }
+    
+    safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+    updateAromaDatalists();
+    closeAromaEditModal();
+    renderMesAromes();
+}
+
+function propagateAromaToExistingRecipes() {
+    if (currentEditAromaId === null) return;
+    
+    let name = document.getElementById('edit_arome_name').value.trim();
+    let pg = 100 - (parseInt(document.getElementById('edit_arome_pg').value) || 0);
+    
+    if (name.length < 2) {
+        showAlert("Nom d'arôme invalide (min. 2 lettres).");
+        return;
+    }
+    
+    let exists = savedAromas.some(a => a.name.toLowerCase() === name.toLowerCase() && a.id !== currentEditAromaId);
+    if (exists) {
+        showAlert("Un arôme portant ce nom existe déjà dans votre stock.");
+        return;
+    }
+    
+    let a = savedAromas.find(x => x.id === currentEditAromaId);
+    if (!a) return;
+    
+    let oldName = a.name;
+    
+    // Update the aroma in stock
+    a.name = name;
+    a.pg = pg;
+    
+    let updatedRecipesCount = 0;
+    
+    // Update compositions
+    savedCompos.forEach(c => {
+        let compoChanged = false;
+        if (c.items) {
+            c.items.forEach(item => {
+                if (item.type === 'aroma' && item.name.toLowerCase() === oldName.toLowerCase()) {
+                    if (item.name !== name || item.pg !== pg) {
+                        item.name = name;
+                        item.pg = pg;
+                        compoChanged = true;
+                    }
+                }
+            });
+        }
+        if (compoChanged) updatedRecipesCount++;
+    });
+    
+    if (updatedRecipesCount > 0) {
+        safeSetItem('jediy_compos', JSON.stringify(savedCompos));
+        syncCompoSelects();
+    }
+    
+    // Update mixes
+    let updatedMixes = 0;
+    savedMixes.forEach(m => {
+        let mixChanged = false;
+        if (m.config && m.config.multi) {
+            m.config.multi.forEach(item => {
+                if (item.type === 'aroma' && item.name.toLowerCase() === oldName.toLowerCase()) {
+                    if (item.name !== name || item.pg !== pg) {
+                        item.name = name;
+                        item.pg = pg;
+                        mixChanged = true;
+                    }
+                }
+            });
+        }
+        if (mixChanged) {
+            updatedMixes++;
+            updatedRecipesCount++;
+        }
+    });
+    
+    if (updatedMixes > 0) {
+        safeSetItem('jediy_mixes', JSON.stringify(savedMixes));
+    }
+    
+    // Save updated stock
+    safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+    updateAromaDatalists();
+    closeAromaEditModal();
+    renderMesAromes();
+    
+    if (updatedRecipesCount > 0) {
+        showAlert(`Arôme mis à jour avec succès dans ${updatedRecipesCount} recette(s) existante(s) !`);
+    } else {
+        showAlert("Arôme mis à jour ! Aucune recette existante n'utilisait cet arôme.");
+    }
+}
+
+function deleteAroma(id) {
+    let a = savedAromas.find(x => x.id === id);
+    if (!a) return;
+    openHtmlConfirm(`Supprimer l'arôme "${a.name}" de votre stock ? (Vos recettes existantes ne seront pas supprimées).`, () => {
+        savedAromas = savedAromas.filter(x => x.id !== id);
+        safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+        updateAromaDatalists();
+        renderMesAromes();
+    });
+}
