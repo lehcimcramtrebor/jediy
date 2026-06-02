@@ -3529,7 +3529,7 @@ function freezeComputedStyles(element) {
 function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
     let clone = document.getElementById('recipe_modal_content').querySelector('.export-card, .recipe-card-wrapper'); if (!clone) return null;
     let pristineCard = clone.cloneNode(true);
-    let originalWidth = clone.offsetWidth || 512;
+    let originalWidth = 380;
     
     // Déplier les compositions / arômes
     clone.querySelectorAll('.hidden, [id$="_aroma_fold_panel"]').forEach(el => {
@@ -3611,14 +3611,10 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
         clone.classList.add('border-stone-200');
     }
 
-    let aromaGrids = clone.querySelectorAll('.pdf-aroma-grid, .grid-cols-1.sm\\:grid-cols-2');
-    aromaGrids.forEach(g => {
-        g.classList.remove('grid-cols-1', 'sm:grid-cols-2', 'grid-cols-3');
-        if (pngMode === null) {
-            g.classList.add('grid-cols-3');
-        } else {
-            g.classList.add('grid-cols-2');
-        }
+    // Convertir inconditionnellement toutes les grilles de 2 colonnes ou adaptatives en colonne unique (superposition verticale)
+    clone.querySelectorAll('.grid-cols-2, .md\\:grid-cols-2, .sm\\:grid-cols-2, .pdf-aroma-grid').forEach(g => {
+        g.classList.remove('grid-cols-2', 'sm:grid-cols-2', 'md:grid-cols-2', 'lg:grid-cols-2', 'xl:grid-cols-2', 'grid-cols-3', 'md:grid-cols-3', 'sm:grid-cols-3');
+        g.classList.add('grid-cols-1');
         if (g.parentElement.classList.contains('hidden')) g.parentElement.classList.remove('hidden');
     });
 
@@ -3664,7 +3660,7 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
             let bRatioSel = clone.querySelector('.sim-b-ratio'); let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
             generatedSignatures.clear(); 
             
-            cleanSimDiv = document.createElement('div'); cleanSimDiv.className = 'mt-4 grid grid-cols-2 gap-3 w-full pdf-guides';
+            cleanSimDiv = document.createElement('div'); cleanSimDiv.className = 'mt-4 grid grid-cols-1 gap-3 w-full pdf-guides';
             
             let defaultGuidesHtml = getGuideHtmlForVol(prepVolAttr, `Bidon Complet`, totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
             if (prepVolAttr > 50) defaultGuidesHtml += getGuideHtmlForVol(50, "Prélèvement", totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
@@ -3678,7 +3674,7 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
                     let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10); let aromaVolInSample = customPreleveVol * (totalAroma / prepVolAttr); let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100; let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
                     let warning = actualNic > maxNic; let customMlText = round1(customBCount * 10); let customBoostWeight = getWeight(customBCount * 10, bPg); let customBaseWeight = getWeight(customPreleveVol, basePg);
                     let customHtml = `
-                    <div class="col-span-2 p-3 bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 rounded-xl text-stone-700 dark:text-stone-300 leading-tight break-inside-avoid mt-1" style="font-size:10px;">
+                    <div class="col-span-1 p-3 bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 rounded-xl text-stone-700 dark:text-stone-300 leading-tight break-inside-avoid mt-1" style="font-size:10px;">
                         <div class="font-black uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2 border-b border-stone-200 dark:border-stone-700/50 pb-1 flex items-center gap-2"><span>💡 Personnalisé</span><span class="bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(customPreleveVol)} ml (${round2(customBaseWeight)} g)</span></div>
                         <div class="flex justify-between items-center">
                             <div class="flex flex-col">
