@@ -54,11 +54,21 @@ let savedCompos = [];
 try { savedCompos = JSON.parse(safeGetItem('jediy_compos') || '[]'); } catch(e) { savedCompos = []; }
 let savedAromas = [];
 try { savedAromas = JSON.parse(safeGetItem('jediy_aromas') || '[]'); } catch(e) { savedAromas = []; }
+let savedBuilds = [];
+try { savedBuilds = JSON.parse(safeGetItem('jediy_builds') || '[]'); } catch(e) { savedBuilds = []; }
 let currentEditAromaId = null;
+let currentEditBuildId = null;
 let currentMixCard = null;
 let currentEditCompoId = null;
 let groupMixes = false;
 let unreadNotification = false;
+
+let unsavedCategories = { mixes: false, compos: false, aromas: false, builds: false };
+try { 
+    unsavedCategories = JSON.parse(safeGetItem('jediy_unsaved_categories') || JSON.stringify(unsavedCategories)); 
+} catch(e) { 
+    unsavedCategories = { mixes: false, compos: false, aromas: false, builds: false }; 
+}
 
 /* ========================================== */
 /* I.D. JEDI                                  */
@@ -105,6 +115,7 @@ function init() {
     if(typeof setCoilType === 'function') setCoilType('wire');
     if(typeof setCoilMode === 'function') setCoilMode('electro');
     if(typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
+    if(typeof triggerNotificationCycle === 'function') triggerNotificationCycle();
 }
 window.onload = () => { init(); };
 
@@ -799,7 +810,9 @@ function _doSaveCompo(name, prefix) {
     savedCompos.push({ id: Date.now(), name: name, items: items });
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     extractAndStoreAromas(items);
-    syncCompoSelects(); setNeedsExport(true); showAlert("Composition sauvegardée !");
+    syncCompoSelects(); setNeedsExport(true);
+    if(typeof markCategoryModified === 'function') markCategoryModified('compos');
+    showAlert("Composition sauvegardée !");
 }
 
 function syncCompoSelects() {
@@ -946,7 +959,9 @@ function _finalizeNewCompoSave(name) {
     savedCompos.push({ id: Date.now(), name: name, items: items });
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     extractAndStoreAromas(items);
-    syncCompoSelects(); setNeedsExport(true); showAlert("Composition créée !"); closeCompoEditModal();
+    syncCompoSelects(); setNeedsExport(true);
+    if(typeof markCategoryModified === 'function') markCategoryModified('compos');
+    showAlert("Composition créée !"); closeCompoEditModal();
 }
 
 function _finalizeEditCompoSave(name) {
@@ -954,7 +969,9 @@ function _finalizeEditCompoSave(name) {
     if(c) { c.name = name; c.items = JSON.parse(JSON.stringify(state.edit_compo.multi)); }
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     if(c) { extractAndStoreAromas(c.items); }
-    syncCompoSelects(); setNeedsExport(true); showAlert("Composition mise à jour !"); closeCompoEditModal();
+    syncCompoSelects(); setNeedsExport(true);
+    if(typeof markCategoryModified === 'function') markCategoryModified('compos');
+    showAlert("Composition mise à jour !"); closeCompoEditModal();
 }
 
 function saveAsNewCompo() {
@@ -968,11 +985,58 @@ function saveAsNewCompo() {
     savedCompos.push({ id: Date.now(), name: name, items: items });
     safeSetItem('jediy_compos', JSON.stringify(savedCompos));
     extractAndStoreAromas(items);
-    syncCompoSelects(); setNeedsExport(true); showAlert("Copie sauvegardée !"); closeCompoEditModal();
+    syncCompoSelects(); setNeedsExport(true);
+    if(typeof markCategoryModified === 'function') markCategoryModified('compos');
+    showAlert("Copie sauvegardée !"); closeCompoEditModal();
 }
 
 function openExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.remove('hidden'); }
-function closeExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.add('hidden'); }
+function closeExportCompoPrompt() { document.getElementById('export_compo_prompt_modal').classList.add('hidden'); hideCompoPngOptions(); }
+
+let currentCompoPngAction = 'download';
+function showCompoPngOptions() {
+    document.getElementById('compo_export_step_1').classList.add('hidden');
+    document.getElementById('compo_export_step_png_action').classList.remove('hidden');
+    document.getElementById('compo_export_step_png_action').classList.add('flex');
+    document.getElementById('btn_back_compo_export').classList.remove('hidden');
+}
+
+function selectCompoPngAction(action) {
+    currentCompoPngAction = action;
+    document.getElementById('compo_export_step_png_action').classList.add('hidden');
+    document.getElementById('compo_export_step_png_action').classList.remove('flex');
+    document.getElementById('compo_export_step_png_style').classList.remove('hidden');
+    document.getElementById('compo_export_step_png_style').classList.add('flex');
+}
+
+function executeCompoPngExport(mode) {
+    exportCompoPNG(currentCompoPngAction, mode);
+}
+
+function handleCompoExportBack() {
+    let styleEl = document.getElementById('compo_export_step_png_style');
+    let actionEl = document.getElementById('compo_export_step_png_action');
+    
+    if (styleEl && !styleEl.classList.contains('hidden')) {
+        styleEl.classList.add('hidden');
+        styleEl.classList.remove('flex');
+        actionEl.classList.remove('hidden');
+        actionEl.classList.add('flex');
+    } else {
+        if (actionEl) { actionEl.classList.add('hidden'); actionEl.classList.remove('flex'); }
+        document.getElementById('compo_export_step_1').classList.remove('hidden');
+        document.getElementById('btn_back_compo_export').classList.add('hidden');
+    }
+}
+
+function hideCompoPngOptions() {
+    document.getElementById('compo_export_step_1').classList.remove('hidden');
+    let actionEl = document.getElementById('compo_export_step_png_action');
+    if (actionEl) { actionEl.classList.add('hidden'); actionEl.classList.remove('flex'); }
+    let styleEl = document.getElementById('compo_export_step_png_style');
+    if (styleEl) { styleEl.classList.add('hidden'); styleEl.classList.remove('flex'); }
+    document.getElementById('btn_back_compo_export').classList.add('hidden');
+}
 
 function getCompoExportData() {
     let c = savedCompos.find(x => x.id === currentEditCompoId);
@@ -992,27 +1056,45 @@ function exportCompoJson() {
     closeExportCompoPrompt();
 }
 
+function shareCompoJson() {
+    let dataObj = getCompoExportData();
+    let data = { is_jediy_compo: true, jedi: jediIdentity, data: { id: Date.now(), name: dataObj.name, items: dataObj.items } };
+    let jsonStr = JSON.stringify(data, null, 2);
+    let safeName = dataObj.name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    let safeJedi = jediIdentity.replace(/[^a-z0-9]/gi, '_').toLowerCase() || "anonyme";
+    let filename = `Composition_${safeName}_jediy_${safeJedi}.json`;
+    if(typeof shareJsonFile === 'function') shareJsonFile(filename, jsonStr, `Composition ${dataObj.name}`);
+    else fallbackDownload(jsonStr, filename);
+    closeExportCompoPrompt();
+}
+
 function importCompoJson(e) {
     let file = e.target.files[0]; if(!file) return;
     let reader = new FileReader();
     reader.onload = function(ev) {
         try {
             let json = JSON.parse(ev.target.result);
-            if(!json.is_jediy_compo) { openHtmlConfirm("Fichier non reconnu comme composition Je-DIY !"); return; }
+            if(!json.is_jediy_compo || !json.data) { showAlert("Fichier Composition individuel invalide !"); return; }
             let compo = json.data;
-            compo.id = Date.now(); 
-            let existingIdx = savedCompos.findIndex(c => c.name.toLowerCase() === compo.name.toLowerCase());
-            if (existingIdx >= 0) {
-                openHtmlConfirm(`La composition "${compo.name}" existe déjà. Importer comme copie ?`, () => {
-                    compo.name += " (Import)";
-                    savedCompos.push(compo); safeSetItem('jediy_compos', JSON.stringify(savedCompos));
-                    syncCompoSelects(); showAlert("Composition importée !");
-                });
-            } else {
-                savedCompos.push(compo); safeSetItem('jediy_compos', JSON.stringify(savedCompos));
-                syncCompoSelects(); showAlert("Composition importée !");
+            let originalName = compo.name;
+            let newName = originalName;
+            let count = 1;
+            while (savedCompos.some(c => c.name.toLowerCase() === newName.toLowerCase())) {
+                newName = `${originalName} (Import ${count})`;
+                count++;
             }
-        } catch(err) { openHtmlConfirm("Erreur de lecture du fichier JSON."); }
+            compo.name = newName;
+            compo.id = Date.now();
+            savedCompos.push(compo);
+            safeSetItem('jediy_compos', JSON.stringify(savedCompos));
+            syncCompoSelects();
+            renderMesCompos();
+            showAlert(`Composition "${newName}" importée !`);
+            setNeedsExport(true);
+            if(typeof markCategoryModified === 'function') markCategoryModified('compos');
+        } catch(err) {
+            showAlert("Erreur de lecture du fichier JSON !");
+        }
     };
     reader.readAsText(file); e.target.value = '';
 }
@@ -1054,7 +1136,219 @@ function copyToClipboard(text) {
 
 // Fonctions relais liées aux boutons HTML
 function exportCompoPDF(action) { exportCompoMedia('pdf', action); }
-function exportCompoPNG() { exportCompoMedia('png'); }
+function exportCompoPNG(action = 'download', mode = 'light') {
+    let data = getCompoExportData();
+    let tPerc = data.items.reduce((acc, v)=>acc+v.perc, 0);
+    if (tPerc <= 0) tPerc = 1;
+    
+    let currentSimVol = 30;
+    if (typeof currentEditCompoId !== 'undefined' && currentEditCompoId) {
+        let el = document.getElementById('conc_vol_' + currentEditCompoId);
+        if (el && el.value) currentSimVol = parseFloat(el.value);
+    }
+    if (isNaN(currentSimVol) || currentSimVol <= 0) currentSimVol = 30;
+
+    let vols = [10, 30, 50, 100];
+    if (!vols.includes(currentSimVol)) vols.push(currentSimVol);
+    vols.sort((a, b) => a - b);
+    
+    let filename = `${data.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_compo_${mode}.png`;
+    
+    // 1. Create the off-screen captureWrapper
+    let captureWrapper = document.createElement('div');
+    captureWrapper.style.width = "648px"; // Card 600px + 48px padding (24px each side)
+    captureWrapper.style.padding = "24px";
+    captureWrapper.style.boxSizing = "border-box";
+    captureWrapper.style.position = "absolute";
+    captureWrapper.style.left = "-9999px";
+    
+    if (mode === 'dark') {
+        captureWrapper.classList.add('dark');
+        captureWrapper.style.backgroundColor = "#0c0a09"; // Deep dark background (Stone 950)
+    } else {
+        captureWrapper.style.backgroundColor = "#ffffff";
+    }
+    
+    // 2. Build the beautiful premium floating card HTML
+    let cardClass = mode === 'dark' 
+        ? "bg-stone-900/90 border border-stone-800 rounded-3xl p-6 shadow-2xl flex flex-col w-[600px] text-stone-100 backdrop-blur-md"
+        : "bg-white border border-stone-200 rounded-3xl p-6 shadow-2xl flex flex-col w-[600px] text-stone-800";
+        
+    let headerDivHtml = `
+        <div class="mb-5 border-b border-stone-200 dark:border-stone-700/50 pb-4 flex justify-between items-start">
+            <div class="flex-1 pr-4">
+                <div class="text-2xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-1.5 pb-1" style="line-height:1.2;">${data.name}</div>
+                <span class="inline-block bg-stone-100 dark:bg-stone-800/80 px-2 py-1 rounded font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest" style="font-size:9px; line-height:1.2;">Je-DIY • Fiche Recette Concentré</span>
+            </div>
+            <div class="flex gap-3 items-center">
+                <div class="text-right flex flex-col items-end gap-1">
+                    <span class="inline-block font-black text-amber-750 dark:text-amber-350 bg-amber-100 dark:bg-amber-950/40 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-800" style="font-size:14px; line-height:1.2;">${round1(tPerc)} %</span>
+                </div>
+                <img src="jediy.png" alt="Je-DIY" class="w-14 h-14 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700/50">
+            </div>
+        </div>
+    `;
+    
+    // Ingredients Grid
+    let gridItemsHtml = "";
+    data.items.forEach(i => {
+        let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : 'Densité 1.0');
+        let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+        
+        let itemCardClass = mode === 'dark'
+            ? "bg-stone-800/60 border border-stone-700/40 p-3 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm"
+            : "bg-stone-50 border border-stone-200 p-3 rounded-2xl flex flex-col items-center justify-center text-center shadow-sm";
+            
+        let detailsClass = mode === 'dark'
+            ? "inline-block bg-white/10 text-stone-300 px-1.5 py-0.5 rounded text-[8px] font-bold mb-1.5"
+            : "inline-block bg-stone-200/60 text-stone-500 px-1.5 py-0.5 rounded text-[8px] font-bold mb-1.5";
+            
+        gridItemsHtml += `
+            <div class="${itemCardClass}">
+                <span class="font-bold text-stone-700 dark:text-stone-200 text-[11px] w-full break-words whitespace-normal mb-0.5" style="line-height: 1.3; overflow: visible;">${icon} ${i.name}</span>
+                <span class="${detailsClass}">${details}</span>
+                <span class="font-black text-amber-600 dark:text-amber-400 text-xs">${round1(i.perc)}%</span>
+            </div>
+        `;
+    });
+    
+    let proportionsTitleClass = mode === 'dark' ? "text-stone-300" : "text-stone-400";
+    let proportionsHtml = `
+        <div class="text-xs font-bold ${proportionsTitleClass} uppercase tracking-widest mb-3">📊 Proportions de la recette</div>
+        <div class="grid grid-cols-2 gap-3 mb-5">${gridItemsHtml}</div>
+    `;
+    
+    // Fabrication Table
+    let tableHeadersHtml = `
+        <div class="flex bg-stone-250 dark:bg-stone-800 p-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider mb-2 text-stone-700 dark:text-stone-300">
+            <div class="flex-[2] text-left">Ingrédients</div>
+    `;
+    vols.forEach(v => {
+        let isCustom = v === currentSimVol && ![10, 30, 50, 100].includes(v);
+        let textColorClass = isCustom ? 'text-amber-600 dark:text-amber-400' : '';
+        tableHeadersHtml += `<div class="flex-1 text-right ${textColorClass}">${v} ml</div>`;
+    });
+    tableHeadersHtml += `</div>`;
+    
+    let tableRowsHtml = "";
+    data.items.forEach((i, idx) => {
+        let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
+        
+        tableRowsHtml += `
+            <div class="flex items-center p-2.5 border-b border-stone-200/50 dark:border-stone-800/50 last:border-none text-xs">
+                <div class="flex-[2] font-bold text-stone-700 dark:text-stone-300 break-words whitespace-normal pr-2" style="overflow: visible; line-height: 1.3;">${icon} ${i.name}</div>
+        `;
+        
+        vols.forEach(v => {
+            let v_i = v * (i.perc / tPerc);
+            let w_i = getLiquidWeight(i.type, v_i, i.pg, i.degree);
+            tableRowsHtml += `
+                <div class="flex-1 text-right leading-tight">
+                    <span class="font-black text-stone-900 dark:text-stone-100 block">${round2(v_i)} ml</span>
+                    <span class="text-[9px] font-bold text-amber-600 dark:text-amber-400 block">${round2(w_i)} g</span>
+                </div>
+            `;
+        });
+        
+        tableRowsHtml += `</div>`;
+    });
+    
+    let tableContainerClass = mode === 'dark'
+        ? "bg-stone-950/40 border border-stone-800 p-4 rounded-2xl flex flex-col gap-1 shadow-inner"
+        : "bg-stone-50/50 border border-stone-200 p-4 rounded-2xl flex flex-col gap-1 shadow-inner";
+        
+    let fabricationTitleClass = mode === 'dark' ? "text-stone-300" : "text-stone-400";
+    let fabricationHtml = `
+        <div class="text-xs font-bold ${fabricationTitleClass} uppercase tracking-widest mb-3">🧪 Tableau de fabrication de concentré</div>
+        <div class="${tableContainerClass}">
+            ${tableHeadersHtml}
+            ${tableRowsHtml}
+        </div>
+    `;
+    
+    // Footer
+    let footerText = typeof jediIdentity !== 'undefined' && jediIdentity ? `Composition partagée par <strong class="text-amber-600 dark:text-amber-400">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
+    let footerTextClass = mode === 'dark' ? "text-stone-300" : "text-stone-400";
+    let footerHtml = `
+        <div class="mt-5 text-center border-t border-stone-200 dark:border-stone-700/50 pt-3">
+            <span class="${footerTextClass} uppercase tracking-widest font-bold" style="font-size:9px;">${footerText}</span>
+        </div>
+    `;
+    
+    // 3. Assemble and Append the elements
+    let cardDiv = document.createElement('div');
+    cardDiv.className = cardClass;
+    cardDiv.innerHTML = headerDivHtml + proportionsHtml + fabricationHtml + footerHtml;
+    
+    captureWrapper.appendChild(cardDiv);
+    document.body.appendChild(captureWrapper);
+    
+    // Set document state for styling
+    document.documentElement.dataset.originalTheme = document.documentElement.dataset.theme;
+    if (mode === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+    
+
+    
+    window.scrollTo(0, 0);
+    
+    setTimeout(() => {
+        freezeComputedStyles(cardDiv);
+        html2canvas(captureWrapper, { 
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: (mode === 'dark' ? '#0c0a09' : '#ffffff'),
+            scrollY: 0 
+        }).then(canvas => {
+            
+            const finalize = () => {
+                captureWrapper.remove();
+                document.documentElement.dataset.theme = document.documentElement.dataset.originalTheme;
+                applyTheme();
+                closeExportCompoPrompt();
+            };
+
+            canvas.toBlob(blob => {
+                let file = new File([blob], filename, { type: 'image/png' });
+                if (action === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: `Fiche Compo Je-DIY : ${data.name}`,
+                        text: `Composition générée avec Je-DIY`
+                    }).then(() => {
+                        finalize();
+                    }).catch(err => {
+                        console.log("Erreur partage direct PNG:", err);
+                        // Fallback download
+                        let link = document.createElement('a');
+                        link.download = filename;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        finalize();
+                    });
+                } else {
+                    // Direct download
+                    let link = document.createElement('a');
+                    link.download = filename;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    finalize();
+                }
+            }, 'image/png');
+
+        }).catch(err => {
+            console.error("Erreur PNG composition :", err);
+            showAlert("Erreur lors de la capture PNG.");
+            captureWrapper.remove();
+            document.documentElement.dataset.theme = document.documentElement.dataset.originalTheme;
+            applyTheme();
+            closeExportCompoPrompt();
+        });
+    }, 600);
+}
 
 // Le moteur commun qui génère le HTML et gère l'export final
 function exportCompoMedia(format, action = 'download') {
@@ -1905,7 +2199,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
                 </div>
                 ${btnHtml}
             </div>
-            <div class="card-body space-y-2 mb-4">`;
+            <div class="card-body flex flex-col gap-2 mb-4">`;
 
     if (r.multi) {
         let compoPgMl = 0;
@@ -1922,7 +2216,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         let originalPercBadge = (r.originalCompoTotal > 0) ? `<span class="block text-[9px] font-normal text-stone-500 mt-0.5">Recette originale : ${round1(r.originalCompoTotal)}%</span>` : '';
         
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
-            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); toggleCardPanelFolding(this, 'compo');">
                 <span class="flex items-center gap-1.5 leading-tight">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     <div class="flex flex-col">
@@ -1962,7 +2256,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         aromaWeight = getWeight(r.aroma, r.aromaPg);
         totalWeight += aromaWeight;
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(r.aromaPg, false)}</span></span>
+                <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Arôme <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(r.aromaPg, false)}</span></div>
                 <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.aroma)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(aromaWeight)} g</span></div>
             </div>`;
     }
@@ -1971,7 +2265,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         if(b.vol > 0.1) {
             let baseWeight = getWeight(b.vol, b.pgRatio); totalWeight += baseWeight;
             html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Base <span class="inline-block font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(b.pgRatio, false)}</span></span>
+                    <div class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Base <span class="inline-block font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(b.pgRatio, false)}</span></div>
                     <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(b.vol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(baseWeight)} g</span></div>
                 </div>`;
         }
@@ -1980,7 +2274,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     if(prefix === 't1' && r.nic > 0) {
         let nicWeight = getWeight(r.nic, r.nicRatio); totalWeight += nicWeight;
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(r.nicRatio, false)}</span></span>
+                <div class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(r.nicRatio, false)}</span></div>
                 <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.nic)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(r.nic/10)} u.)</span></span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(nicWeight)} g</span></div>
             </div>`;
     }
@@ -2002,7 +2296,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
         html += `</div>`;
         
         html += `<div class="sim-container mt-2 p-3 bg-white dark:bg-stone-800 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-100 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${r.prepVol}" data-aroma-vol="${r.aroma}" data-max-nic="${r.nicMax}" data-bstr="${r.bStr||(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${r.realPgRatio}">
-            <div class="flex items-center justify-between cursor-pointer select-none text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors" style="font-size:10px;" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
+            <div class="flex items-center justify-between cursor-pointer select-none text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors" style="font-size:10px;" onclick="event.stopPropagation(); toggleSimFolding(this);">
                 <span class="flex items-center gap-1.5">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     🧪 Simulation d'ajout de boosters
@@ -2072,11 +2366,11 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
                 </div>
                 ${btnHtml}
             </div>
-            <div class="card-body space-y-2 mb-4">`;
+            <div class="card-body flex flex-col gap-2 mb-4">`;
     if (c.multi) {
         let originalPercBadge = (c.originalCompoTotal > 0) ? `<span class="block text-[9px] font-normal text-stone-500 mt-0.5">Recette originale : ${round1(c.originalCompoTotal)}%</span>` : '';
         let multiHtml = `<div class="bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors mb-2 w-full">
-            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('hidden'); this.querySelector('svg').classList.toggle('rotate-90');">
+            <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex justify-between items-center cursor-pointer select-none" onclick="event.stopPropagation(); toggleCardPanelFolding(this, 'compo');">
                 <span class="flex items-center gap-1.5 leading-tight">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200 shrink-0"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     <div class="flex flex-col">
@@ -2123,13 +2417,13 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
     }
     if (c.bVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="inline-block font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(c.bPg, false)}</span></span>
+                    <div class="text-sm font-bold text-stone-600 dark:text-stone-400 flex items-center gap-2">Base <span class="inline-block font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(c.bPg, false)}</span></div>
                     <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml</span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(bWeight)} g</span></div>
                 </div>`;
     }
     if (c.nVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 transition-colors">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(c.nPg, false)}</span></span>
+                    <div class="text-sm font-bold text-brand-600 dark:text-brand-500 flex items-center gap-2">Booster <span class="inline-block font-bold text-brand-700 dark:text-brand-300 bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded transition-colors" style="font-size:10px; line-height:1.2;">${formatRatioStr(c.nPg, false)}</span></div>
                     <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.nVol)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(c.nVol/10)} u.)</span></span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(nWeight)} g</span></div>
                 </div>`;
     }
@@ -2163,16 +2457,16 @@ function buildBoostCardHtml(c, noBtn = false, isCompact = false) {
                 </div>
                 ${btnHtml}
             </div>
-            <div class="card-body space-y-2 mb-4">`;
+            <div class="card-body flex flex-col gap-2 mb-4">`;
     if(c.vol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
-                    <span class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Jus <span class="inline-block font-bold bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded" style="font-size:11px; line-height:1.2;">${formatRatioStr(c.pg, false)}</span></span>
+                    <div class="text-sm font-bold text-stone-600 dark:text-stone-300 flex items-center gap-2">Jus <span class="inline-block font-bold bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded" style="font-size:11px; line-height:1.2;">${formatRatioStr(c.pg, false)}</span></div>
                     <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.vol)} ml</span><span class="block font-bold text-brand-600 mt-0.5" style="font-size:10px;">${round2(jWeight)} g</span></div>
                 </div>`;
     }
     if(c.bVol > 0) {
         html += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700">
-                    <span class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Booster <span class="inline-block font-bold bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded" style="font-size:11px; line-height:1.2;">${formatRatioStr(c.bPg, false)}</span></span>
+                    <div class="text-sm font-bold text-brand-600 dark:text-brand-400 flex items-center gap-2">Booster <span class="inline-block font-bold bg-brand-100 dark:bg-brand-900 px-1.5 py-0.5 rounded" style="font-size:11px; line-height:1.2;">${formatRatioStr(c.bPg, false)}</span></div>
                     <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(c.bVol)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(c.bVol/10)} u.)</span></span><span class="block font-bold text-brand-600 mt-0.5" style="font-size:10px;">${round2(bWeight)} g</span></div>
                 </div>`;
     }
@@ -2223,6 +2517,7 @@ function syncSimInputs(inputEl, source) {
     updateSim(inputEl);
 }
 
+let isSyncingSim = false;
 function updateSim(el) {
     let container = el.closest('.recipe-card-wrapper'); if(!container) return;
     let sel = container.querySelector('.sim-sel-vol'); let customInp = container.querySelector('.sim-custom-vol');
@@ -2248,6 +2543,125 @@ function updateSim(el) {
         if (finalNic > maxNic) resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>${aromaHtml}<br><span class="text-[10px] text-red-500 dark:text-red-400 font-bold block mt-1 leading-tight">⚠️ Taux max (${maxNic} mg) dépassé,<br>arôme trop dilué !</span>`;
         else resEl.innerHTML = `${round1(finalVol)} ml à <span class="text-brand-600 dark:text-brand-400">${round1(finalNic)} mg/ml</span>${aromaHtml}`;
     } else resEl.innerText = "0 ml";
+
+    // Synchronize all other shortfill card simulations in the document in real time
+    if (!isSyncingSim) {
+        isSyncingSim = true;
+        try {
+            document.querySelectorAll('.sim-container').forEach(otherSim => {
+                if (otherSim === simContObj) return; // Skip the active one
+                
+                let otherSel = otherSim.querySelector('.sim-sel-vol');
+                let otherCustom = otherSim.querySelector('.sim-custom-vol');
+                let otherBCount = otherSim.querySelector('.sim-b-count');
+                let otherMlCount = otherSim.querySelector('.sim-ml-count');
+                let otherBRatio = otherSim.querySelector('.sim-b-ratio');
+                
+                if (otherSel) {
+                    otherSel.value = sel.value;
+                    let wrapper = otherSel.parentElement.querySelector('.sim-custom-wrapper');
+                    if (wrapper) {
+                        if (sel.value === 'custom') {
+                            wrapper.classList.remove('hidden');
+                            wrapper.classList.add('flex');
+                        } else {
+                            wrapper.classList.add('hidden');
+                            wrapper.classList.remove('flex');
+                        }
+                    }
+                }
+                if (otherCustom && customInp) otherCustom.value = customInp.value;
+                if (otherBCount && bCountInp) otherBCount.value = bCountInp.value;
+                if (otherMlCount) {
+                    let mlInp = simContObj.querySelector('.sim-ml-count');
+                    if (mlInp) otherMlCount.value = mlInp.value;
+                }
+                if (otherBRatio && bRatioSel) otherBRatio.value = bRatioSel.value;
+                
+                // Recalculate simulation values for this other card
+                let otherCard = otherSim.closest('.recipe-card-wrapper');
+                if (otherCard) {
+                    updateSim(otherSel || otherBCount);
+                }
+            });
+        } finally {
+            isSyncingSim = false;
+        }
+    }
+}
+
+let isSyncingPanelFolding = false;
+function toggleCardPanelFolding(headerEl, panelType) {
+    let panel = headerEl.nextElementSibling;
+    let svg = headerEl.querySelector('svg');
+    if (!panel || !svg) return;
+
+    let isExpanded = !panel.classList.contains('hidden');
+    
+    // Toggle active element state
+    if (isExpanded) {
+        panel.classList.add('hidden');
+        svg.classList.remove('rotate-90');
+    } else {
+        panel.classList.remove('hidden');
+        svg.classList.add('rotate-90');
+    }
+
+    // Propagate state to other card components
+    if (!isSyncingPanelFolding) {
+        isSyncingPanelFolding = true;
+        try {
+            let activeCard = headerEl.closest('.recipe-card-wrapper');
+            
+            document.querySelectorAll('.recipe-card-wrapper').forEach(otherCard => {
+                if (otherCard === activeCard) return; // Skip current card
+                
+                let targetHeader = null;
+                let targetPanel = null;
+                let targetSvg = null;
+
+                if (panelType === 'compo') {
+                    let compoGrid = otherCard.querySelector('.pdf-aroma-grid');
+                    if (compoGrid) {
+                        targetPanel = compoGrid.parentElement;
+                        if (targetPanel) {
+                            targetHeader = targetPanel.previousElementSibling;
+                            if (targetHeader) {
+                                targetSvg = targetHeader.querySelector('svg');
+                            }
+                        }
+                    }
+                } else if (panelType === 'sim') {
+                    let simContainer = otherCard.querySelector('.sim-container');
+                    if (simContainer) {
+                        targetHeader = simContainer.firstElementChild;
+                        if (targetHeader) {
+                            targetPanel = targetHeader.nextElementSibling;
+                            targetSvg = targetHeader.querySelector('svg');
+                        }
+                    }
+                }
+
+                // Replicate folding state
+                if (targetHeader && targetPanel && targetSvg) {
+                    if (isExpanded) {
+                        targetPanel.classList.add('hidden');
+                        targetSvg.classList.remove('rotate-90');
+                    } else {
+                        targetPanel.classList.remove('hidden');
+                        targetSvg.classList.add('rotate-90');
+                    }
+                }
+            });
+        } finally {
+            isSyncingPanelFolding = false;
+        }
+    }
+}
+
+// Backward compatibility alias for stability tests
+function toggleSimFolding(headerEl) {
+    toggleCardPanelFolding(headerEl, 'sim');
 }
 
 /* ========================================== */
@@ -2305,8 +2719,19 @@ function updateSettingsBadge() {
 }
 
 function setNeedsExport(state) {
-    if (state) safeSetItem('jediy_needs_export', 'true');
-    else localStorage.removeItem('jediy_needs_export');
+    if (state) {
+        safeSetItem('jediy_needs_export', 'true');
+    } else {
+        localStorage.removeItem('jediy_needs_export');
+        if (typeof clearUnsavedCategories === 'function') {
+            clearUnsavedCategories();
+        } else {
+            unsavedCategories = { mixes: false, compos: false, aromas: false, builds: false };
+            safeSetItem('jediy_unsaved_categories', JSON.stringify(unsavedCategories));
+            let container = document.getElementById('unsaved_notifications_container');
+            if (container) container.innerHTML = '';
+        }
+    }
     updateSettingsBadge();
 }
 
@@ -2348,13 +2773,22 @@ function toggleSaveMixBtn() {
     let val = document.getElementById('mix_name_input').value.trim(); 
     let isValid = val.length >= 2;
     
+    // Si c'est un nouveau mix, on mémorise le nom tapé
+    let isSaved = false;
+    if (currentMixCard) {
+        isSaved = currentMixCard.closest('#mes_mixes_list') !== null;
+    }
+    if (!isSaved) {
+        lastTypedMixName = val;
+    }
+    
     let saveBtn = document.getElementById('btn_save_mix'); 
     if(saveBtn) saveBtn.disabled = !isValid;
     
-    document.getElementById('btn_copy_text').disabled = false;
-    document.getElementById('btn_share_mix').disabled = false;
-    document.getElementById('btn_pdf_mix').disabled = false;
-    if(document.getElementById('btn_png_mix')) document.getElementById('btn_png_mix').disabled = false;
+    document.getElementById('btn_copy_text').disabled = !isValid;
+    document.getElementById('btn_share_mix').disabled = !isValid;
+    document.getElementById('btn_pdf_mix').disabled = !isValid;
+    if(document.getElementById('btn_png_mix')) document.getElementById('btn_png_mix').disabled = !isValid;
     
     if(currentMixCard) {
         let titleEl = currentMixCard.querySelector('.font-extrabold.text-stone-800');
@@ -2384,7 +2818,10 @@ function saveCurrentMix() {
     safeSetItem('jediy_mixes', JSON.stringify(savedMixes));
     if (cfg.multi) { extractAndStoreAromas(cfg.multi); }
     setNeedsExport(true);
-    showAlert("Mix sauvegardé !"); cancelExport();
+    if(typeof markCategoryModified === 'function') markCategoryModified('mixes');
+    showAlert("Mix sauvegardé !"); 
+    lastTypedMixName = "";
+    cancelExport();
     if(document.getElementById('tab_mes_donnees').classList.contains('active')) renderMesMixes();
 }
 
@@ -2397,6 +2834,7 @@ function setSort(sortType) {
         else el.className = "flex-1 sm:flex-none px-3 py-1.5 text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-100 rounded-lg text-xs font-bold transition-all";
     });
     renderMesMixes(); renderMesCompos(); renderMesAromes();
+    if (typeof renderMesBuilds === 'function') renderMesBuilds();
 }
 
 function toggleGroupMixes() {
@@ -2405,18 +2843,21 @@ function toggleGroupMixes() {
     if (groupMixes) { btn.classList.add('bg-green-100', 'text-green-700', 'border-green-300', 'dark:bg-green-900/30', 'dark:text-green-400'); btn.classList.remove('bg-stone-100', 'text-stone-500', 'dark:bg-stone-800', 'dark:text-stone-400'); } 
     else { btn.classList.remove('bg-green-100', 'text-green-700', 'border-green-300', 'dark:bg-green-900/30', 'dark:text-green-400'); btn.classList.add('bg-stone-100', 'text-stone-500', 'dark:bg-stone-800', 'dark:text-stone-400'); }
     renderMesMixes(); renderMesCompos(); renderMesAromes();
+    if (typeof renderMesBuilds === 'function') renderMesBuilds();
 }
 
 function switchDataTab(tab) {
     let btnCreateCompo = document.getElementById('btn_create_compo');
     let btnCreateArome = document.getElementById('btn_create_arome');
     let btnImportCompo = document.getElementById('btn_import_compo');
+    let btnImportBuild = document.getElementById('btn_import_build');
     let btnGroup = document.getElementById('btn_group_mixes');
     
     // Hide all lists first
     document.getElementById('mes_mixes_list').classList.add('hidden');
     document.getElementById('mes_compos_list').classList.add('hidden');
     document.getElementById('mes_aromes_list').classList.add('hidden');
+    document.getElementById('mes_builds_list').classList.add('hidden');
     
     // Inactivate all buttons
     let activeBtnClasses = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
@@ -2424,11 +2865,13 @@ function switchDataTab(tab) {
     document.getElementById('tab_btn_mes_mixes').className = inactiveBtnClasses;
     document.getElementById('tab_btn_mes_compos').className = inactiveBtnClasses;
     document.getElementById('tab_btn_mes_aromes').className = inactiveBtnClasses;
+    document.getElementById('tab_btn_mes_builds').className = inactiveBtnClasses;
     
     // Hide buttons by default
     if(btnCreateCompo) btnCreateCompo.classList.add('hidden');
     if(btnCreateArome) btnCreateArome.classList.add('hidden');
     if(btnImportCompo) btnImportCompo.classList.add('hidden');
+    if(btnImportBuild) btnImportBuild.classList.add('hidden');
     if(btnGroup) { btnGroup.classList.add('hidden'); btnGroup.classList.remove('flex'); }
     
     if(tab === 'mixes') {
@@ -2447,6 +2890,11 @@ function switchDataTab(tab) {
         document.getElementById('tab_btn_mes_aromes').className = activeBtnClasses;
         if(btnCreateArome) btnCreateArome.classList.remove('hidden');
         renderMesAromes();
+    } else if(tab === 'builds') {
+        document.getElementById('mes_builds_list').classList.remove('hidden');
+        document.getElementById('tab_btn_mes_builds').className = activeBtnClasses;
+        if(btnImportBuild) btnImportBuild.classList.remove('hidden');
+        renderMesBuilds();
     }
 }
 
@@ -2681,12 +3129,18 @@ function deleteMix(id) {
     openHtmlConfirm("Supprimer ce mix ?", () => {
         savedMixes = savedMixes.filter(x => x.id !== id); 
         safeSetItem('jediy_mixes', JSON.stringify(savedMixes)); 
+        setNeedsExport(true);
+        if(typeof markCategoryModified === 'function') markCategoryModified('mixes');
         renderMesMixes(); 
     });
 }
 function deleteCompo(id) { 
     openHtmlConfirm("Supprimer cette composition ?", () => {
-        savedCompos = savedCompos.filter(x => x.id !== id); safeSetItem('jediy_compos', JSON.stringify(savedCompos)); syncCompoSelects(); renderMesCompos(); 
+        savedCompos = savedCompos.filter(x => x.id !== id); 
+        safeSetItem('jediy_compos', JSON.stringify(savedCompos)); 
+        setNeedsExport(true);
+        if(typeof markCategoryModified === 'function') markCategoryModified('compos');
+        syncCompoSelects(); renderMesCompos(); 
     });
 }
 
@@ -2697,6 +3151,7 @@ async function exportSettingsJson() {
         mixes: savedMixes, 
         compos: savedCompos,
         aromas: savedAromas,
+        builds: savedBuilds,
         hw_bases: JSON.parse(safeGetItem('jediy_hw_bases') || '[100, 0]'),
         hw_boosts: JSON.parse(safeGetItem('jediy_hw_boosts') || '[50]')
     };
@@ -2733,21 +3188,29 @@ function fallbackDownload(jsonStr, filename) {
 
 function triggerImport() { document.getElementById('json_import_input').click(); }
 function handleImport(e) {
-    let file = e.target.files[0]; if(!file) return; let reader = new FileReader();
-    reader.onload = function(ev) {
-        try {
-            let data = JSON.parse(ev.target.result);
-            if(data.mixes) { savedMixes = data.mixes; safeSetItem('jediy_mixes', JSON.stringify(savedMixes)); }
-            if(data.compos) { savedCompos = data.compos; safeSetItem('jediy_compos', JSON.stringify(savedCompos)); }
-            if(data.aromas) { savedAromas = data.aromas; safeSetItem('jediy_aromas', JSON.stringify(savedAromas)); }
-            if(data.jediIdentity !== undefined) { if(data.jediIdentity) safeSetItem('jediIdentity', data.jediIdentity); else safeRemoveItem('jediIdentity'); }
-            if(data.theme) safeSetItem('theme', data.theme);
-            if(data.hw_bases) safeSetItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
-            if(data.hw_boosts) safeSetItem('jediy_hw_boosts', JSON.stringify(data.hw_boosts));
-            showAlert("Importation réussie !"); setTimeout(() => window.location.reload(), 1000);
-        } catch(err) { showAlert("Fichier invalide !"); }
-    };
-    reader.readAsText(file); e.target.value = '';
+    let file = e.target.files[0]; if(!file) return;
+    openHtmlConfirm(
+        `<span class="text-red-500 font-extrabold block mb-2">🚨 ATTENTION !</span> Cette opération va écraser définitivement toutes vos données locales actuelles (mixes, compositions, arômes, montages). Voulez-vous continuer ?`,
+        () => {
+            let reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    let data = JSON.parse(ev.target.result);
+                    if(data.mixes) { savedMixes = data.mixes; safeSetItem('jediy_mixes', JSON.stringify(savedMixes)); }
+                    if(data.compos) { savedCompos = data.compos; safeSetItem('jediy_compos', JSON.stringify(savedCompos)); }
+                    if(data.aromas) { savedAromas = data.aromas; safeSetItem('jediy_aromas', JSON.stringify(savedAromas)); }
+                    if(data.builds) { savedBuilds = data.builds; safeSetItem('jediy_builds', JSON.stringify(savedBuilds)); }
+                    if(data.jediIdentity !== undefined) { if(data.jediIdentity) safeSetItem('jediIdentity', data.jediIdentity); else safeRemoveItem('jediIdentity'); }
+                    if(data.theme) safeSetItem('theme', data.theme);
+                    if(data.hw_bases) safeSetItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
+                    if(data.hw_boosts) safeSetItem('jediy_hw_boosts', JSON.stringify(data.hw_boosts));
+                    showAlert("Importation réussie !"); setTimeout(() => window.location.reload(), 1000);
+                } catch(err) { showAlert("Fichier invalide !"); }
+            };
+            reader.readAsText(file);
+        }
+    );
+    e.target.value = '';
 }
 
 /* ========================================== */
@@ -2787,7 +3250,7 @@ function openModalFromCard(element) {
         desc.innerText = "Modifie le nom si besoin, puis exporte ou partage ton Mix.";
     } else {
         saveWrapper.style.display = 'block'; 
-        nameInput.value = c.globalName || "";
+        nameInput.value = lastTypedMixName || c.globalName || "";
         desc.innerText = "Donne un nom à ton Mix pour le sauvegarder ou l'exporter.";
     }
     toggleSaveMixBtn();
@@ -2822,10 +3285,56 @@ function openModalFromCard(element) {
 }
 
 function closeRecipeModal() { document.getElementById('recipe_modal').classList.add('hidden'); currentMixCard = null; }
+let currentRecipePngAction = 'download';
 function showPdfOptions() { document.getElementById('export_step_1').classList.add('hidden'); document.getElementById('export_step_2').classList.remove('hidden'); document.getElementById('export_step_2').classList.add('flex'); document.getElementById('btn_back_export').classList.remove('hidden'); }
-function hidePdfOptions() { document.getElementById('export_step_1').classList.remove('hidden'); document.getElementById('export_step_2').classList.add('hidden'); document.getElementById('export_step_2').classList.remove('flex'); document.getElementById('btn_back_export').classList.add('hidden'); }
+function showPngOptions() {
+    document.getElementById('export_step_1').classList.add('hidden');
+    document.getElementById('export_step_png_action').classList.remove('hidden');
+    document.getElementById('export_step_png_action').classList.add('flex');
+    document.getElementById('btn_back_export').classList.remove('hidden');
+}
+function selectRecipePngAction(action) {
+    currentRecipePngAction = action;
+    document.getElementById('export_step_png_action').classList.add('hidden');
+    document.getElementById('export_step_png_action').classList.remove('flex');
+    document.getElementById('export_step_png_style').classList.remove('hidden');
+    document.getElementById('export_step_png_style').classList.add('flex');
+}
+function executeRecipePngExport(mode) {
+    exportRecipePNG(currentRecipePngAction, mode);
+}
+function handleRecipeExportBack() {
+    let styleEl = document.getElementById('export_step_png_style');
+    let actionEl = document.getElementById('export_step_png_action');
+    let pdfEl = document.getElementById('export_step_2');
+    
+    if (styleEl && !styleEl.classList.contains('hidden')) {
+        styleEl.classList.add('hidden');
+        styleEl.classList.remove('flex');
+        actionEl.classList.remove('hidden');
+        actionEl.classList.add('flex');
+    } else {
+        if (actionEl) { actionEl.classList.add('hidden'); actionEl.classList.remove('flex'); }
+        if (pdfEl) { pdfEl.classList.add('hidden'); pdfEl.classList.remove('flex'); }
+        document.getElementById('export_step_1').classList.remove('hidden');
+        document.getElementById('btn_back_export').classList.add('hidden');
+    }
+}
+function hidePdfOptions() {
+    document.getElementById('export_step_1').classList.remove('hidden');
+    document.getElementById('export_step_2').classList.add('hidden');
+    document.getElementById('export_step_2').classList.remove('flex');
+    let actionEl = document.getElementById('export_step_png_action');
+    if (actionEl) { actionEl.classList.add('hidden'); actionEl.classList.remove('flex'); }
+    let styleEl = document.getElementById('export_step_png_style');
+    if (styleEl) { styleEl.classList.add('hidden'); styleEl.classList.remove('flex'); }
+    document.getElementById('btn_back_export').classList.add('hidden');
+}
 function openExportPrompt() {
-    if (pendingNewMix) { document.getElementById('mix_name_input').value = currentMixCard ? (JSON.parse(decodeURIComponent(currentMixCard.getAttribute('data-config'))).globalName || '') : ''; pendingNewMix = false; }
+    if (pendingNewMix) { 
+        document.getElementById('mix_name_input').value = lastTypedMixName || (currentMixCard ? (JSON.parse(decodeURIComponent(currentMixCard.getAttribute('data-config'))).globalName || '') : ''); 
+        pendingNewMix = false; 
+    }
     if(document.getElementById('mix_name_input').style.display !== 'none') { toggleSaveMixBtn(); }
     document.getElementById('export_prompt_modal').classList.remove('hidden'); 
     if(document.getElementById('mix_name_input').style.display !== 'none') document.getElementById('mix_name_input').focus();
@@ -2954,28 +3463,28 @@ function computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, b
 function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, basePg, bPg) {
     let baseWeight = getWeight(baseVol, basePg); let data = computeBoostGuide(baseVol, totalAroma, prepVol, nicMax, bStr, basePg, bPg);
     let html = `
-        <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 leading-tight break-inside-avoid h-full flex flex-col" style="font-size:10px;">
-            <div class="font-black uppercase tracking-widest text-stone-500 mb-2 border-b border-stone-200 pb-1 flex items-center justify-between">
-                <span>💡 ${title}</span><span class="bg-stone-200 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(baseVol)} ml (${round2(baseWeight)} g)</span>
+        <div class="p-3 bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 rounded-xl text-stone-700 dark:text-stone-300 leading-tight break-inside-avoid h-full flex flex-col" style="font-size:10px;">
+            <div class="font-black uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2 border-b border-stone-200 dark:border-stone-700/50 pb-1 flex items-center justify-between">
+                <span>💡 ${title}</span><span class="bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(baseVol)} ml (${round2(baseWeight)} g)</span>
             </div>
             <div class="flex-1 flex flex-col justify-center gap-1.5">`;
     data.forEach(row => {
         generatedSignatures.add(`${baseVol}-${row.bCount}`);
-        let isMax = row.isMax; let warning = (row.nic > nicMax) ? `<span class="text-red-500 font-bold ml-1 bg-red-50 px-1 rounded border border-red-100" style="font-size:8px;">⚠️ Max</span>` : '';
-        let trClass = isMax ? "text-brand-700 font-bold bg-brand-50 rounded px-1 -mx-1" : "text-stone-600"; 
+        let isMax = row.isMax; let warning = (row.nic > nicMax) ? `<span class="text-red-500 font-bold ml-1 bg-red-50 dark:bg-red-950/20 px-1 rounded border border-red-100 dark:border-red-900/30" style="font-size:8px;">⚠️ Max</span>` : '';
+        let trClass = isMax ? "text-brand-700 dark:text-brand-300 font-bold bg-brand-50 dark:bg-brand-900/30 rounded px-1 -mx-1" : "text-stone-600 dark:text-stone-400"; 
         let prefix = isMax ? "MAX: " : "+ "; let mlText = round1(row.bCount * 10); let bWeight = getWeight(row.bCount * 10, bPg);
         
         html += `
-            <div class="flex justify-between items-center border-b border-stone-200/50 last:border-0 pb-1.5 ${trClass}">
+            <div class="flex justify-between items-center border-b border-stone-200/50 dark:border-stone-700/30 last:border-0 pb-1.5 ${trClass}">
                 <div class="flex flex-col">
                     <span class="font-bold">${prefix}${round1(row.bCount)} boost.</span>
                     <span class="opacity-70" style="font-size:8px;">(${mlText}ml - ${round2(bWeight)}g)</span>
-                    <span class="text-brand-600 font-bold mt-0.5">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</span>
+                    <span class="text-brand-600 dark:text-brand-400 font-bold mt-0.5">-> ${isMax ? '' : '~'}${round1(row.nic)} mg</span>
                 </div>
                 <div class="flex flex-col items-end text-right" style="line-height:1.2;">
                     <span style="font-size:10px;">Arôme: ${isMax ? '' : '~'}${round1(row.aroma)}%</span>
-                    <span class="text-stone-400 font-bold mt-0.5" style="font-size:8px;">Boosters: ${formatRatioStr(bPg)}</span>
-                    <span class="text-stone-400 font-bold" style="font-size:8px;">Ratio final: ~${formatRatioStr(row.pg)}</span>
+                    <span class="text-stone-400 dark:text-stone-500 font-bold mt-0.5" style="font-size:8px;">Boosters: ${formatRatioStr(bPg)}</span>
+                    <span class="text-stone-400 dark:text-stone-500 font-bold" style="font-size:8px;">Ratio final: ~${formatRatioStr(row.pg)}</span>
                     ${warning}
                 </div>
             </div>`;
@@ -2983,57 +3492,167 @@ function getGuideHtmlForVol(baseVol, title, totalAroma, prepVol, bStr, nicMax, b
     html += `</div></div>`; return html;
 }
 
-function prepareCardForExport() {
-    let clone = document.getElementById('recipe_modal_content').querySelector('.export-card'); if (!clone) return null;
+function freezeComputedStyles(element) {
+    [element, ...Array.from(element.querySelectorAll('*'))].forEach(el => {
+        // Disable transitions and animations, force absolute opacity
+        el.classList.remove('animate-fade-in', 'animate-slide-up', 'transition-all', 'transition-colors', 'duration-300');
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.setProperty('transform', 'none', 'important');
+        el.style.setProperty('transition', 'none', 'important');
+        el.style.setProperty('animation', 'none', 'important');
+
+        let computed = window.getComputedStyle(el);
+        let bg = computed.backgroundColor;
+        let color = computed.color;
+        let borderTop = computed.borderTopColor;
+        let borderRight = computed.borderRightColor;
+        let borderBottom = computed.borderBottomColor;
+        let borderLeft = computed.borderLeftColor;
+        let bgImg = computed.backgroundImage;
+        
+        if (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') {
+            el.style.setProperty('background-color', bg, 'important');
+        }
+        if (color) {
+            el.style.setProperty('color', color, 'important');
+        }
+        if (borderTop && borderTop !== 'transparent' && borderTop !== 'rgba(0, 0, 0, 0)') el.style.setProperty('border-top-color', borderTop, 'important');
+        if (borderRight && borderRight !== 'transparent' && borderRight !== 'rgba(0, 0, 0, 0)') el.style.setProperty('border-right-color', borderRight, 'important');
+        if (borderBottom && borderBottom !== 'transparent' && borderBottom !== 'rgba(0, 0, 0, 0)') el.style.setProperty('border-bottom-color', borderBottom, 'important');
+        if (borderLeft && borderLeft !== 'transparent' && borderLeft !== 'rgba(0, 0, 0, 0)') el.style.setProperty('border-left-color', borderLeft, 'important');
+        if (bgImg && bgImg !== 'none') {
+            el.style.setProperty('background-image', bgImg, 'important');
+        }
+    });
+}
+
+function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
+    let clone = document.getElementById('recipe_modal_content').querySelector('.export-card, .recipe-card-wrapper'); if (!clone) return null;
     let pristineCard = clone.cloneNode(true);
+    let originalWidth = clone.offsetWidth || 512;
+    
+    // Déplier les compositions / arômes
+    clone.querySelectorAll('.hidden, [id$="_aroma_fold_panel"]').forEach(el => {
+        el.classList.remove('hidden');
+    });
+    clone.querySelectorAll('[id$="_aroma_fold_icon"]').forEach(icon => {
+        icon.classList.remove('rotate-0');
+        icon.classList.add('rotate-180');
+    });
     
     clone.querySelectorAll('.truncate').forEach(el => {
         el.classList.remove('truncate');
         el.classList.add('break-words', 'whitespace-normal');
     });
     
-    clone.classList.remove('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar', 'shadow-2xl');
-    clone.classList.add('border-2', 'border-stone-200', 'rounded-3xl', 'p-6');
+    clone.classList.remove('max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
     
-    clone.style.width = '600px';
+    // Forcer la hauteur automatique pour éviter les étirements de viewport de html2canvas
+    clone.classList.remove('h-full');
+    clone.style.setProperty('height', 'auto', 'important');
+    clone.style.setProperty('min-height', '0', 'important');
+    clone.style.setProperty('max-height', 'none', 'important');
+    clone.querySelectorAll('.h-full').forEach(el => {
+        el.classList.remove('h-full');
+        el.style.setProperty('height', 'auto', 'important');
+    });
+    
+    // Masquage strict de tous les boutons interactifs
+    clone.querySelectorAll('button, .modal-buttons, .calc-tab-buttons').forEach(btn => {
+        btn.style.setProperty('display', 'none', 'important');
+    });
+    
+    // Force absolute opacity and disable all animations/transitions to prevent html2canvas from capturing a semi-transparent state
+    [clone, ...Array.from(clone.querySelectorAll('*'))].forEach(el => {
+        el.classList.remove('animate-fade-in', 'animate-slide-up', 'transition-all', 'transition-colors', 'duration-300');
+        el.style.setProperty('opacity', '1', 'important');
+        el.style.setProperty('transform', 'none', 'important');
+        el.style.setProperty('transition', 'none', 'important');
+        el.style.setProperty('animation', 'none', 'important');
+    });
+    
+    clone.style.width = originalWidth + 'px';
     clone.style.margin = '0 auto';
-    clone.style.backgroundColor = '#ffffff';
+    
+    // Premium theme color dictionary to guarantee exact colors during export
+    const THEME_COLORS = {
+        complet: { bg: '#78350f', bgLight: '#fffbeb', brand300: '#fcd34d' },
+        boost: { bg: '#064e3b', bgLight: '#ecfdf5', brand300: '#6ee7b7' },
+        shortfill: { bg: '#312e81', bgLight: '#eef2ff', brand300: '#a5b4fc' },
+        manuel: { bg: '#7f1d1d', bgLight: '#fef2f2', brand300: '#fca5a5' },
+        assistant: { bg: '#3b3730', bgLight: '#f8f5ee', brand300: '#d2cbc3' },
+        coils: { bg: '#1c1917', bgLight: '#f5f3ff', brand300: '#c4b5fd' }
+    };
+    const themeColors = THEME_COLORS[activeTheme] || THEME_COLORS['complet'];
+    
+    if (pngMode === 'dark') {
+        clone.classList.remove(
+            'bg-brand-50', 'dark:bg-brand-900',
+            'bg-white', 'dark:bg-stone-900',
+            'bg-sky-50', 'dark:bg-sky-900',
+            'bg-amber-50', 'dark:bg-amber-900',
+            'bg-indigo-50', 'dark:bg-indigo-900',
+            'bg-emerald-50', 'dark:bg-emerald-900'
+        );
+        clone.style.setProperty('background-color', themeColors.bg, 'important');
+        clone.classList.remove('border-stone-800', 'dark:border-stone-800');
+        clone.style.setProperty('border', '1px solid ' + themeColors.brand300 + '73', 'important'); // 0.45 opacity
+    } else {
+        clone.classList.remove(
+            'bg-brand-50', 'dark:bg-brand-900',
+            'bg-white', 'dark:bg-stone-900',
+            'bg-sky-50', 'dark:bg-sky-900',
+            'bg-amber-50', 'dark:bg-amber-900',
+            'bg-indigo-50', 'dark:bg-indigo-900',
+            'bg-emerald-50', 'dark:bg-emerald-900'
+        );
+        clone.style.setProperty('background-color', themeColors.bgLight, 'important');
+        clone.classList.remove('border-stone-800', 'dark:border-stone-800');
+        clone.classList.add('border-stone-200');
+    }
 
     let aromaGrids = clone.querySelectorAll('.pdf-aroma-grid, .grid-cols-1.sm\\:grid-cols-2');
     aromaGrids.forEach(g => {
-        g.classList.remove('grid-cols-1', 'sm:grid-cols-2');
-        g.classList.add('grid-cols-3');
+        g.classList.remove('grid-cols-1', 'sm:grid-cols-2', 'grid-cols-3');
+        if (pngMode === null) {
+            g.classList.add('grid-cols-3');
+        } else {
+            g.classList.add('grid-cols-2');
+        }
         if (g.parentElement.classList.contains('hidden')) g.parentElement.classList.remove('hidden');
     });
 
-    let name = document.getElementById('mix_name_input').value.trim() || "Mix";
-    let cfgStr = clone.getAttribute('data-config'); let c = JSON.parse(decodeURIComponent(cfgStr));
-    
-    let originalHeader = clone.querySelector('.flex-1 > div.flex.justify-between.items-start');
-    if (originalHeader) originalHeader.style.display = 'none';
-    
-    let prepType = "";
-    if (c.type === 't1') prepType = "Liquide Prêt";
-    else if (c.type === 't2') prepType = "Base Shortfill";
-    else if (c.type === 't3') prepType = "Mélange Manuel";
-    else if (c.type === 'boost') prepType = "Mélange Boosté";
+    let cfgStr = clone.getAttribute('data-config');
+    if (cfgStr) {
+        let name = document.getElementById('mix_name_input').value.trim() || "Mix";
+        let c = JSON.parse(decodeURIComponent(cfgStr));
+        
+        let originalHeader = clone.querySelector('.flex-1 > div.flex.justify-between.items-start');
+        if (originalHeader) originalHeader.style.display = 'none';
+        
+        let prepType = "";
+        if (c.type === 't1') prepType = "Liquide Prêt";
+        else if (c.type === 't2') prepType = "Base Shortfill";
+        else if (c.type === 't3') prepType = "Mélange Manuel";
+        else if (c.type === 'boost') prepType = "Mélange Boosté";
 
-    let totalVol = c.type === 't1' ? c.finalVol : (c.type === 't2' ? c.prepVol : (c.type === 'boost' ? c.vol+c.bVol : c.aVol+c.bVol+c.nVol));
-    let pgRatioNum = (c.type === 't3' || c.type === 'boost') ? parseFloat(clone.getAttribute('data-ratio')) : (c.realPgRatio !== undefined ? c.realPgRatio : c.pg);
-    let ratioStr = formatRatioStr(pgRatioNum || 50, true);
+        let totalVol = c.type === 't1' ? c.finalVol : (c.type === 't2' ? c.prepVol : (c.type === 'boost' ? c.vol+c.bVol : c.aVol+c.bVol+c.nVol));
+        let pgRatioNum = (c.type === 't3' || c.type === 'boost') ? parseFloat(clone.getAttribute('data-ratio')) : (c.realPgRatio !== undefined ? c.realPgRatio : c.pg);
+        let ratioStr = formatRatioStr(pgRatioNum || 50, true);
 
-    let headerDiv = document.createElement('div'); headerDiv.className = 'export-title mb-5 border-b border-stone-200 pb-4 flex justify-between items-start';
-    let qrcodeHtml = `<img src="jediy.png" alt="QR" class="w-14 h-14 rounded-xl shadow-sm border border-stone-200">`;
-    let techHtml = `<div class="text-right flex flex-col items-end gap-1"><span class="inline-block font-black text-stone-800 bg-stone-100 px-2 py-0.5 rounded-md" style="font-size:11px; line-height:1.2;">${ratioStr}</span><span class="block text-brand-600 font-black text-base" style="font-size:16px; line-height:1.2;">${round1(totalVol)} ml</span></div>`;
-    
-    headerDiv.innerHTML = `
-        <div class="flex-1 pr-4">
-            <div class="text-2xl font-black text-stone-800 tracking-tight mb-1.5 pb-1" style="line-height:1.2;">${name}</div>
-            <span class="inline-block bg-stone-100 px-2 py-1 rounded font-bold text-stone-500 uppercase tracking-widest" style="font-size:9px; line-height:1.2;">Je-DIY • ${prepType}</span>
-        </div>
-        <div class="flex gap-3 items-center">${techHtml}${qrcodeHtml}</div>
-    `;
-    clone.insertBefore(headerDiv, clone.firstChild);            
+        let headerDiv = document.createElement('div'); headerDiv.className = 'export-title mb-5 border-b border-stone-200 dark:border-stone-700/50 pb-4 flex justify-between items-start';
+        let qrcodeHtml = `<img src="jediy.png" alt="QR" class="w-14 h-14 rounded-xl shadow-sm border border-stone-200 dark:border-stone-700/50">`;
+        let techHtml = `<div class="text-right flex flex-col items-end gap-1"><span class="inline-block font-black text-stone-800 dark:text-stone-100 bg-stone-100 dark:bg-stone-800/80 px-2 py-0.5 rounded-md" style="font-size:11px; line-height:1.2;">${ratioStr}</span><span class="block text-brand-600 dark:text-brand-400 font-black text-base" style="font-size:16px; line-height:1.2;">${round1(totalVol)} ml</span></div>`;
+        
+        headerDiv.innerHTML = `
+            <div class="flex-1 pr-4">
+                <div class="text-2xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-1.5 pb-1" style="line-height:1.2;">${name}</div>
+                <span class="inline-block bg-stone-100 dark:bg-stone-800/80 px-2 py-1 rounded font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest" style="font-size:9px; line-height:1.2;">Je-DIY • ${prepType}</span>
+            </div>
+            <div class="flex gap-3 items-center">${techHtml}${qrcodeHtml}</div>
+        `;
+        clone.insertBefore(headerDiv, clone.firstChild);            
+    }
     
     let buttons = clone.querySelector('.modal-buttons'); if (buttons) buttons.style.display = 'none';
 
@@ -3059,19 +3678,19 @@ function prepareCardForExport() {
                     let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10); let aromaVolInSample = customPreleveVol * (totalAroma / prepVolAttr); let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100; let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
                     let warning = actualNic > maxNic; let customMlText = round1(customBCount * 10); let customBoostWeight = getWeight(customBCount * 10, bPg); let customBaseWeight = getWeight(customPreleveVol, basePg);
                     let customHtml = `
-                    <div class="col-span-2 p-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 leading-tight break-inside-avoid mt-1" style="font-size:10px;">
-                        <div class="font-black uppercase tracking-widest text-stone-500 mb-2 border-b border-stone-200 pb-1 flex items-center gap-2"><span>💡 Personnalisé</span><span class="bg-stone-200 text-stone-700 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(customPreleveVol)} ml (${round2(customBaseWeight)} g)</span></div>
+                    <div class="col-span-2 p-3 bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 rounded-xl text-stone-700 dark:text-stone-300 leading-tight break-inside-avoid mt-1" style="font-size:10px;">
+                        <div class="font-black uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2 border-b border-stone-200 dark:border-stone-700/50 pb-1 flex items-center gap-2"><span>💡 Personnalisé</span><span class="bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(customPreleveVol)} ml (${round2(customBaseWeight)} g)</span></div>
                         <div class="flex justify-between items-center">
                             <div class="flex flex-col">
                                 <span class="font-bold">+ ${round1(customBCount)} boost.</span>
                                 <span class="opacity-70" style="font-size:8px;">(${customMlText}ml - ${round2(customBoostWeight)}g)</span>
-                                <span class="text-brand-600 font-bold mt-0.5">-> ~${round1(actualNic)} mg</span>
+                                <span class="text-brand-600 dark:text-brand-400 font-bold mt-0.5">-> ~${round1(actualNic)} mg</span>
                             </div>
                             <div class="flex flex-col items-end text-right" style="line-height:1.2;">
                                 <span style="font-size:10px;">Arôme: ~${round1(finalAromaPerc)}%</span>
-                                <span class="text-stone-400 font-bold mt-0.5" style="font-size:8px;">Boosters: ${formatRatioStr(bPg)}</span>
-                                <span class="text-stone-400 font-bold" style="font-size:8px;">Ratio final: ~${formatRatioStr(customFinalPg)}</span>
-                                ${warning ? '<span class="text-red-500 font-bold mt-0.5 bg-red-50 px-1 rounded border border-red-100" style="font-size:8px;">⚠️ Max dépassé</span>' : ''}
+                                <span class="text-stone-400 dark:text-stone-500 font-bold mt-0.5" style="font-size:8px;">Boosters: ${formatRatioStr(bPg)}</span>
+                                <span class="text-stone-400 dark:text-stone-500 font-bold" style="font-size:8px;">Ratio final: ~${formatRatioStr(customFinalPg)}</span>
+                                ${warning ? '<span class="text-red-500 font-bold mt-0.5 bg-red-50 dark:bg-red-950/20 px-1 rounded border border-red-100 dark:border-red-900/30" style="font-size:8px;">⚠️ Max dépassé</span>' : ''}
                             </div>
                         </div>
                     </div>`;
@@ -3082,19 +3701,82 @@ function prepareCardForExport() {
         }
     }
 
-    let footerDiv = document.createElement('div'); footerDiv.className = 'export-footer mt-5 text-center border-t border-stone-200 pt-3';
-    let footerText = jediIdentity ? `Mix partagé par <strong class="text-brand-600">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
-    footerDiv.innerHTML = `<span class="text-stone-500 uppercase tracking-widest font-bold" style="font-size:9px;">${footerText}</span>`;
+    let footerDiv = document.createElement('div'); footerDiv.className = 'export-footer mt-5 text-center border-t border-stone-200 dark:border-stone-700/50 pt-3';
+    let footerText = jediIdentity ? `Mix partagé par <strong class="text-brand-600 dark:text-brand-400">${jediIdentity}</strong>` : `Généré avec Je-DIY - Le calculateur expert`;
+    footerDiv.innerHTML = `<span class="text-stone-500 dark:text-stone-400 uppercase tracking-widest font-bold" style="font-size:9px;">${footerText}</span>`;
     clone.appendChild(footerDiv);
     
-    document.documentElement.dataset.pdfTheme = document.getElementById('recipe_modal_theme_wrapper').dataset.theme;
-    document.body.classList.add('exporting'); 
+    let rmtw = document.getElementById('recipe_modal_theme_wrapper');
+    document.documentElement.dataset.pdfTheme = rmtw ? rmtw.dataset.theme : activeTheme;
+    if (pngMode === null) {
+        document.body.classList.add('exporting'); 
+    }
     document.documentElement.dataset.originalTheme = document.documentElement.dataset.theme;
     document.documentElement.dataset.theme = document.documentElement.dataset.pdfTheme;
-    document.documentElement.classList.remove('dark');
+    
+    if (pngMode === 'dark') {
+        document.documentElement.classList.add('dark');
+        
+        // Dynamically style and fix contrast for all badges and text in dark PNG mode (after all dynamic DOM elements are inserted)
+        clone.querySelectorAll('*').forEach(el => {
+            let isBadge = false;
+            let isBrandText = false;
+            let isStoneText = false;
+            
+            let classListStatic = Array.from(el.classList);
+            classListStatic.forEach(cls => {
+                if (cls.startsWith('bg-brand-') || cls.startsWith('dark:bg-brand-') ||
+                    cls.startsWith('bg-stone-') || cls.startsWith('dark:bg-stone-')) {
+                    if (cls.includes('100') || cls.includes('200') || cls.includes('700') || cls.includes('800') || cls.includes('900')) {
+                        isBadge = true;
+                    }
+                }
+                
+                if (cls.startsWith('text-brand-') || cls.startsWith('dark:text-brand-')) {
+                    isBrandText = true;
+                }
+                
+                if (cls.startsWith('text-stone-') || cls.startsWith('dark:text-stone-')) {
+                    if (cls.includes('400') || cls.includes('500') || cls.includes('600') || cls.includes('700')) {
+                        isStoneText = true;
+                    }
+                }
+            });
+            
+            if (isBadge) {
+                classListStatic.forEach(cls => {
+                    if (cls.startsWith('bg-') || cls.startsWith('dark:bg-')) {
+                        el.classList.remove(cls);
+                    }
+                });
+                el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
+                el.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.15)', 'important');
+                el.style.setProperty('color', '#f5f5f4', 'important');
+            } else if (isBrandText) {
+                classListStatic.forEach(cls => {
+                    if (cls.startsWith('text-brand-') || cls.startsWith('dark:text-brand-')) {
+                        el.classList.remove(cls);
+                    }
+                });
+                el.style.setProperty('color', themeColors.brand300, 'important');
+            } else if (isStoneText) {
+                classListStatic.forEach(cls => {
+                    if (cls.startsWith('text-stone-') || cls.startsWith('dark:text-stone-')) {
+                        el.classList.remove(cls);
+                    }
+                });
+                el.style.setProperty('color', 'rgb(214, 211, 209)', 'important');
+            }
+        });
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+    
+
     
     return {
         card: clone,
+        width: originalWidth,
         restore: () => {
             document.body.classList.remove('exporting'); 
             document.documentElement.dataset.theme = document.documentElement.dataset.originalTheme;
@@ -3121,11 +3803,13 @@ function prepareCardForExport() {
 }
 
 function exportRecipePDF(action) {
-    let ctx = prepareCardForExport(); if (!ctx) return;
+    let activeTheme = document.getElementById('recipe_modal_theme_wrapper').dataset.theme || 'complet';
+    let ctx = prepareCardForExport(null, activeTheme); if (!ctx) return;
     let name = document.getElementById('mix_name_input').value.trim() || "mix";
     let filename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.pdf`;
     
     setTimeout(() => {
+        freezeComputedStyles(ctx.card);
         let opt = {
             margin: [5, 5, 5, 5], filename: filename, image: { type: 'jpeg', quality: 0.95 },
             html2canvas: { scale: 2, useCORS: true, scrollY: 0, backgroundColor: '#ffffff', windowWidth: document.documentElement.offsetWidth },
@@ -3172,55 +3856,88 @@ function executeShare() {
 }
 
 // Export PNG pour les Mixes/Recettes
-function exportRecipePNG() {
-    let ctx = prepareCardForExport(); if (!ctx) return;
+function exportRecipePNG(action = 'download', mode = 'light') {
+    let activeTheme = document.getElementById('recipe_modal_theme_wrapper').dataset.theme || 'complet';
+    let ctx = prepareCardForExport(mode, activeTheme); if (!ctx) return;
     let name = document.getElementById('mix_name_input').value.trim() || "mix";
-    let filename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+    let filename = `${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${mode}.png`;
     
     let parent = ctx.card.parentNode;
     let nextSibling = ctx.card.nextSibling;
     
-    // Création d'une page format A4
-    let a4Wrapper = document.createElement('div');
-    a4Wrapper.style.width = "794px"; // Largeur A4
-    a4Wrapper.style.height = "1123px"; // Hauteur A4
-    a4Wrapper.style.backgroundColor = "#ffffff";
-    a4Wrapper.style.padding = "40px"; // Marges de la page
-    a4Wrapper.style.boxSizing = "border-box";
-    a4Wrapper.style.position = "absolute";
-    a4Wrapper.style.left = "-9999px"; // Caché hors écran pendant la capture
+    let cardWidth = ctx.width || 512;
+    // Création d'un conteneur hors écran aux dimensions réelles de la fiche affichée (largeur + 24px de padding de chaque côté)
+    let captureWrapper = document.createElement('div');
+    captureWrapper.style.width = (cardWidth + 48) + "px";
+    captureWrapper.style.padding = "24px";
+    captureWrapper.style.boxSizing = "border-box";
+    captureWrapper.style.position = "absolute";
+    captureWrapper.style.left = "-9999px"; // Caché hors écran pendant la capture
     
-    document.body.appendChild(a4Wrapper);
-    a4Wrapper.appendChild(ctx.card);
+    if (mode === 'dark') {
+        captureWrapper.classList.add('dark');
+        captureWrapper.style.backgroundColor = "#0c0a09"; // Stone 950
+    } else {
+        captureWrapper.style.backgroundColor = "#ffffff";
+    }
     
-    // Ajustements pour que la fiche se place bien en haut de la page A4
+    document.body.appendChild(captureWrapper);
+    captureWrapper.appendChild(ctx.card);
+    
+    // Ajustements précis pour conserver le ratio et la largeur exacte de la fiche
     let oldWidth = ctx.card.style.width;
     let oldMargin = ctx.card.style.margin;
-    ctx.card.style.width = "100%";
+    ctx.card.style.width = cardWidth + "px";
     ctx.card.style.margin = "0";
     ctx.card.classList.remove('h-full'); // On retire l'étirement vertical
     
     setTimeout(() => {
-        html2canvas(a4Wrapper, { scale: 2, useCORS: true, backgroundColor: '#ffffff', scrollY: 0 }).then(canvas => {
-            let link = document.createElement('a');
-            link.download = filename;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
+        freezeComputedStyles(ctx.card);
+        html2canvas(captureWrapper, { scale: 2, useCORS: true, backgroundColor: (mode === 'dark' ? '#0c0a09' : '#ffffff'), scrollY: 0 }).then(canvas => {
             
-            // On remet la fiche à sa place d'origine
-            if (nextSibling) {
-                parent.insertBefore(ctx.card, nextSibling);
-            } else {
-                parent.appendChild(ctx.card);
-            }
+            const finalize = () => {
+                // On remet la fiche à sa place d'origine
+                if (nextSibling) {
+                    parent.insertBefore(ctx.card, nextSibling);
+                } else {
+                    parent.appendChild(ctx.card);
+                }
+                captureWrapper.remove();
+                ctx.card.style.width = oldWidth;
+                ctx.card.style.margin = oldMargin;
+                ctx.card.classList.add('h-full');
+                ctx.restore();
+                cancelExport();
+            };
+
+            canvas.toBlob(blob => {
+                let file = new File([blob], filename, { type: 'image/png' });
+                if (action === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: `Fiche Mix Je-DIY : ${name}`,
+                        text: `Fiche Recette générée avec Je-DIY`
+                    }).then(() => {
+                        finalize();
+                    }).catch(err => {
+                        console.log("Erreur partage direct PNG:", err);
+                        // Fallback download
+                        let link = document.createElement('a');
+                        link.download = filename;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        finalize();
+                    });
+                } else {
+                    // Direct download
+                    let link = document.createElement('a');
+                    link.download = filename;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    finalize();
+                }
+            }, 'image/png');
             
-            a4Wrapper.remove();
-            ctx.card.style.width = oldWidth;
-            ctx.card.style.margin = oldMargin;
-            ctx.card.classList.add('h-full');
-            
-            ctx.restore();
-            cancelExport();
         }).catch(err => {
             console.error("Erreur PNG recette :", err);
             showAlert("Erreur lors de la capture PNG.");
@@ -3229,7 +3946,7 @@ function exportRecipePNG() {
             } else {
                 parent.appendChild(ctx.card);
             }
-            a4Wrapper.remove();
+            captureWrapper.remove();
             ctx.card.style.width = oldWidth;
             ctx.card.style.margin = oldMargin;
             ctx.card.classList.add('h-full');
@@ -3491,7 +4208,7 @@ function syncCoilVoltage() {
     syncCoilOhmSolver('volts');
 }
 
-function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
+function drawCoilSVG(wraps, id, wireDia, struct, config, legs, spacing = 0) {
     let container = document.getElementById('coil_svg_container');
     if (!container) return;
     
@@ -3619,14 +4336,19 @@ function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
     let coilRadius = Math.max(18, Math.min(45, id * 10)) * scale;
     let legVisualLength = Math.max(8, Math.min(42, legs * 1.9)) * scale;
     
+    let gapVisual = spacing * 20 * scale;
+    let pitch = thickness + gapVisual;
+    
     let centers = isDouble ? [80, 220] : [150];
     
     centers.forEach(cx => {
-        // Jig rod
+        let totalCoilWidthVisual = ((wraps - 1) * pitch + thickness);
+        let jigWidth = Math.max(130, totalCoilWidthVisual + 30);
+        
         let jig = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        jig.setAttribute('x', cx - 65);
+        jig.setAttribute('x', cx - jigWidth / 2);
         jig.setAttribute('y', 75 - (11 * scale));
-        jig.setAttribute('width', '130');
+        jig.setAttribute('width', jigWidth);
         jig.setAttribute('height', 22 * scale);
         jig.setAttribute('rx', '4');
         jig.setAttribute('fill', '#4b5563');
@@ -3636,13 +4358,13 @@ function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
         let intWraps = Math.floor(wraps);
         let isHalfWrap = (wraps % 1 !== 0);
         
-        let startX = cx - (wraps * thickness) / 2;
+        let startX = cx - totalCoilWidthVisual / 2;
         
         // 1. Back spires
         for (let k = 0; k < intWraps; k++) {
-            let x = startX + k * thickness;
+            let x = startX + k * pitch;
             let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            let d = `M ${x} ${75 - coilRadius} C ${x + thickness} ${75 - coilRadius - 6 * scale}, ${x + thickness} ${75 + coilRadius + 6 * scale}, ${x} ${75 + coilRadius}`;
+            let d = `M ${x} ${75 - coilRadius} C ${x + pitch} ${75 - coilRadius - 6 * scale}, ${x + pitch} ${75 + coilRadius + 6 * scale}, ${x} ${75 + coilRadius}`;
             path.setAttribute('d', d);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke', '#374151');
@@ -3653,9 +4375,9 @@ function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
         }
         
         if (isHalfWrap) {
-            let x = startX + intWraps * thickness;
+            let x = startX + intWraps * pitch;
             let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            let d = `M ${x} ${75 - coilRadius} C ${x + thickness/2} ${75 - coilRadius - 3 * scale}, ${x + thickness/2} ${75 + coilRadius + 3 * scale}, ${x} ${75 + coilRadius}`;
+            let d = `M ${x} ${75 - coilRadius} C ${x + pitch/2} ${75 - coilRadius - 3 * scale}, ${x + pitch/2} ${75 + coilRadius + 3 * scale}, ${x} ${75 + coilRadius}`;
             path.setAttribute('d', d);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke', '#374151');
@@ -3677,10 +4399,10 @@ function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
         let rightLeg = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         
         if (isHalfWrap) {
-            let xEnd = startX + intWraps * thickness;
+            let xEnd = startX + intWraps * pitch;
             rightLeg.setAttribute('d', `M ${xEnd - 4 * scale} 75 L ${xEnd + 15 * scale} ${75 + coilRadius + legVisualLength}`);
         } else {
-            let xEnd = startX + (intWraps - 1) * thickness;
+            let xEnd = startX + (intWraps - 1) * pitch;
             rightLeg.setAttribute('d', `M ${xEnd + thickness} ${75 - coilRadius} Q ${xEnd + thickness + 8 * scale} 75, ${xEnd + thickness + 15 * scale} ${75 + coilRadius + legVisualLength}`);
         }
         
@@ -3692,10 +4414,10 @@ function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
 
         // 3. Front spires
         for (let k = 0; k < intWraps; k++) {
-            let x = startX + k * thickness;
+            let x = startX + k * pitch;
             
             let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            let d = `M ${x} ${75 + coilRadius} C ${x - thickness/2} ${75 + coilRadius - 5 * scale}, ${x - thickness/2} ${75 - coilRadius + 5 * scale}, ${x} ${75 - coilRadius}`;
+            let d = `M ${x} ${75 + coilRadius} C ${x - pitch/2} ${75 + coilRadius - 5 * scale}, ${x - pitch/2} ${75 - coilRadius + 5 * scale}, ${x} ${75 - coilRadius}`;
             path.setAttribute('d', d);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke', 'url(#svgMetalCoil)');
@@ -3717,9 +4439,9 @@ function drawCoilSVG(wraps, id, wireDia, struct, config, legs) {
         }
         
         if (isHalfWrap) {
-            let x = startX + intWraps * thickness;
+            let x = startX + intWraps * pitch;
             let path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            let d = `M ${x} ${75 + coilRadius} C ${x - thickness/3} ${75 + coilRadius - 3 * scale}, ${x - thickness/3} 75, ${x - 4 * scale} 75`;
+            let d = `M ${x} ${75 + coilRadius} C ${x - pitch/3} ${75 + coilRadius - 3 * scale}, ${x - pitch/3} 75, ${x - 4 * scale} 75`;
             path.setAttribute('d', d);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke', 'url(#svgMetalCoil)');
@@ -3971,10 +4693,32 @@ function calculateCoil(isManualWatts = false) {
         }
     }
     
-    drawCoilSVG(wraps, innerDia, wireEffectiveDia, struct, config, legs);
+    let spacingVal = 0;
+    let widthText = '-- mm';
+    if (currentCoilType === 'mesh') {
+        let rawW = parseFloat(document.getElementById('mesh_width')?.value);
+        let w = isNaN(rawW) ? 6.8 : Math.max(1.0, rawW);
+        widthText = w.toFixed(1) + ' mm';
+    } else {
+        spacingVal = parseFloat(document.getElementById('coil_spacing')?.value) || 0;
+        let hasWrap = ['clapton', 'fused2', 'fused3', 'fused4', 'staple', 'framed'].includes(struct);
+        let wrapDiaMm = Math.max(0.01, parseFloat(document.getElementById('coil_wrap_mm')?.value) || 0.13);
+        let wDia = wireEffectiveDia + (hasWrap ? wrapDiaMm * 2 : 0);
+        let totalWidth = (wraps * wDia) + (Math.max(0, wraps - 1) * spacingVal);
+        widthText = totalWidth.toFixed(1) + ' mm';
+    }
+    let widthEl = document.getElementById('coil_width');
+    if (widthEl) widthEl.innerText = widthText;
+    
+    currentCoilSurface = totalSurfaceArea;
+    
+    drawCoilSVG(wraps, innerDia, wireEffectiveDia, struct, config, legs, spacingVal);
 }
 
+let currentCoilSurface = 0;
 let currentCoilMode = 'electro';
+let lastTypedBuildName = "";
+let lastTypedMixName = "";
 function setCoilMode(mode) {
     currentCoilMode = mode;
     let btnElectro = document.getElementById('coil_mode_electro');
@@ -4995,6 +5739,8 @@ function saveAromaEdit() {
     }
     
     safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+    setNeedsExport(true);
+    if(typeof markCategoryModified === 'function') markCategoryModified('aromas');
     updateAromaDatalists();
     closeAromaEditModal();
     renderMesAromes();
@@ -5077,14 +5823,16 @@ function propagateAromaToExistingRecipes() {
     
     // Save updated stock
     safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+    setNeedsExport(true);
+    if(typeof markCategoryModified === 'function') markCategoryModified('aromas');
     updateAromaDatalists();
     closeAromaEditModal();
     renderMesAromes();
     
     if (updatedRecipesCount > 0) {
-        showAlert(`Arôme mis à jour avec succès dans ${updatedRecipesCount} recette(s) existante(s) !`);
+        showAlert(`Arôme mis à succès dans ${updatedRecipesCount} recette(s) !`);
     } else {
-        showAlert("Arôme mis à jour ! Aucune recette existante n'utilisait cet arôme.");
+        showAlert("Arôme mis à jour !");
     }
 }
 
@@ -5094,6 +5842,8 @@ function deleteAroma(id) {
     openHtmlConfirm(`Supprimer l'arôme "${a.name}" de votre stock ? (Vos recettes existantes ne seront pas supprimées).`, () => {
         savedAromas = savedAromas.filter(x => x.id !== id);
         safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
+        setNeedsExport(true);
+        if(typeof markCategoryModified === 'function') markCategoryModified('aromas');
         updateAromaDatalists();
         renderMesAromes();
     });
@@ -5170,3 +5920,1371 @@ document.addEventListener('click', function(e) {
         });
     }
 });
+
+/* ========================================================================= */
+/* 12. GESTION DES MONTAGES (COILS / MESH) & NOTIFICATIONS DE SAUVEGARDE    */
+/* ========================================================================= */
+
+// Collecte l'état actuel de tous les réglages et résultats du simulateur de bobine (Coils/Mesh)
+function getCurrentBuildData() {
+    let type = currentCoilType; // 'wire' ou 'mesh'
+    let config = currentCoilConfig; // 'single' ou 'double'
+    let mode = currentCoilMode; // 'electro' ou 'meca'
+    
+    // Paramètres principaux du calculateur
+    let materialCore = document.getElementById('coil_material_core')?.value || 'ni80';
+    let watts = parseFloat(document.getElementById('coil_watts')?.value) || 45;
+    let volts = parseFloat(document.getElementById('coil_volts')?.value) || 3.7;
+    
+    // Résultats physiques calculés
+    let ohms = document.getElementById('coil_ohms')?.innerText || '0.000 Ω';
+    let amps = document.getElementById('coil_amps')?.innerText || '0.00';
+    let weight = document.getElementById('coil_weight')?.innerText || '0.000 g';
+    let diesel = document.getElementById('coil_diesel')?.innerText || 'Rapide 🚀';
+    
+    let fluxBar = document.getElementById('coil_heatflux_val');
+    let flux = fluxBar ? fluxBar.innerText : '0';
+    
+    let data = {
+        type: type,
+        config: config,
+        mode: mode,
+        materialCore: materialCore,
+        watts: watts,
+        volts: volts,
+        ohms: ohms,
+        amps: amps,
+        weight: weight,
+        diesel: diesel,
+        flux: flux,
+        surface: currentCoilSurface || 0
+    };
+    
+    if (type === 'mesh') {
+        data.meshType = document.getElementById('mesh_type')?.value || 'weave_200';
+        data.meshLength = parseFloat(document.getElementById('mesh_length')?.value) || 16.0;
+        data.meshWidth = parseFloat(document.getElementById('mesh_width')?.value) || 6.8;
+    } else {
+        data.structure = document.getElementById('coil_structure')?.value || 'simple';
+        data.innerDia = parseFloat(document.getElementById('coil_inner_dia')?.value) || 3.0;
+        data.wraps = parseFloat(document.getElementById('coil_wraps')?.value) || 6;
+        data.legs = parseFloat(document.getElementById('coil_legs')?.value) || 8;
+        data.coreMm = parseFloat(document.getElementById('coil_core_mm')?.value) || 0.40;
+        data.coreAwg = document.getElementById('coil_core_awg')?.value || '26';
+        data.spacing = parseFloat(document.getElementById('coil_spacing')?.value) || 0;
+        
+        // Paramètres exotiques
+        data.ribbonW = parseFloat(document.getElementById('coil_ribbon_w')?.value) || 0.5;
+        data.ribbonH = parseFloat(document.getElementById('coil_ribbon_h')?.value) || 0.1;
+        data.ribbonCount = parseInt(document.getElementById('coil_ribbon_count')?.value) || 6;
+        data.frameMm = parseFloat(document.getElementById('coil_frame_mm')?.value) || 0.32;
+        data.frameAwg = document.getElementById('coil_frame_awg')?.value || '28';
+        
+        let hasWrap = ['clapton', 'fused2', 'fused3', 'fused4', 'staple', 'framed'].includes(data.structure);
+        if (hasWrap) {
+            data.materialWrap = document.getElementById('coil_material_wrap')?.value || 'ni80';
+            data.wrapMm = parseFloat(document.getElementById('coil_wrap_mm')?.value) || 0.13;
+            data.wrapAwg = document.getElementById('coil_wrap_awg')?.value || '36';
+        }
+    }
+    
+    return data;
+}
+
+// Ouvre l'aperçu/fiche du montage en cours de configuration dans le calculateur
+function viewCoilBuildSheet() {
+    let buildData = getCurrentBuildData();
+    buildData.name = lastTypedBuildName || "Mon Montage";
+    openBuildModalFromCard(buildData);
+}
+
+// Calcule les recommandations d'utilisation Box Électro et simulations Mod Méca pour un montage classique (Coil)
+function getBuildUsageRecommendations(b) {
+    if (b.type === 'mesh') return null;
+    
+    let surface = parseFloat(b.surface);
+    if (!surface || isNaN(surface) || surface <= 0) {
+        let flux = parseFloat(b.flux) || 0;
+        let watts = parseFloat(b.watts) || 45;
+        surface = flux > 0 ? (watts * 1000) / flux : watts * 5;
+    }
+    
+    let r = parseFloat(b.ohms) || 0.5;
+    if (isNaN(r) || r <= 0) r = 0.5;
+    
+    // Electro range
+    let wattsMin = Math.max(5, Math.round(surface * 0.12));
+    let wattsMax = Math.max(wattsMin, Math.min(150, Math.round(surface * 0.32)));
+    
+    // Meca simulation
+    // 4.2V
+    let iPeak = 4.2 / r;
+    let pPeak = 17.64 / r;
+    let fPeak = (pPeak * 1000) / surface;
+    
+    // 3.7V
+    let iNom = 3.7 / r;
+    let pNom = 13.69 / r;
+    let fNom = (pNom * 1000) / surface;
+    
+    // 3.2V
+    let iLow = 3.2 / r;
+    let pLow = 10.24 / r;
+    let fLow = (pLow * 1000) / surface;
+    
+    // Vape quality based on nominal heat flux
+    let vapeQuality = "";
+    let vapeQualityColor = "";
+    if (fNom < 120) {
+        vapeQuality = "Vape froide / Effet Diesel 🐢";
+        vapeQualityColor = "text-blue-500 dark:text-blue-400";
+    } else if (fNom >= 120 && fNom <= 280) {
+        vapeQuality = "Vape idéale et équilibrée 🚀";
+        vapeQualityColor = "text-emerald-500 dark:text-emerald-400 font-extrabold";
+    } else {
+        vapeQuality = "Vape très chaude / Risque de dry hit 🔥";
+        vapeQualityColor = "text-red-500 dark:text-red-400 animate-pulse font-extrabold";
+    }
+    
+    // Battery safety based on peak current
+    let safetyBadgeColor = "";
+    let safetyBorderColor = "";
+    let safetyBgColor = "";
+    let safetyText = "";
+    if (iPeak > 25) {
+        safetyText = "🔴 DANGER : Décharge extrême (" + iPeak.toFixed(1) + " A) ! Accu CDM >25A obligatoire (Samsung 20S / Sony VTC5A).";
+        safetyBadgeColor = "text-red-500 bg-red-50 dark:bg-red-950/40 dark:text-red-400 border border-red-200 dark:border-red-900/30";
+        safetyBorderColor = "border-red-200 dark:border-red-900/30";
+        safetyBgColor = "bg-red-50/50 dark:bg-red-950/10";
+    } else if (iPeak > 15) {
+        safetyText = "🟡 ATTENTION : Décharge élevée (" + iPeak.toFixed(1) + " A). Accu CDM >20A requis (Samsung 25R / Sony VTC6).";
+        safetyBadgeColor = "text-amber-500 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30";
+        safetyBorderColor = "border-amber-200 dark:border-amber-900/30";
+        safetyBgColor = "bg-amber-50/50 dark:bg-amber-950/10";
+    } else {
+        safetyText = "🟢 SÉCURISÉ : Décharge modérée (" + iPeak.toFixed(1) + " A). Accu standard (CDM >15A) suffisant.";
+        safetyBadgeColor = "text-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30";
+        safetyBorderColor = "border-emerald-200 dark:border-emerald-900/30";
+        safetyBgColor = "bg-emerald-50/50 dark:bg-emerald-950/10";
+    }
+    
+    return {
+        surface,
+        wattsMin,
+        wattsMax,
+        iPeak,
+        pPeak,
+        fPeak,
+        iNom,
+        pNom,
+        fNom,
+        iLow,
+        pLow,
+        fLow,
+        vapeQuality,
+        vapeQualityColor,
+        safetyText,
+        safetyBadgeColor,
+        safetyBorderColor,
+        safetyBgColor
+    };
+}
+
+// Génère la vue modale détaillée (la fiche montage) à l'intérieur de recipe_modal
+function openBuildModalFromCard(b) {
+    currentEditBuildId = b.id || null;
+    let isSaved = b.id !== undefined;
+    
+    let content = document.getElementById('recipe_modal_content');
+    let themeWrapper = document.getElementById('recipe_modal_theme_wrapper');
+    if (!content || !themeWrapper) return;
+    
+    // Style thématique sky-blue pour coils
+    themeWrapper.setAttribute('data-theme', 'coils');
+    
+    let isMesh = b.type === 'mesh';
+    let detailLine = '';
+    let meshSpecs = '';
+    if (isMesh) {
+        detailLine = `Mesh ${b.meshLength} x ${b.meshWidth} mm`;
+        meshSpecs = `
+        <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+            <span class="text-stone-400 dark:text-stone-500 font-bold">Type de grille :</span>
+            <span class="font-extrabold text-stone-800 dark:text-stone-100">${b.meshType}</span>
+        </div>`;
+    } else {
+        let coreStr = b.coreMm ? `${b.coreMm}mm (${b.coreAwg}G)` : '';
+        detailLine = `${b.wraps} spires • ø${b.innerDia}mm`;
+        meshSpecs = `
+        <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+            <span class="text-stone-400 dark:text-stone-500 font-bold">Structure :</span>
+            <span class="font-extrabold text-stone-800 dark:text-stone-100">${b.structure}</span>
+        </div>
+        <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+            <span class="text-stone-400 dark:text-stone-500 font-bold">Ame du fil :</span>
+            <span class="font-extrabold text-stone-800 dark:text-stone-100">${coreStr}</span>
+        </div>
+        ${b.materialWrap ? `
+        <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+            <span class="text-stone-400 dark:text-stone-500 font-bold">Enrobage :</span>
+            <span class="font-extrabold text-stone-800 dark:text-stone-100">${b.materialWrap} ${b.wrapMm}mm (${b.wrapAwg}G)</span>
+        </div>` : ''}
+        <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+            <span class="text-stone-400 dark:text-stone-500 font-bold">Pattes (Legs) :</span>
+            <span class="font-extrabold text-stone-800 dark:text-stone-100">${b.legs} mm</span>
+        </div>
+        <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+            <span class="text-stone-400 dark:text-stone-500 font-bold">Espacement :</span>
+            <span class="font-extrabold text-stone-800 dark:text-stone-100">${b.spacing !== undefined && b.spacing > 0 ? b.spacing.toFixed(1) + ' mm' : 'Serrées (Microcoil)'}</span>
+        </div>`;
+    }
+    
+    let modeLabel = b.mode === 'meca' ? 'Mécanique 🔋' : 'Électronique ⚡';
+    
+    let html = `
+    <div class="recipe-card-wrapper bg-white dark:bg-stone-900 rounded-3xl p-5 md:p-6 border border-stone-200 dark:border-stone-800 shadow-2xl relative overflow-hidden transition-colors w-full">
+        <div class="absolute top-0 right-0 w-24 h-24 bg-sky-500/10 rounded-bl-full pointer-events-none"></div>
+        
+        <div class="pr-12 mb-3.5">
+            <span class="px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-white bg-sky-500 rounded-full shadow-sm">${b.config === 'double' ? 'Double' : 'Single'} ${isMesh ? 'Mesh' : 'Coil'}</span>
+            <h3 class="text-xl sm:text-2xl font-black text-stone-800 dark:text-stone-100 mt-2">🌀 ${b.name || 'Fiche de Montage'}</h3>
+            <p class="text-xs text-sky-600 dark:text-sky-400 font-bold uppercase tracking-wide mt-0.5">Matériau Core : ${b.materialCore.toUpperCase()}</p>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-2 bg-sky-50/55 dark:bg-sky-950/20 rounded-2xl p-3 mb-4 border border-sky-100/50 dark:border-sky-900/30">
+            <div class="text-center">
+                <div class="text-[9px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">Résistance</div>
+                <div class="text-lg font-black text-sky-600 dark:text-sky-400">${b.ohms}</div>
+            </div>
+            <div class="text-center border-x border-stone-200 dark:border-stone-800/60">
+                <div class="text-[9px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">Sweet Spot</div>
+                <div class="text-lg font-black text-stone-800 dark:text-stone-100">${b.watts} W</div>
+            </div>
+            <div class="text-center">
+                <div class="text-[9px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-1">Poids</div>
+                <div class="text-lg font-black text-stone-800 dark:text-stone-100">${b.weight}</div>
+            </div>
+        </div>
+        
+        <div class="flex flex-col gap-1 mb-4">
+            <h4 class="text-[10px] font-black text-stone-400 dark:text-stone-500 uppercase tracking-wider mb-2">Détails de Conception</h4>
+            
+            <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+                <span class="text-stone-400 dark:text-stone-500 font-bold">Dimensions :</span>
+                <span class="font-extrabold text-stone-800 dark:text-stone-100">${detailLine}</span>
+            </div>
+            
+            ${meshSpecs}
+            
+            <div class="flex justify-between py-1 sm:py-1.5 border-b border-stone-100 dark:border-stone-800/40 text-xs">
+                <span class="text-stone-400 dark:text-stone-500 font-bold">Réactivité :</span>
+                <span class="font-extrabold text-stone-800 dark:text-stone-100">${b.diesel}</span>
+            </div>
+        </div>
+        
+        ${(function() {
+            let recs = getBuildUsageRecommendations(b);
+            if (!recs) return '';
+            return `
+            <div class="mt-4 border-t border-stone-200 dark:border-stone-800 pt-4 grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                <!-- Section Électro -->
+                <div class="bg-gradient-to-r from-sky-500/5 to-indigo-500/5 dark:from-sky-500/10 dark:to-indigo-500/10 border border-sky-100 dark:border-sky-950/30 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-base">⚡</span>
+                            <h4 class="text-xs font-black text-stone-800 dark:text-stone-100">Box Électronique</h4>
+                        </div>
+                        <p class="text-[11px] text-stone-500 dark:text-stone-400 mb-3 leading-relaxed">
+                            Plage de puissance idéale pour conserver un flux thermique sain (120 à 320 mW/mm²) :
+                        </p>
+                        <div class="flex justify-between items-center text-xs font-black text-stone-800 dark:text-stone-200 bg-white/60 dark:bg-stone-900/60 p-2 rounded-xl border border-stone-100 dark:border-stone-800/40 mb-3">
+                            <span>${recs.wattsMin} W</span>
+                            <span class="text-[10px] text-stone-400 dark:text-stone-500 uppercase">à</span>
+                            <span>${recs.wattsMax} W</span>
+                        </div>
+                    </div>
+                    <div class="relative pt-1 mt-auto">
+                        <div class="flex mb-1 items-center justify-between text-[9px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">
+                            <span>Vape Douce</span>
+                            <span>Intense</span>
+                        </div>
+                        <div class="h-2 bg-stone-100 dark:bg-stone-800 rounded-full overflow-hidden relative border border-stone-200/50 dark:border-stone-700/30">
+                            <div class="absolute top-0 bottom-0 left-[15%] right-[15%] bg-gradient-to-r from-sky-400 to-indigo-500 dark:from-sky-500 dark:to-indigo-600 rounded-full shadow-inner"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-1.5 text-[11px] font-black text-stone-700 dark:text-stone-300">
+                            <span>${recs.wattsMin} W</span>
+                            <span class="text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/30 px-1.5 py-0.5 rounded text-[9px]">Sweet Spot: ${b.watts}W</span>
+                            <span>${recs.wattsMax} W</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section Mécanique -->
+                <div class="bg-stone-50/50 dark:bg-stone-950/20 border border-stone-200/60 dark:border-stone-800/50 rounded-2xl p-4 shadow-sm flex flex-col gap-3.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🔋</span>
+                            <h4 class="text-xs font-black text-stone-800 dark:text-stone-100">Mod Mécanique</h4>
+                        </div>
+                        <span class="px-2 py-0.5 rounded text-[8px] font-extrabold ${recs.safetyBadgeColor}">${recs.iPeak > 25 ? '⚠️ DANGER' : recs.iPeak > 15 ? 'ALERTE' : 'SÉCURISÉ'}</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-stone-100 dark:border-stone-800/40 bg-white/60 dark:bg-stone-900/60">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-stone-100/55 dark:bg-stone-800/30 text-[8px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">
+                                    <th class="p-1.5">Accu (V)</th>
+                                    <th class="p-1.5">P (W)</th>
+                                    <th class="p-1.5">I (A)</th>
+                                    <th class="p-1.5">Flux</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-stone-100 dark:divide-stone-800/40 text-[10px] text-stone-700 dark:text-stone-300">
+                                <tr>
+                                    <td class="p-1.5 font-bold text-stone-800 dark:text-stone-200">4.2V (Plein)</td>
+                                    <td class="p-1.5 font-extrabold">${recs.pPeak.toFixed(0)} W</td>
+                                    <td class="p-1.5 font-extrabold">${recs.iPeak.toFixed(1)} A</td>
+                                    <td class="p-1.5 font-bold ${recs.fPeak > 280 ? 'text-red-500' : recs.fPeak < 120 ? 'text-blue-500' : 'text-emerald-500'}">${Math.round(recs.fPeak)}</td>
+                                </tr>
+                                <tr class="bg-stone-50/30 dark:bg-stone-800/10">
+                                    <td class="p-1.5 font-bold text-stone-800 dark:text-stone-200">3.7V (Nom.)</td>
+                                    <td class="p-1.5 font-extrabold">${recs.pNom.toFixed(0)} W</td>
+                                    <td class="p-1.5 font-extrabold">${recs.iNom.toFixed(1)} A</td>
+                                    <td class="p-1.5 font-bold ${recs.fNom > 280 ? 'text-red-500' : recs.fNom < 120 ? 'text-blue-500' : 'text-emerald-500'}">${Math.round(recs.fNom)}</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-1.5 font-bold text-stone-500 dark:text-stone-400">3.2V (Bas)</td>
+                                    <td class="p-1.5 text-stone-500">${recs.pLow.toFixed(0)} W</td>
+                                    <td class="p-1.5 text-stone-500">${recs.iLow.toFixed(1)} A</td>
+                                    <td class="p-1.5 text-stone-500">${Math.round(recs.fLow)}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex flex-col gap-1.5 text-[10px]">
+                        <div class="flex justify-between py-1 border-b border-stone-100 dark:border-stone-800/30">
+                            <span class="text-stone-400 dark:text-stone-500 font-bold">Rendu Vape (à 3.7V) :</span>
+                            <span class="font-extrabold ${recs.vapeQualityColor}">${recs.vapeQuality}</span>
+                        </div>
+                        
+                        <div class="p-2 rounded-xl border ${recs.safetyBorderColor} ${recs.safetyBgColor} text-[9.5px] leading-relaxed text-stone-700 dark:text-stone-300">
+                            ${recs.safetyText}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        })()}
+        
+        <div class="modal-buttons flex flex-col gap-3 mt-5">
+            ${isSaved ? `
+            <div class="flex gap-2">
+                <button onclick="loadBuildIntoCalculatorFromModal(${b.id})" class="flex-1 flex items-center justify-center gap-2 py-3 bg-sky-500 hover:bg-sky-600 text-white font-extrabold rounded-xl shadow-md transition-all active:scale-95 text-xs sm:text-sm">
+                    ⚡ Charger dans le Calculateur
+                </button>
+                <button onclick="openBuildExportPromptFromModal(${b.id})" class="w-12 h-12 flex items-center justify-center bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 font-extrabold rounded-xl transition-colors border border-stone-200 dark:border-stone-700 shadow-sm" title="Exporter ou Partager">
+                    📤
+                </button>
+            </div>
+            ` : `
+            <button onclick="openBuildExportPromptFromModal(null)" class="w-full py-3 bg-sky-500 hover:bg-sky-600 text-white font-extrabold rounded-xl shadow-md transition-all active:scale-95 text-xs sm:text-sm flex items-center justify-center gap-2">
+                💾 Sauvegarder & Exporter ce Montage
+            </button>
+            `}
+            <button onclick="closeRecipeModal()" class="w-full py-2.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-600 dark:text-stone-455 font-bold rounded-xl transition-colors text-center text-xs">Fermer</button>
+        </div>
+    </div>`;
+    
+    content.innerHTML = html;
+    document.getElementById('recipe_modal').classList.remove('hidden');
+}
+
+// Ouvre l'aperçu du montage depuis son identifiant sauvegardé
+function openBuildModalFromCardById(id) {
+    let b = savedBuilds.find(x => x.id === id);
+    if (b) openBuildModalFromCard(b);
+}
+
+// Charge tous les réglages physiques d'un montage sauvegardé dans le simulateur Coils
+function loadBuildIntoCalculator(id) {
+    let b = savedBuilds.find(x => x.id === id);
+    if (!b) return;
+    
+    // Bascule de type
+    setCoilType(b.type);
+    
+    // Configuration simple ou double
+    setCoilConfig(b.config);
+    
+    // Mode electro ou meca
+    setCoilMode(b.mode);
+    
+    // Matériau principal
+    let matCoreEl = document.getElementById('coil_material_core');
+    if (matCoreEl) matCoreEl.value = b.materialCore;
+    
+    // Puissance Watts
+    let wattsEl = document.getElementById('coil_watts');
+    if (wattsEl) {
+        wattsEl.value = b.watts;
+        let disp = document.getElementById('coil_watts_disp');
+        if (disp) disp.innerText = b.watts + ' W';
+    }
+    
+    // Tension Volts
+    let voltsEl = document.getElementById('coil_volts');
+    if (voltsEl) voltsEl.value = b.volts;
+    
+    if (b.type === 'mesh') {
+        let typeEl = document.getElementById('mesh_type');
+        if (typeEl) typeEl.value = b.meshType;
+        
+        let lengthEl = document.getElementById('mesh_length');
+        if (lengthEl) lengthEl.value = b.meshLength;
+        
+        let widthEl = document.getElementById('mesh_width');
+        if (widthEl) widthEl.value = b.meshWidth;
+    } else {
+        let structEl = document.getElementById('coil_structure');
+        if (structEl) structEl.value = b.structure;
+        
+        toggleCoilStructureFields();
+        
+        let innerDiaEl = document.getElementById('coil_inner_dia');
+        if (innerDiaEl) innerDiaEl.value = b.innerDia;
+        
+        let wrapsEl = document.getElementById('coil_wraps');
+        if (wrapsEl) wrapsEl.value = b.wraps;
+        
+        let legsEl = document.getElementById('coil_legs');
+        if (legsEl) legsEl.value = b.legs;
+        
+        let spacingEl = document.getElementById('coil_spacing');
+        if (spacingEl) {
+            let spacingVal = b.spacing !== undefined ? b.spacing : 0;
+            spacingEl.value = spacingVal;
+            let disp = document.getElementById('coil_spacing_disp');
+            if (disp) {
+                disp.innerText = spacingVal === 0 ? 'Serrées (Microcoil)' : spacingVal.toFixed(1) + ' mm';
+            }
+        }
+        
+        let coreMmEl = document.getElementById('coil_core_mm');
+        if (coreMmEl) coreMmEl.value = b.coreMm;
+        
+        let coreAwgEl = document.getElementById('coil_core_awg');
+        if (coreAwgEl) coreAwgEl.value = b.coreAwg;
+        
+        // Paramètres complexes
+        let ribbonWEl = document.getElementById('coil_ribbon_w');
+        if (ribbonWEl) ribbonWEl.value = b.ribbonW;
+        
+        let ribbonHEl = document.getElementById('coil_ribbon_h');
+        if (ribbonHEl) ribbonHEl.value = b.ribbonH;
+        
+        let ribbonCountEl = document.getElementById('coil_ribbon_count');
+        if (ribbonCountEl) ribbonCountEl.value = b.ribbonCount;
+        
+        let frameMmEl = document.getElementById('coil_frame_mm');
+        if (frameMmEl) frameMmEl.value = b.frameMm;
+        
+        let frameAwgEl = document.getElementById('coil_frame_awg');
+        if (frameAwgEl) frameAwgEl.value = b.frameAwg;
+        
+        if (b.materialWrap) {
+            let matWrapEl = document.getElementById('coil_material_wrap');
+            if (matWrapEl) matWrapEl.value = b.materialWrap;
+            
+            let wrapMmEl = document.getElementById('coil_wrap_mm');
+            if (wrapMmEl) wrapMmEl.value = b.wrapMm;
+            
+            let wrapAwgEl = document.getElementById('coil_wrap_awg');
+            if (wrapAwgEl) wrapAwgEl.value = b.wrapAwg;
+        }
+    }
+    
+    // Switch to Coils tab
+    switchTab('tab_coils');
+    
+    // Trigger calculation
+    calculateCoil(true);
+    
+    showAlert("Montage chargé dans le calculateur !");
+}
+
+// Relais de chargement depuis la modale
+function loadBuildIntoCalculatorFromModal(id) {
+    if (id === null) {
+        closeRecipeModal();
+        switchTab('tab_coils');
+    } else {
+        loadBuildIntoCalculator(id);
+        closeRecipeModal();
+    }
+}
+
+// Ouvre l'invite d'export/sauvegarde du montage
+function openBuildExportPromptFromModal(id) {
+    let nameInput = document.getElementById('build_name_input');
+    let desc = document.getElementById('build_export_modal_desc');
+    
+    if (id !== null) {
+        let b = savedBuilds.find(x => x.id === id);
+        if (b) {
+            currentEditBuildId = id;
+            if (nameInput) nameInput.value = b.name;
+            if (desc) desc.innerText = "Modifier le nom de votre Montage pour l'enregistrer ou l'exporter.";
+        }
+    } else {
+        currentEditBuildId = null;
+        if (nameInput) nameInput.value = lastTypedBuildName || "";
+        if (desc) desc.innerText = "Donne un nom à ton Montage pour le sauvegarder ou l'exporter.";
+    }
+    
+    toggleSaveBuildBtn();
+    document.getElementById('build_export_modal').classList.remove('hidden');
+    hideBuildPdfOptions();
+}
+
+// Valide la longueur du nom et gère l'état d'activation des boutons associés
+function toggleSaveBuildBtn() {
+    let nameInput = document.getElementById('build_name_input');
+    let name = nameInput ? nameInput.value.trim() : "";
+    
+    // Si c'est un nouveau montage, on mémorise le nom tapé
+    if (currentEditBuildId === null) {
+        lastTypedBuildName = name;
+    }
+    
+    let saveBtn = document.getElementById('btn_save_build');
+    let copyBtn = document.getElementById('btn_copy_build');
+    let shareBtn = document.getElementById('btn_share_build');
+    let jsonBtn = document.getElementById('btn_export_build_json');
+    let pdfBtn = document.getElementById('btn_pdf_build');
+    let pngBtn = document.getElementById('btn_png_build');
+    
+    let hasName = name.length >= 2;
+    
+    [saveBtn, copyBtn, shareBtn, jsonBtn, pdfBtn, pngBtn].forEach(btn => {
+        if (btn) {
+            btn.disabled = !hasName;
+        }
+    });
+}
+
+// Enregistre ou met à jour le montage actuel
+function saveCurrentBuild() {
+    let nameInput = document.getElementById('build_name_input');
+    let name = nameInput ? nameInput.value.trim() : "";
+    if (name.length < 2) {
+        showAlert("Le nom doit faire au moins 2 caractères.");
+        return;
+    }
+    
+    let buildData = getCurrentBuildData();
+    buildData.name = name;
+    
+    if (currentEditBuildId !== null) {
+        let idx = savedBuilds.findIndex(x => x.id === currentEditBuildId);
+        if (idx !== -1) {
+            buildData.id = currentEditBuildId;
+            savedBuilds[idx] = buildData;
+            showAlert("Montage mis à jour !");
+        }
+    } else {
+        buildData.id = Date.now();
+        savedBuilds.push(buildData);
+        showAlert("Montage sauvegardé !");
+        lastTypedBuildName = "";
+    }
+    
+    safeSetItem('jediy_builds', JSON.stringify(savedBuilds));
+    setNeedsExport(true);
+    markCategoryModified('builds');
+    
+    renderMesBuilds();
+    closeBuildExportModal();
+    closeRecipeModal();
+}
+
+// Supprime un montage sauvegardé
+function deleteBuild(id) {
+    let b = savedBuilds.find(x => x.id === id);
+    if (!b) return;
+    openHtmlConfirm(`Supprimer le montage "${b.name}" de vos données ?`, () => {
+        savedBuilds = savedBuilds.filter(x => x.id !== id);
+        safeSetItem('jediy_builds', JSON.stringify(savedBuilds));
+        setNeedsExport(true);
+        markCategoryModified('builds');
+        renderMesBuilds();
+    });
+}
+
+// Rend la liste de tous les montages enregistrés sous forme de fiches élégantes
+function renderMesBuilds() {
+    let container = document.getElementById('mes_builds_list');
+    if (!container) return;
+    
+    if (savedBuilds.length === 0) {
+        container.innerHTML = `
+        <div class="col-span-full p-8 bg-stone-100 dark:bg-stone-800/45 text-center text-stone-500 rounded-3xl border border-stone-200 dark:border-stone-800">
+            Aucun montage enregistré pour le moment.<br>
+            <span class="text-xs text-stone-400 mt-2 block">Configurez vos spires ou mesh puis cliquez sur <strong>"Voir la fiche montage"</strong> pour le stocker !</span>
+        </div>`;
+        return;
+    }
+    
+    let sort = document.getElementById('sort_mixes')?.value || 'recent';
+    let arr = [...savedBuilds];
+    if (sort === 'az') arr.sort((a,b) => a.name.localeCompare(b.name));
+    else if (sort === 'za') arr.sort((a,b) => b.name.localeCompare(a.name));
+    else arr.sort((a,b) => b.id - a.id);
+    
+    let html = '';
+    arr.forEach(b => {
+        let isMesh = b.type === 'mesh';
+        let detailLine = '';
+        if (isMesh) {
+            detailLine = `Mesh ${b.meshLength} x ${b.meshWidth} mm`;
+        } else {
+            detailLine = `${b.wraps} spires • ø${b.innerDia}mm • ${b.structure}`;
+        }
+        
+        let typeLabel = isMesh ? '🏁 Mesh' : '🧵 Coil';
+        let configLabel = b.config === 'double' ? 'Double' : 'Single';
+        
+        html += `
+        <div class="relative group mt-6 h-full w-full cursor-pointer" data-theme="coils" onclick="openBuildModalFromCardById(${b.id})">
+            <div class="absolute -top-4 right-4 z-10 flex gap-2">
+                <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white bg-sky-500 rounded-full shadow-sm">${configLabel}</span>
+            </div>
+            
+            <div class="recipe-card-wrapper bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full group relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-bl-full pointer-events-none transition-transform group-hover:scale-110"></div>
+                
+                <div>
+                    <div class="pr-12 mb-3">
+                        <h4 class="text-lg font-black text-stone-800 dark:text-stone-100 truncate" title="${b.name}">🌀 ${b.name}</h4>
+                        <div class="text-[10px] font-bold text-sky-600 dark:text-sky-400 mt-0.5 flex items-center gap-1.5 uppercase tracking-wide">
+                            <span>${typeLabel}</span>
+                            <span>•</span>
+                            <span>${b.materialCore.toUpperCase()}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2 bg-sky-50/40 dark:bg-sky-950/10 rounded-xl p-3 mb-4 border border-sky-100/50 dark:border-sky-900/10">
+                        <div>
+                            <div class="text-[8px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">Résistance</div>
+                            <div class="text-base font-black text-sky-600 dark:text-sky-400">${b.ohms}</div>
+                        </div>
+                        <div>
+                            <div class="text-[8px] font-bold text-stone-400 dark:text-stone-500 uppercase tracking-wider">Puissance</div>
+                            <div class="text-base font-black text-stone-600 dark:text-sky-400">${b.watts} W</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1.5 mb-5 text-[11px] text-stone-500 dark:text-stone-400 font-medium">
+                        <div class="flex justify-between">
+                            <span class="text-stone-400">Specs :</span>
+                            <span class="font-bold text-stone-700 dark:text-stone-250 truncate pl-2">${detailLine}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-stone-400">Reactivité :</span>
+                            <span class="font-bold text-stone-700 dark:text-stone-250">${b.diesel}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 pt-2.5 border-t border-stone-100 dark:border-stone-800/60 mt-auto">
+                    <button onclick="event.stopPropagation(); loadBuildIntoCalculator(${b.id})" class="flex-1 flex items-center justify-center gap-1 py-1.5 bg-sky-100 hover:bg-sky-200 dark:bg-sky-950/40 dark:hover:bg-sky-900/60 text-sky-700 dark:text-sky-300 font-extrabold text-[10px] rounded-lg transition-all shadow-sm">
+                        ⚡ Charger
+                    </button>
+                    <button onclick="event.stopPropagation(); deleteBuild(${b.id})" class="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg transition-colors text-xs" title="Supprimer">
+                        🗑️
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+// Fermeture et affichage des volets PDF dans la modale d'export du montage
+function closeBuildExportModal() {
+    document.getElementById('build_export_modal').classList.add('hidden');
+}
+
+let currentBuildPngAction = 'download';
+function showBuildPdfOptions() {
+    document.getElementById('build_export_step_1').classList.add('hidden');
+    document.getElementById('build_export_step_2').classList.remove('hidden');
+    document.getElementById('build_export_step_2').classList.add('flex');
+    document.getElementById('btn_back_build_export').classList.remove('hidden');
+}
+
+function showBuildPngOptions() {
+    document.getElementById('build_export_step_1').classList.add('hidden');
+    document.getElementById('build_export_step_png_action').classList.remove('hidden');
+    document.getElementById('build_export_step_png_action').classList.add('flex');
+    document.getElementById('btn_back_build_export').classList.remove('hidden');
+}
+
+function selectBuildPngAction(action) {
+    currentBuildPngAction = action;
+    document.getElementById('build_export_step_png_action').classList.add('hidden');
+    document.getElementById('build_export_step_png_action').classList.remove('flex');
+    document.getElementById('build_export_step_png_style').classList.remove('hidden');
+    document.getElementById('build_export_step_png_style').classList.add('flex');
+}
+
+function executeBuildPngExport(mode) {
+    exportBuildPNG(currentBuildPngAction, mode);
+}
+
+function handleBuildExportBack() {
+    let styleEl = document.getElementById('build_export_step_png_style');
+    let actionEl = document.getElementById('build_export_step_png_action');
+    let pdfEl = document.getElementById('build_export_step_2');
+    
+    if (styleEl && !styleEl.classList.contains('hidden')) {
+        styleEl.classList.add('hidden');
+        styleEl.classList.remove('flex');
+        actionEl.classList.remove('hidden');
+        actionEl.classList.add('flex');
+    } else {
+        if (actionEl) { actionEl.classList.add('hidden'); actionEl.classList.remove('flex'); }
+        if (pdfEl) { pdfEl.classList.add('hidden'); pdfEl.classList.remove('flex'); }
+        document.getElementById('build_export_step_1').classList.remove('hidden');
+        document.getElementById('btn_back_build_export').classList.add('hidden');
+    }
+}
+
+function hideBuildPdfOptions() {
+    document.getElementById('build_export_step_1').classList.remove('hidden');
+    document.getElementById('build_export_step_2').classList.add('hidden');
+    document.getElementById('build_export_step_2').classList.remove('flex');
+    let actionEl = document.getElementById('build_export_step_png_action');
+    if (actionEl) { actionEl.classList.add('hidden'); actionEl.classList.remove('flex'); }
+    let styleEl = document.getElementById('build_export_step_png_style');
+    if (styleEl) { styleEl.classList.add('hidden'); styleEl.classList.remove('flex'); }
+    document.getElementById('btn_back_build_export').classList.add('hidden');
+}
+
+// Génère la représentation textuelle complète d'un montage
+function generateBuildText(b) {
+    let isMesh = b.type === 'mesh';
+    let text = `🌀 MONTAGE JE-DIY : ${b.name}\n`;
+    text += `===================================\n`;
+    text += `Configuration : ${b.config === 'double' ? 'Double' : 'Single'} ${isMesh ? 'Mesh' : 'Coil'}\n`;
+    text += `Matériau : ${b.materialCore.toUpperCase()}\n`;
+    text += `Résistance : ${b.ohms}\n`;
+    text += `Sweet Spot : ${b.watts} W\n`;
+    text += `Poids : ${b.weight}\n`;
+    text += `Réactivité : ${b.diesel}\n`;
+    
+    if (isMesh) {
+        text += `Dimensions Mesh : ${b.meshLength} x ${b.meshWidth} mm\n`;
+        text += `Type Grille : ${b.meshType}\n`;
+    } else {
+        text += `Structure : ${b.structure}\n`;
+        text += `Dimensions : ${b.wraps} spires • ø${b.innerDia}mm • legs ${b.legs}mm\n`;
+        text += `Fil Ame : ${b.coreMm}mm (${b.coreAwg}G)\n`;
+        if (b.materialWrap) {
+            text += `Enrobage : ${b.materialWrap} ${b.wrapMm}mm (${b.wrapAwg}G)\n`;
+        }
+        if (b.spacing !== undefined && b.spacing > 0) {
+            text += `Espacement : ${b.spacing.toFixed(1)} mm\n`;
+        } else {
+            text += `Espacement : Serrées (Microcoil)\n`;
+        }
+    }
+    if (b.amps && b.amps !== '0.00') text += `Courant (Meca) : ${b.amps} A\n`;
+    if (b.flux && b.flux !== '0') text += `Flux thermique : ${b.flux} mW/mm²\n`;
+    
+    let recs = getBuildUsageRecommendations(b);
+    if (recs) {
+        text += `-----------------------------------\n`;
+        text += `⚡ RECOMMANDATIONS ÉLECTRO :\n`;
+        text += `Plage conseillée : ${recs.wattsMin}W - ${recs.wattsMax}W\n`;
+        text += `Sweet Spot : ${b.watts}W\n`;
+        text += `\n`;
+        text += `🔋 SIMULATION DE DÉCHARGE MÉCA :\n`;
+        text += `• Pleine charge (4.2V) : ${recs.pPeak.toFixed(1)}W • ${recs.iPeak.toFixed(1)}A • Flux: ${Math.round(recs.fPeak)} mW/mm²\n`;
+        text += `• Nominal (3.7V) : ${recs.pNom.toFixed(1)}W • ${recs.iNom.toFixed(1)}A • Flux: ${Math.round(recs.fNom)} mW/mm²\n`;
+        text += `• Accu faible (3.2V) : ${recs.pLow.toFixed(1)}W • ${recs.iLow.toFixed(1)}A\n`;
+        text += `• Rendu vape : ${recs.vapeQuality}\n`;
+        text += `• Sécurité accu : ${recs.safetyText}\n`;
+    }
+    
+    text += `===================================\n`;
+    text += `Créé avec Je-DIY - Votre assistant de vape intelligent.`;
+    return text;
+}
+
+// Copie dans le presse-papier
+function copyBuildText() {
+    let nameInput = document.getElementById('build_name_input');
+    let name = nameInput ? nameInput.value.trim() : "Montage";
+    let b = getCurrentBuildData();
+    b.name = name;
+    
+    let text = generateBuildText(b);
+    navigator.clipboard.writeText(text).then(() => {
+        showAlert("Texte copié !");
+    }).catch(() => {
+        showAlert("Erreur lors de la copie.");
+    });
+}
+
+// Partage natif ou copie alternative du texte descriptif
+function shareBuildText() {
+    let nameInput = document.getElementById('build_name_input');
+    let name = nameInput ? nameInput.value.trim() : "Montage";
+    let b = getCurrentBuildData();
+    b.name = name;
+    
+    let text = generateBuildText(b);
+    if (navigator.share) {
+        navigator.share({
+            title: `Montage Je-DIY - ${b.name}`,
+            text: text
+        }).then(() => {
+            showAlert("Partagé !");
+        }).catch(err => {
+            if (err.name !== 'AbortError') showAlert("Erreur de partage.");
+        });
+    } else {
+        showAlert("Le partage n'est pas supporté sur ce navigateur.");
+    }
+}
+
+// Assistant partagé d'export natif de fichiers JSON individuels (Mobile-friendly Navigator Share)
+async function shareJsonFile(filename, jsonStr, description) {
+    try {
+        let blob = new Blob([jsonStr], { type: 'application/json' });
+        let file = new File([blob], filename, { type: 'application/json' });
+        
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+            await navigator.share({
+                files: [file],
+                title: filename,
+                text: description
+            });
+            showAlert("Fichier partagé !");
+        } else {
+            fallbackDownload(jsonStr, filename);
+        }
+    } catch(err) {
+        if (err.name !== 'AbortError') {
+            fallbackDownload(jsonStr, filename);
+        }
+    }
+}
+
+// Partage du JSON individuel d'un montage
+function exportBuildJsonFile() {
+    let nameInput = document.getElementById('build_name_input');
+    let name = nameInput ? nameInput.value.trim() : "Montage";
+    let b = getCurrentBuildData();
+    b.name = name;
+    
+    let envelope = {
+        is_jediy_build: true,
+        data: b
+    };
+    
+    let filename = `montage_${name.toLowerCase().replace(/[^a-z0-9]/g, '_')}.json`;
+    let jsonStr = JSON.stringify(envelope, null, 2);
+    
+    shareJsonFile(filename, jsonStr, `Montage Je-DIY : ${name}`);
+    closeBuildExportModal();
+}
+
+// Lit et valide l'import individuel d'un montage JSON
+function importBuildJson(e) {
+    let file = e.target.files[0]; if(!file) return;
+    let reader = new FileReader();
+    reader.onload = function(ev) {
+        try {
+            let json = JSON.parse(ev.target.result);
+            if (!json.is_jediy_build || !json.data) {
+                showAlert("Fichier Montage individuel invalide !");
+                return;
+            }
+            
+            let build = json.data;
+            let originalName = build.name || "Montage Importé";
+            let newName = originalName;
+            let count = 1;
+            while (savedBuilds.some(b => b.name.toLowerCase() === newName.toLowerCase())) {
+                newName = `${originalName} (Import ${count})`;
+                count++;
+            }
+            build.name = newName;
+            build.id = Date.now();
+            
+            savedBuilds.push(build);
+            safeSetItem('jediy_builds', JSON.stringify(savedBuilds));
+            
+            renderMesBuilds();
+            showAlert(`Montage "${newName}" importé !`);
+            setNeedsExport(true);
+            markCategoryModified('builds');
+        } catch(err) {
+            showAlert("Erreur de lecture du fichier JSON !");
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+}
+
+// Exporte la fiche de montage en PDF
+function exportBuildPDF(action = 'download') {
+    let nameInput = document.getElementById('build_name_input');
+    let name = nameInput ? nameInput.value.trim() : "Montage";
+    let b = getCurrentBuildData();
+    b.name = name;
+    
+    let wrapper = document.createElement('div');
+    wrapper.id = "temp_build_pdf_wrapper";
+    wrapper.style.width = "100%";
+    wrapper.style.maxWidth = "800px";
+    wrapper.style.margin = "0 auto";
+    wrapper.style.padding = "20px";
+    wrapper.style.backgroundColor = "#ffffff";
+    wrapper.style.fontFamily = "sans-serif";
+    
+    let isMesh = b.type === 'mesh';
+    let detailLine = '';
+    let meshSpecs = '';
+    if (isMesh) {
+        detailLine = `Mesh ${b.meshLength} x ${b.meshWidth} mm`;
+        meshSpecs = `
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+            <span style="font-weight: bold; color: #57534e;">Type de grille :</span>
+            <span style="font-weight: 900; color: #1c1917;">${b.meshType}</span>
+        </div>`;
+    } else {
+        let coreStr = b.coreMm ? `${b.coreMm}mm (${b.coreAwg}G)` : '';
+        detailLine = `${b.wraps} spires • ø${b.innerDia}mm`;
+        meshSpecs = `
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+            <span style="font-weight: bold; color: #57534e;">Structure :</span>
+            <span style="font-weight: 900; color: #1c1917;">${b.structure}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+            <span style="font-weight: bold; color: #57534e;">Ame du fil :</span>
+            <span style="font-weight: 900; color: #1c1917;">${coreStr}</span>
+        </div>
+        ${b.materialWrap ? `
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+            <span style="font-weight: bold; color: #57534e;">Enrobage :</span>
+            <span style="font-weight: 900; color: #1c1917;">${b.materialWrap} ${b.wrapMm}mm (${b.wrapAwg}G)</span>
+        </div>` : ''}
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+            <span style="font-weight: bold; color: #57534e;">Pattes (Legs) :</span>
+            <span style="font-weight: 900; color: #1c1917;">${b.legs} mm</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+            <span style="font-weight: bold; color: #57534e;">Espacement :</span>
+            <span style="font-weight: 900; color: #1c1917;">${b.spacing !== undefined && b.spacing > 0 ? b.spacing.toFixed(1) + ' mm' : 'Serrées (Microcoil)'}</span>
+        </div>`;
+    }
+    
+    let modeLabel = b.mode === 'meca' ? 'Mécanique 🔋' : 'Électronique ⚡';
+    
+    let html = `
+    <div style="border: 2px solid #e5e7eb; border-radius: 16px; padding: 24px; background-color: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+        <div style="margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start;">
+            <div style="flex: 1; padding-right: 16px;">
+                <div style="font-size: 24px; font-weight: 900; color: #0284c7; line-height: 1.2; margin-bottom: 6px;">${b.name}</div>
+                <span style="display: inline-block; background-color: #e0f2fe; padding: 4px 8px; border-radius: 4px; font-weight: bold; color: #0369a1; text-transform: uppercase; font-size: 9px; letter-spacing: 1px;">Je-DIY • Fiche de Montage</span>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="text-align: right;">
+                    <span style="display: block; font-size: 9px; font-weight: bold; color: #a8a29e; text-transform: uppercase; margin-bottom: 2px; letter-spacing: 0.5px;">Type de montage</span>
+                    <span style="display: inline-block; background-color: #e0f2fe; padding: 4px 10px; border-radius: 8px; color: #0369a1; font-weight: 900; font-size: 15px; border: 1px solid #bae6fd;">${b.config === 'double' ? 'Double' : 'Single'} ${isMesh ? 'Mesh' : 'Coil'}</span>
+                </div>
+                <div style="width: 48px; height: 48px; background-color: #f5f5f4; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; border: 1px solid #e5e7eb;">🌀</div>
+            </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #f0f9ff; padding: 12px; border-radius: 12px; border: 1px solid #bae6fd; text-align: center;">
+                <span style="font-size: 9px; font-weight: bold; color: #0369a1; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Résistance</span>
+                <span style="font-weight: 900; color: #0284c7; font-size: 18px;">${b.ohms}</span>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #fafaf9; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; text-align: center;">
+                <span style="font-size: 9px; font-weight: bold; color: #78716c; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Sweet Spot</span>
+                <span style="font-weight: 900; color: #1c1917; font-size: 18px;">${b.watts} W</span>
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #fafaf9; padding: 12px; border-radius: 12px; border: 1px solid #e5e7eb; text-align: center;">
+                <span style="font-size: 9px; font-weight: bold; color: #78716c; text-transform: uppercase; margin-bottom: 4px; letter-spacing: 0.5px;">Poids Estimé</span>
+                <span style="font-weight: 900; color: #1c1917; font-size: 18px;">${b.weight}</span>
+            </div>
+        </div>
+        
+        <div style="font-size: 11px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">📐 Caractéristiques Physiques</div>
+        <div style="background-color: #fcfcfc; padding: 10px 14px; border-radius: 12px; border: 1px solid #e5e7eb; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+                <span style="font-weight: bold; color: #57534e;">Dimensions :</span>
+                <span style="font-weight: 900; color: #1c1917;">${detailLine}</span>
+            </div>
+            
+            ${meshSpecs}
+            
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid #e5e7eb; font-size: 12px; padding: 4px 0;">
+                <span style="font-weight: bold; color: #57534e;">Matériau Principal :</span>
+                <span style="font-weight: 900; color: #1c1917; text-transform: uppercase;">${b.materialCore}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0;">
+                <span style="font-weight: bold; color: #57534e;">Réactivité estimée :</span>
+                <span style="font-weight: 900; color: #1c1917;">${b.diesel}</span>
+            </div>
+        </div>
+        
+        ${(function() {
+            let recs = getBuildUsageRecommendations(b);
+            if (!recs) return '';
+            return `
+            <div style="margin-top: 12px; font-size: 11px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">⚡ Recommandations Box Électronique</div>
+            <div style="background-color: #f0f9ff; border: 1px solid #bae6fd; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
+                <div style="font-size: 12px; color: #0369a1; font-weight: bold; margin-bottom: 4px;">Plage de puissance conseillée</div>
+                <div style="font-size: 11px; color: #334155; margin-bottom: 8px; line-height: 1.4;">
+                    Pour ce montage, la plage idéale pour conserver un flux thermique sain (120 à 320 mW/mm²) se situe entre <strong>${recs.wattsMin} W</strong> et <strong>${recs.wattsMax} W</strong>.
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; background-color: #ffffff; padding: 8px 12px; border-radius: 8px; border: 1px solid #e0f2fe; font-size: 12px;">
+                    <span style="font-weight: bold; color: #64748b;">Mini : ${recs.wattsMin} W</span>
+                    <span style="font-weight: 900; color: #0284c7; background-color: #e0f2fe; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Sweet Spot : ${b.watts} W</span>
+                    <span style="font-weight: bold; color: #64748b;">Max : ${recs.wattsMax} W</span>
+                </div>
+            </div>
+
+            <div style="font-size: 11px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">🔋 Simulation de Décharge Mod Méca</div>
+            <div style="background-color: #fafaf9; border: 1px solid #e5e7eb; border-radius: 12px; padding: 10px 14px; margin-bottom: 12px;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 8px; font-size: 11px; text-align: left;">
+                    <thead>
+                        <tr style="border-bottom: 2px solid #e5e7eb; color: #78716c; font-weight: bold; text-transform: uppercase; font-size: 8px; letter-spacing: 0.5px;">
+                            <th style="padding: 4px;">Accu (V)</th>
+                            <th style="padding: 4px;">Puissance (W)</th>
+                            <th style="padding: 4px;">Courant (A)</th>
+                            <th style="padding: 4px;">Flux (mW/mm²)</th>
+                        </tr>
+                    </thead>
+                    <tbody style="color: #334155;">
+                        <tr style="border-bottom: 1px solid #f3f4f6;">
+                            <td style="padding: 4px; font-weight: bold;">4.2V (Plein)</td>
+                            <td style="padding: 4px; font-weight: bold;">${recs.pPeak.toFixed(1)} W</td>
+                            <td style="padding: 4px; font-weight: bold;">${recs.iPeak.toFixed(2)} A</td>
+                            <td style="padding: 4px; font-weight: bold; color: ${recs.fPeak > 280 ? '#ef4444' : recs.fPeak < 120 ? '#3b82f6' : '#10b981'};">${Math.round(recs.fPeak)} mW/mm²</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f3f4f6; background-color: #fcfcfc;">
+                            <td style="padding: 4px; font-weight: bold;">3.7V (Nominal)</td>
+                            <td style="padding: 4px; font-weight: bold;">${recs.pNom.toFixed(1)} W</td>
+                            <td style="padding: 4px; font-weight: bold;">${recs.iNom.toFixed(2)} A</td>
+                            <td style="padding: 4px; font-weight: bold; color: ${recs.fNom > 280 ? '#ef4444' : recs.fNom < 120 ? '#3b82f6' : '#10b981'};">${Math.round(recs.fNom)} mW/mm²</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; font-weight: bold; color: #78716c;">3.2V (Déchargé)</td>
+                            <td style="padding: 4px; color: #78716c;">${recs.pLow.toFixed(1)} W</td>
+                            <td style="padding: 4px; color: #78716c;">${recs.iLow.toFixed(2)} A</td>
+                            <td style="padding: 4px; color: #78716c;">${Math.round(recs.fLow)} mW/mm²</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="border-top: 1px solid #e5e7eb; padding-top: 8px; font-size: 11px; line-height: 1.4; color: #475569;">
+                    <div style="margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; color: #64748b;">Rendu Vape (à 3.7V) :</span>
+                        <span style="font-weight: 900; color: ${recs.fNom > 280 ? '#ef4444' : recs.fNom < 120 ? '#3b82f6' : '#10b981'};">${recs.vapeQuality.replace(/🐢|🚀|🔥/g, '').trim()}</span>
+                    </div>
+                    <div style="background-color: ${recs.iPeak > 25 ? '#fef2f2' : recs.iPeak > 15 ? '#fffbeb' : '#f0fdf4'}; border: 1px solid ${recs.iPeak > 25 ? '#fecaca' : recs.iPeak > 15 ? '#fef3c7' : '#bbf7d0'}; border-radius: 8px; padding: 8px; color: ${recs.iPeak > 25 ? '#991b1b' : recs.iPeak > 15 ? '#92400e' : '#166534'}; font-size: 10px; margin-top: 6px;">
+                        ${recs.safetyText}
+                    </div>
+                </div>
+            </div>`;
+        })()}
+        
+        <div style="margin-top: 24px; text-align: center; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+            <span style="text-transform: uppercase; letter-spacing: 1px; font-weight: bold; color: #78716c; font-size: 9px;">Généré avec Je-DIY - Le compagnon expert DIY</span>
+        </div>
+    </div>`;
+    
+    wrapper.innerHTML = html;
+    document.body.appendChild(wrapper); 
+    document.body.classList.add('exporting');
+    
+    window.scrollTo(0, 0);
+    
+    let safeName = name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    
+    setTimeout(() => {
+        let html2canvasOpts = { 
+            scale: 2, 
+            useCORS: true, 
+            backgroundColor: '#ffffff'
+        };
+
+        const cleanupExport = () => {
+            document.body.classList.remove('exporting');
+            const w = document.getElementById("temp_build_pdf_wrapper");
+            if (w) w.remove();
+            closeBuildExportModal();
+        };
+
+        let opt = { 
+            margin: 5, 
+            filename: `Montage_${safeName}.pdf`, 
+            image: { type: 'jpeg', quality: 0.98 }, 
+            html2canvas: html2canvasOpts, 
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } 
+        };
+        
+        let worker = html2pdf().set(opt).from(wrapper);
+        
+        if (action === 'download') {
+            worker.save().then(() => { 
+                cleanupExport(); 
+            }).catch(err => {
+                console.error("Erreur PDF montage :", err);
+                showAlert("Erreur lors de la génération du PDF.");
+                cleanupExport();
+            });
+        } else {
+            worker.output('blob').then(pdfBlob => {
+                cleanupExport();
+                
+                let file = new File([pdfBlob], `Montage_${safeName}.pdf`, { type: 'application/pdf' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) { 
+                    navigator.share({ files: [file], title: name, text: 'Mon montage Je-DIY' })
+                    .catch(()=>{ 
+                        let link = document.createElement('a');
+                        link.href = URL.createObjectURL(pdfBlob);
+                        link.download = `Montage_${safeName}.pdf`;
+                        link.click();
+                    }); 
+                } else { 
+                    let link = document.createElement('a');
+                    link.href = URL.createObjectURL(pdfBlob);
+                    link.download = `Montage_${safeName}.pdf`;
+                    link.click();
+                }
+            }).catch(err => {
+                console.error("Erreur PDF montage :", err);
+                showAlert("Erreur lors de la génération du PDF.");
+                cleanupExport();
+            });
+        }
+    }, 500);
+}
+
+// Exporte la fiche de montage en image PNG (Clair / Sombre)
+function exportBuildPNG(action = 'download', mode = 'light') {
+    let ctx = prepareCardForExport(mode, 'coils'); if (!ctx) return;
+    let nameInput = document.getElementById('build_name_input');
+    let name = nameInput ? nameInput.value.trim() : "Montage";
+    let filename = `Montage_${name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${mode}.png`;
+    
+    let parent = ctx.card.parentNode;
+    let nextSibling = ctx.card.nextSibling;
+    
+    let cardWidth = ctx.width || 512;
+    // Création d'un conteneur hors écran aux dimensions réelles de la fiche affichée (largeur + 24px de padding de chaque côté)
+    let captureWrapper = document.createElement('div');
+    captureWrapper.style.width = (cardWidth + 48) + "px";
+    captureWrapper.style.padding = "24px";
+    captureWrapper.style.boxSizing = "border-box";
+    captureWrapper.style.position = "absolute";
+    captureWrapper.style.left = "-9999px"; // Caché hors écran pendant la capture
+    
+    if (mode === 'dark') {
+        captureWrapper.classList.add('dark');
+        captureWrapper.style.backgroundColor = "#0c0a09"; // Stone 950
+    } else {
+        captureWrapper.style.backgroundColor = "#ffffff";
+    }
+    
+    document.body.appendChild(captureWrapper);
+    captureWrapper.appendChild(ctx.card);
+    
+    // Ajustements précis pour conserver le ratio et la largeur exacte de la fiche
+    let oldWidth = ctx.card.style.width;
+    let oldMargin = ctx.card.style.margin;
+    ctx.card.style.width = cardWidth + "px";
+    ctx.card.style.margin = "0";
+    ctx.card.classList.remove('h-full'); // On retire l'étirement vertical
+    
+    setTimeout(() => {
+        freezeComputedStyles(ctx.card);
+        html2canvas(captureWrapper, { scale: 2, useCORS: true, backgroundColor: (mode === 'dark' ? '#0c0a09' : '#ffffff'), scrollY: 0 }).then(canvas => {
+            
+            const finalize = () => {
+                // On remet la fiche à sa place d'origine
+                if (nextSibling) {
+                    parent.insertBefore(ctx.card, nextSibling);
+                } else {
+                    parent.appendChild(ctx.card);
+                }
+                captureWrapper.remove();
+                ctx.card.style.width = oldWidth;
+                ctx.card.style.margin = oldMargin;
+                ctx.card.classList.add('h-full');
+                ctx.restore();
+                closeBuildExportModal();
+            };
+
+            canvas.toBlob(blob => {
+                let file = new File([blob], filename, { type: 'image/png' });
+                if (action === 'share' && navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: `Fiche Montage Je-DIY : ${name}`,
+                        text: `Fiche de Montage générée avec Je-DIY`
+                    }).then(() => {
+                        finalize();
+                    }).catch(err => {
+                        console.log("Erreur partage direct PNG:", err);
+                        // Fallback download
+                        let link = document.createElement('a');
+                        link.download = filename;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        finalize();
+                    });
+                } else {
+                    // Direct download
+                    let link = document.createElement('a');
+                    link.download = filename;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    finalize();
+                }
+            }, 'image/png');
+
+        }).catch(err => {
+            console.error("Erreur PNG montage :", err);
+            showAlert("Erreur lors de la capture PNG.");
+            if (nextSibling) {
+                parent.insertBefore(ctx.card, nextSibling);
+            } else {
+                parent.appendChild(ctx.card);
+            }
+            captureWrapper.remove();
+            ctx.card.style.width = oldWidth;
+            ctx.card.style.margin = oldMargin;
+            ctx.card.classList.add('h-full');
+            ctx.restore();
+            closeBuildExportModal();
+        });
+    }, 600);
+}
+
+// Boucle de notifications de sauvegarde dynamique
+let notificationInterval = null;
+let notificationTimeout = null;
+let notificationCycleActive = false;
+
+function markCategoryModified(category) {
+    if (unsavedCategories.hasOwnProperty(category)) {
+        unsavedCategories[category] = true;
+        safeSetItem('jediy_unsaved_categories', JSON.stringify(unsavedCategories));
+        triggerNotificationCycle();
+    }
+}
+
+function clearUnsavedCategories() {
+    unsavedCategories = { mixes: false, compos: false, aromas: false, builds: false };
+    safeSetItem('jediy_unsaved_categories', JSON.stringify(unsavedCategories));
+    
+    if (notificationInterval) clearInterval(notificationInterval);
+    if (notificationTimeout) clearTimeout(notificationTimeout);
+    notificationCycleActive = false;
+    
+    let container = document.getElementById('unsaved_notifications_container');
+    if (container) {
+        container.innerHTML = '';
+    }
+}
+
+function triggerNotificationCycle() {
+    // Annule tout cycle existant pour éviter les conflits
+    if (notificationInterval) clearInterval(notificationInterval);
+    if (notificationTimeout) clearTimeout(notificationTimeout);
+    
+    let categories = Object.keys(unsavedCategories).filter(k => unsavedCategories[k] === true);
+    if (categories.length === 0) {
+        let container = document.getElementById('unsaved_notifications_container');
+        if (container) container.innerHTML = '';
+        return;
+    }
+    
+    notificationCycleActive = true;
+    let currentIdx = 0;
+    
+    function showNextNotification() {
+        let container = document.getElementById('unsaved_notifications_container');
+        if (!container) return;
+        
+        let activeCategories = Object.keys(unsavedCategories).filter(k => unsavedCategories[k] === true);
+        if (activeCategories.length === 0) {
+            container.innerHTML = '';
+            if (notificationInterval) clearInterval(notificationInterval);
+            return;
+        }
+        
+        let cat = activeCategories[currentIdx % activeCategories.length];
+        currentIdx++;
+        
+        let text = "";
+        let bgClass = "";
+        
+        if (cat === 'mixes') {
+            text = "🧴 Mixes à sauver";
+            bgClass = "bg-indigo-500 hover:bg-indigo-600";
+        } else if (cat === 'compos') {
+            text = "✍️ Recettes à sauver";
+            bgClass = "bg-emerald-500 hover:bg-emerald-600";
+        } else if (cat === 'aromas') {
+            text = "🧪 Stock à sauver";
+            bgClass = "bg-purple-500 hover:bg-purple-600";
+        } else if (cat === 'builds') {
+            text = "🌀 Montages à sauver";
+            bgClass = "bg-sky-500 hover:bg-sky-600";
+        }
+        
+        container.innerHTML = `
+        <button onclick="openSettingsModal()" class="ml-2 px-3 py-1 text-[10px] font-black text-white ${bgClass} rounded-full shadow-sm animate-bounce flex items-center gap-1 cursor-pointer transition-all duration-300 transform hover:scale-105" style="animation-duration: 2s;">
+            <span>${text}</span>
+            <span class="inline-block w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+        </button>`;
+    }
+    
+    showNextNotification();
+    
+    // Alterne toutes les 5 secondes
+    notificationInterval = setInterval(showNextNotification, 5000);
+    
+    // Arrête le cycle clignotant actif après 20 secondes pour le confort visuel de l'utilisateur
+    notificationTimeout = setTimeout(() => {
+        clearInterval(notificationInterval);
+        notificationInterval = null;
+        
+        let container = document.getElementById('unsaved_notifications_container');
+        if (container) {
+            let btn = container.querySelector('button');
+            if (btn) {
+                btn.classList.add('opacity-0', 'scale-90');
+                btn.style.transition = 'all 0.5s ease';
+                setTimeout(() => {
+                    if (!notificationCycleActive || !notificationInterval) {
+                        container.innerHTML = '';
+                    }
+                }, 500);
+            }
+        }
+        
+        // Relance doucement un rappel cyclique toutes les 5 minutes
+        notificationTimeout = setTimeout(triggerNotificationCycle, 300000);
+    }, 20000);
+}
+
