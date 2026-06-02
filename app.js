@@ -118,6 +118,18 @@ function init() {
     if(typeof setCoilMode === 'function') setCoilMode('electro');
     if(typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
     if(typeof triggerNotificationCycle === 'function') triggerNotificationCycle();
+
+    // Fetch and display app version from sw.js
+    fetch('sw.js')
+        .then(r => r.text())
+        .then(t => {
+            let match = t.match(/CACHE_NAME\s*=\s*['"`]([^'"`]+)['"`]/);
+            if (match) {
+                let version = match[1].replace('je-diy-v.', '');
+                let el = document.getElementById('app_version_display');
+                if (el) el.innerText = `Version ${version}`;
+            }
+        }).catch(err => console.log("Erreur chargement version:", err));
 }
 window.onload = () => { init(); };
 
