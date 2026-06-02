@@ -664,24 +664,26 @@
                             </select>
                         </div>
                         
-                        <!-- Fold Aroma Trigger -->
-                        <div class="flex items-center justify-between py-2.5 px-4 bg-brand-50/50 dark:bg-brand-900/10 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20 border border-brand-100 dark:border-brand-800/50 transition-colors mb-4 select-none" onclick="toggleFoldCompo('t1')">
-                            <span class="text-xs font-black text-brand-700 dark:text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
-                                🎨 Liste des arômes & additifs
-                            </span>
-                            <svg id="t1_aroma_fold_icon" class="w-4 h-4 text-brand-500 transform transition-transform duration-300 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <!-- Grille de tuiles cliquables des ingrédients -->
+                        <div id="t1_compo_breakdown" class="hidden grid grid-cols-2 gap-2 w-full mb-4 animate-fade-in"></div>
+
+                        <!-- Formulaire d'édition de l'ingrédient actif -->
+                        <div id="t1_multi_list" class="space-y-2 mb-4 w-full hidden"></div>
+
+                        <!-- Boutons d'ajout d'ingrédients -->
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button onclick="addMultiLine('t1', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                            <button onclick="addMultiLine('t1', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                            <button onclick="addMultiLine('t1', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
                         </div>
 
-                        <div id="t1_aroma_fold_panel" class="space-y-4 mb-4">
-                            <div id="t1_multi_list" class="space-y-2 mb-4 w-full"></div>
-
-                            <div class="grid grid-cols-3 gap-2 mb-4">
-                                <button onclick="addMultiLine('t1', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
-                                <button onclick="addMultiLine('t1', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
-                                <button onclick="addMultiLine('t1', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
-                            </div>
+                        <!-- Section de sauvegarde de la composition -->
+                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700 mb-4">
+                            <input type="text" id="t1_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t1')">
+                            <button id="t1_btn_save_compo" disabled onclick="saveCompo('t1')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
                         </div>
 
+                        <!-- Concentration globale (toujours à la fin) -->
                         <div id="t1_multi_global_wrapper" class="hidden flex-col p-4 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4 transition-colors">
 							<div class="flex justify-between items-center mb-2">
 								<span class="text-sm font-bold text-brand-700 dark:text-brand-300">Concentration globale ciblée&nbsp;:</span>
@@ -690,12 +692,6 @@
 							<input type="range" id="t1_multi_global_perc" min="1" max="40" step="0.5" value="0" class="w-full" oninput="updateGlobalMultiPerc('t1', this.value); triggerCalc()">
 							<div id="t1_multi_status_label" class="text-[10px] font-bold text-center mt-2 text-stone-500 uppercase tracking-widest transition-colors">Concentration originale</div>
 						</div>
-
-                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700">
-                            <input type="text" id="t1_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t1')">
-                            <button id="t1_btn_save_compo" disabled onclick="saveCompo('t1')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
-                        </div>
-                        <div id="t1_compo_breakdown" class="hidden mt-3 grid grid-cols-2 gap-2 text-[10px] animate-fade-in"></div>
                     </div>
                 </div>
 
@@ -875,25 +871,27 @@
                             </select>
                         </div>
                         
-                        <!-- Fold Aroma Trigger -->
-                        <div class="flex items-center justify-between py-2.5 px-4 bg-brand-50/50 dark:bg-brand-900/10 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20 border border-brand-100 dark:border-brand-800/50 transition-colors mb-4 select-none" onclick="toggleFoldCompo('t2')">
-                            <span class="text-xs font-black text-brand-700 dark:text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
-                                🎨 Liste des arômes & additifs
-                            </span>
-                            <svg id="t2_aroma_fold_icon" class="w-4 h-4 text-brand-500 transform transition-transform duration-300 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <!-- Grille de tuiles cliquables des ingrédients -->
+                        <div id="t2_compo_breakdown" class="hidden grid grid-cols-2 gap-2 w-full mb-4 animate-fade-in"></div>
+
+                        <!-- Formulaire d'édition de l'ingrédient actif -->
+                        <div id="t2_multi_list" class="space-y-2 mb-4 w-full hidden"></div>
+
+                        <!-- Boutons d'ajout d'ingrédients -->
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button onclick="addMultiLine('t2', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                            <button onclick="addMultiLine('t2', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                            <button onclick="addMultiLine('t2', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
                         </div>
 
-                        <div id="t2_aroma_fold_panel" class="space-y-4 mb-4">
-                            <div id="t2_multi_list" class="space-y-2 mb-4 w-full"></div>
-
-                            <div class="grid grid-cols-3 gap-2 mb-4">
-                                <button onclick="addMultiLine('t2', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
-                                <button onclick="addMultiLine('t2', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
-                                <button onclick="addMultiLine('t2', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
-                            </div>
+                        <!-- Section de sauvegarde de la composition -->
+                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700 mb-4">
+                            <input type="text" id="t2_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t2')">
+                            <button id="t2_btn_save_compo" disabled onclick="saveCompo('t2')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
                         </div>
 
-                       <div id="t2_multi_global_wrapper" class="hidden flex-col p-4 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4 transition-colors">
+                        <!-- Concentration globale (toujours à la fin) -->
+                        <div id="t2_multi_global_wrapper" class="hidden flex-col p-4 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4 transition-colors">
 							<div class="flex justify-between items-center mb-2">
 								<span class="text-sm font-bold text-brand-700 dark:text-brand-300">Concentration globale ciblée&nbsp;:</span>
 								<span id="t2_multi_total_perc" class="text-xl font-black text-brand-600 dark:text-brand-400">0%</span>
@@ -901,12 +899,6 @@
 							<input type="range" id="t2_multi_global_perc" min="1" max="40" step="0.5" value="0" class="w-full" oninput="updateGlobalMultiPerc('t2', this.value); triggerCalc()">
 							<div id="t2_multi_status_label" class="text-[10px] font-bold text-center mt-2 text-stone-500 uppercase tracking-widest transition-colors">Concentration originale</div>
 						</div>
-
-                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700">
-                            <input type="text" id="t2_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t2')">
-                            <button id="t2_btn_save_compo" disabled onclick="saveCompo('t2')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
-                        </div>
-                        <div id="t2_compo_breakdown" class="hidden mt-3 grid grid-cols-2 gap-2 text-[10px] animate-fade-in"></div>
                     </div>
                 </div>
 
@@ -1002,24 +994,20 @@
                             </select>
                         </div>
                         
-                        <!-- Fold Aroma Trigger -->
-                        <div class="flex items-center justify-between py-2.5 px-4 bg-brand-50/50 dark:bg-brand-900/10 rounded-xl cursor-pointer hover:bg-brand-50 dark:hover:bg-brand-900/20 border border-brand-100 dark:border-brand-800/50 transition-colors mb-4 select-none" onclick="toggleFoldCompo('t3')">
-                            <span class="text-xs font-black text-brand-700 dark:text-brand-400 flex items-center gap-1.5 uppercase tracking-wider">
-                                🎨 Liste des arômes & additifs
-                            </span>
-                            <svg id="t3_aroma_fold_icon" class="w-4 h-4 text-brand-500 transform transition-transform duration-300 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        <!-- Grille de tuiles cliquables des ingrédients -->
+                        <div id="t3_compo_breakdown" class="hidden grid grid-cols-2 gap-2 w-full mb-4 animate-fade-in"></div>
+
+                        <!-- Formulaire d'édition de l'ingrédient actif -->
+                        <div id="t3_multi_list" class="space-y-2 mb-4 w-full hidden"></div>
+
+                        <!-- Boutons d'ajout d'ingrédients -->
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button onclick="addMultiLine('t3', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                            <button onclick="addMultiLine('t3', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
+                            <button onclick="addMultiLine('t3', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
                         </div>
 
-                        <div id="t3_aroma_fold_panel" class="space-y-4 mb-4">
-                            <div id="t3_multi_list" class="space-y-2 mb-4 w-full"></div>
-
-                            <div class="grid grid-cols-3 gap-2 mb-4">
-                                <button onclick="addMultiLine('t3', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
-                                <button onclick="addMultiLine('t3', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
-                                <button onclick="addMultiLine('t3', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
-                            </div>
-                        </div>
-
+                        <!-- Volume versé (ml) -->
                         <div class="flex items-center gap-3 mb-4 pt-4 border-t border-brand-200/50 dark:border-brand-800/50">
                             <div class="text-xs font-bold text-brand-800 dark:text-brand-300 w-1/3">Volume versé (ml)&nbsp;:</div>
                             <button onclick="adjustVal('t3_aroma_vol_multi', -5)" class="btn-adjust-sm">-</button>
@@ -1027,18 +1015,18 @@
                             <button onclick="adjustVal('t3_aroma_vol_multi', 5)" class="btn-adjust-sm">+</button>
                         </div>
 
+                        <!-- Section de sauvegarde de la composition -->
+                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700 mb-4">
+                            <input type="text" id="t3_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t3')">
+                            <button id="t3_btn_save_compo" disabled onclick="saveCompo('t3')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
+                        </div>
+
+                        <!-- Concentration globale (toujours à la fin) -->
                         <div class="flex justify-between items-center p-3 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4">
                             <span class="text-sm font-bold text-brand-700 dark:text-brand-300">Concentration de la composition&nbsp;:</span>
                             <span id="t3_multi_total_perc" class="text-lg font-black text-brand-600 dark:text-brand-400">0%</span>
                         </div>
-
-                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700">
-                            <input type="text" id="t3_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t3')">
-                            <button id="t3_btn_save_compo" disabled onclick="saveCompo('t3')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
-                        </div>
                     </div>
-                    
-                    <div id="t3_compo_breakdown" class="hidden mt-3 grid grid-cols-2 gap-2 text-[10px] animate-fade-in"></div>
                 </div>
 
                 <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
@@ -1949,6 +1937,10 @@
         
         <input type="text" id="mix_name_input" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-xl p-3 mb-5 text-stone-800 dark:text-stone-100 font-bold focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" placeholder="Ex: Red Astaire Maison" oninput="toggleSaveMixBtn()">
         
+        <div id="update_name_wrapper" class="hidden mb-5 border-b border-stone-200 dark:border-stone-700 pb-5">
+            <button id="btn_update_name" onclick="updateSavedMixName()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md transition-all">Valider le nouveau nom</button>
+        </div>
+
         <div id="save_mix_wrapper" class="mb-5 border-b border-stone-200 dark:border-stone-700 pb-5">
             <button id="btn_save_mix" onclick="saveCurrentMix()" disabled class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed">💾 Sauvegarder ce Mix</button>
         </div>

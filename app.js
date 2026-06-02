@@ -37,9 +37,9 @@ function getLiquidWeight(type, vol, pgRatio = 100, degree = 40) {
 }
 
 let state = { 
-    t1: { vol_mode: 'defined', nic_mode: 'mg', aroma_mode: 'mono', multi: [] }, 
-    t2: { vol_mode: 'defined', aroma_mode: 'mono', multi: [] },
-    t3: { aroma_mode: 'mono', multi: [] },
+    t1: { vol_mode: 'defined', nic_mode: 'mg', aroma_mode: 'mono', multi: [], editingId: null, editingItem: null }, 
+    t2: { vol_mode: 'defined', aroma_mode: 'mono', multi: [], editingId: null, editingItem: null },
+    t3: { aroma_mode: 'mono', multi: [], editingId: null, editingItem: null },
     edit_compo: { multi: [] }
 };
 let calcExpr = ""; let pendingNewMix = false; 
@@ -59,6 +59,8 @@ try { savedBuilds = JSON.parse(safeGetItem('jediy_builds') || '[]'); } catch(e) 
 let currentEditAromaId = null;
 let currentEditBuildId = null;
 let currentMixCard = null;
+let currentSavedMixId = null;
+let currentSavedMixInitialName = "";
 let currentEditCompoId = null;
 let groupMixes = false;
 let unreadNotification = false;
@@ -431,25 +433,36 @@ function syncMultiVolBreakdown(prefix) {
             }
         }
         
-        let totalPerc = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
-        if (totalPerc > 0) {
-            let html = '';
-            state[prefix].multi.forEach(item => {
-                let v_i = aVol * (item.perc / totalPerc);
-                let w_i = getLiquidWeight(item.type, v_i, item.pg, item.degree);
-                html += `<div class="bg-stone-100 dark:bg-stone-700 p-1.5 rounded text-center">
-                    <span class="block font-bold text-stone-700 dark:text-stone-200 truncate">${item.name}</span>
-                    <span class="text-brand-600 dark:text-brand-400 font-black">${round1(v_i)} ml
-                        <span class="block font-medium text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">(${round2(w_i)} g)</span>
-                    </span>
-                </div>`;
-            });
-            compoBreakdown.innerHTML = html;
+        let visibleItems = state[prefix].multi.filter(item => prefix === 'edit_compo' ? true : item.id !== state[prefix].editingId);
+        
+        if (visibleItems.length > 0) {
+            let totalPerc = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
+            if (totalPerc > 0) {
+                let html = '';
+                visibleItems.forEach(item => {
+                    let v_i = aVol * (item.perc / totalPerc);
+                    let w_i = getLiquidWeight(item.type, v_i, item.pg, item.degree);
+                    let nameLabel = item.name || (item.type === 'aroma' ? 'Arôme' : item.type === 'water' ? 'Eau' : 'Alcool');
+                    html += `<div onclick="editMultiIngredient('${prefix}', ${item.id})" class="bg-stone-100 hover:bg-stone-200 dark:bg-stone-700 dark:hover:bg-stone-600 cursor-pointer p-1.5 rounded text-center transition-colors">
+                        <span class="block font-bold text-stone-700 dark:text-stone-200 truncate text-[10px] sm:text-[11px] leading-tight">${nameLabel}</span>
+                        <span class="block text-[9px] sm:text-[10px] font-bold text-brand-600 dark:text-brand-400 mt-0.5">${round1(item.perc)}%</span>
+                        <span class="block text-[9px] sm:text-[10px] font-black text-stone-600 dark:text-stone-300 mt-0.5">${round1(v_i)} ml</span>
+                        <span class="block text-[8px] sm:text-[9px] font-medium text-stone-500 dark:text-stone-400 mt-0.5">(${round2(w_i)} g)</span>
+                    </div>`;
+                });
+                compoBreakdown.innerHTML = html;
+                compoBreakdown.classList.remove('hidden');
+            } else {
+                compoBreakdown.innerHTML = '<div class="col-span-2 text-stone-500 text-center">Dosage de la compo à 0%</div>';
+                compoBreakdown.classList.remove('hidden');
+            }
         } else {
-            compoBreakdown.innerHTML = '<div class="col-span-2 text-stone-500 text-center">Dosage de la compo à 0%</div>';
+            compoBreakdown.innerHTML = '';
+            compoBreakdown.classList.add('hidden');
         }
     } else {
         compoBreakdown.innerHTML = '';
+        compoBreakdown.classList.add('hidden');
     }
 }
 
@@ -562,12 +575,16 @@ function updateMaterialCompact(prefix) {
 function checkMultiAddButtons(prefix) {
     let isValid = true;
     
-    state[prefix].multi.forEach(item => {
-        if (item.name.trim().length < 2) isValid = false;
-    });
-    
-    let currentTotal = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
-    if (currentTotal >= MAX_AROMA) isValid = false;
+    if (prefix !== 'edit_compo' && state[prefix].editingId !== null) {
+        isValid = false;
+    } else {
+        state[prefix].multi.forEach(item => {
+            if (item.name.trim().length < 2) isValid = false;
+        });
+        
+        let currentTotal = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
+        if (currentTotal >= MAX_AROMA) isValid = false;
+    }
     
     let btns = document.querySelectorAll(`button[onclick^="addMultiLine('${prefix}'"]`);
     btns.forEach(btn => {
@@ -588,19 +605,37 @@ function addMultiLine(prefix, type) {
 
     let id = Date.now() + Math.floor(Math.random() * 1000);
     let name = type === 'aroma' ? '' : (type === 'water' ? 'Eau' : 'Alcool');
-    state[prefix].multi.push({ id, type, name, pg: 100, degree: 40, perc: 0 });
+    let item = { id, type, name, pg: 100, degree: 40, perc: 0 };
+
+    if (prefix === 'edit_compo') {
+        state[prefix].multi.push(item);
+    } else {
+        state[prefix].editingId = id;
+        state[prefix].editingItem = item;
+    }
+
     renderMultiList(prefix); 
     if(prefix !== 'edit_compo') { updateAromaPreview(prefix); triggerCalc(); }
 }
 
 function removeMultiLine(prefix, id) {
     state[prefix].multi = state[prefix].multi.filter(x => x.id !== id);
+    if (prefix !== 'edit_compo' && state[prefix].editingId === id) {
+        state[prefix].editingId = null;
+        state[prefix].editingItem = null;
+    }
     renderMultiList(prefix); 
     if(prefix !== 'edit_compo') { updateAromaPreview(prefix); triggerCalc(); }
 }
 
 function updateMulti(prefix, id, field, val) {
-    let item = state[prefix].multi.find(x => x.id === id); if(!item) return;
+    let item;
+    if (prefix !== 'edit_compo' && state[prefix].editingId === id) {
+        item = state[prefix].editingItem;
+    } else {
+        item = state[prefix].multi.find(x => x.id === id);
+    }
+    if(!item) return;
     
     if(field === 'perc') { 
         val = parseFloat(val); if(isNaN(val) || val < 0) val = 0; 
@@ -637,7 +672,13 @@ function updateMulti(prefix, id, field, val) {
 }
 
 function updateMultiPerc(prefix, id, step) {
-    let item = state[prefix].multi.find(x => x.id === id); if(!item) return;
+    let item;
+    if (prefix !== 'edit_compo' && state[prefix].editingId === id) {
+        item = state[prefix].editingItem;
+    } else {
+        item = state[prefix].multi.find(x => x.id === id);
+    }
+    if(!item) return;
     
     let targetVal = item.perc + step;
     let otherTotal = state[prefix].multi.reduce((acc, v) => v.id !== id ? acc + v.perc : acc, 0);
@@ -691,57 +732,126 @@ function updateGlobalMultiPerc(prefix, val) {
 function renderMultiList(prefix) {
     let container = document.getElementById(`${prefix}_multi_list`); if(!container) return;
     let html = ''; let total = 0;
-    state[prefix].multi.forEach(item => {
-        total += item.perc;
-        let selectHtml = '';
-        if (item.type === 'aroma') {
-            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'pg', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
-            RATIOS.forEach(r => selectHtml += `<option value="${r}" ${item.pg === r ? 'selected' : ''}>${formatRatioStr(r, true)}</option>`);
-            selectHtml += `</select>`;
-        } else if (item.type === 'alcohol') {
-            selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'degree', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
-            for(let d=10; d<=90; d++) selectHtml += `<option value="${d}" ${item.degree === d ? 'selected' : ''}>${d}°</option>`;
-            selectHtml += `</select>`;
-        } else if (item.type === 'water') {
-            selectHtml = `<div class="text-[10px] text-stone-500 font-bold px-1 h-8 flex items-center">Densité: 1.0</div>`;
-        }
+    
+    if (prefix === 'edit_compo') {
+        state[prefix].multi.forEach(item => {
+            total += item.perc;
+            let selectHtml = '';
+            if (item.type === 'aroma') {
+                selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'pg', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
+                RATIOS.forEach(r => selectHtml += `<option value="${r}" ${item.pg === r ? 'selected' : ''}>${formatRatioStr(r, true)}</option>`);
+                selectHtml += `</select>`;
+            } else if (item.type === 'alcohol') {
+                selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'degree', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
+                for(let d=10; d<=90; d++) selectHtml += `<option value="${d}" ${item.degree === d ? 'selected' : ''}>${d}°</option>`;
+                selectHtml += `</select>`;
+            } else if (item.type === 'water') {
+                selectHtml = `<div class="text-[10px] text-stone-500 font-bold px-1 h-8 flex items-center">Densité: 1.0</div>`;
+            }
 
-        let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
+            let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
 
-        html += `
-        <div class="relative focus-within:z-30 flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
-            <div class="aroma-autocomplete-wrapper relative w-full">
-                <input type="text" value="${item.name}" ${placeholder} onfocus="showAromaSuggestions('${prefix}', ${item.id}, this.value)" oninput="showAromaSuggestions('${prefix}', ${item.id}, this.value); updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
-                <div id="${prefix}_auto_${item.id}" class="aroma-autocomplete-box hidden absolute top-full left-0 right-0 mt-1 bg-white/95 dark:bg-stone-800/95 border border-stone-205 dark:border-stone-700 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto hide-scrollbar backdrop-blur-md"></div>
-            </div>
-            
-            <div class="flex gap-2.5 items-center w-full">
-                <!-- Left Column: delete button (taking up ~15%) -->
-                <div class="w-[15%] flex justify-start shrink-0">
-                    <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
+            html += `
+            <div class="relative focus-within:z-30 flex flex-col p-3 bg-white dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 shadow-sm gap-2.5 animate-fade-in">
+                <div class="aroma-autocomplete-wrapper relative w-full">
+                    <input type="text" value="${item.name}" ${placeholder} onfocus="showAromaSuggestions('${prefix}', ${item.id}, this.value)" oninput="showAromaSuggestions('${prefix}', ${item.id}, this.value); updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+                    <div id="${prefix}_auto_${item.id}" class="aroma-autocomplete-box hidden absolute top-full left-0 right-0 mt-1 bg-white/95 dark:bg-stone-800/95 border border-stone-205 dark:border-stone-700 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto hide-scrollbar backdrop-blur-md"></div>
                 </div>
                 
-                <!-- Right Column: select dropdown and dosage aligned to the right (taking up ~85%) -->
-                <div class="flex-1 flex flex-col gap-2 min-w-0">
-                    <div class="w-full">
-                        ${selectHtml}
+                <div class="flex gap-2.5 items-center w-full">
+                    <!-- Left Column: delete button (taking up ~15%) -->
+                    <div class="w-[15%] flex justify-start shrink-0">
+                        <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
                     </div>
                     
-                    <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full h-8">
-                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
-                        
-                        <div class="flex-1 relative flex items-center h-full">
-                            <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
-                            <span class="absolute right-2.5 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                    <!-- Right Column: select dropdown and dosage aligned to the right (taking up ~85%) -->
+                    <div class="flex-1 flex flex-col gap-2 min-w-0">
+                        <div class="w-full">
+                            ${selectHtml}
                         </div>
+                        
+                        <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full h-8">
+                            <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
+                            
+                            <div class="flex-1 relative flex items-center h-full">
+                                <input type="number" step="0.1" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
+                                <span class="absolute right-2.5 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                            </div>
 
-                        <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
+                            <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>`;
-    });
-    container.innerHTML = html;
+            </div>`;
+        });
+        container.innerHTML = html;
+    } else {
+        total = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
+        let editingId = state[prefix].editingId;
+        if (editingId) {
+            container.classList.remove('hidden');
+            let item = state[prefix].editingItem;
+            if (item) {
+                let selectHtml = '';
+                if (item.type === 'aroma') {
+                    selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'pg', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
+                    RATIOS.forEach(r => selectHtml += `<option value="${r}" ${item.pg === r ? 'selected' : ''}>${formatRatioStr(r, true)}</option>`);
+                    selectHtml += `</select>`;
+                } else if (item.type === 'alcohol') {
+                    selectHtml = `<select onchange="updateMulti('${prefix}', ${item.id}, 'degree', this.value)" class="w-full bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg p-1.5 text-[10px] font-bold focus:outline-none transition-colors h-8">`;
+                    for(let d=10; d<=90; d++) selectHtml += `<option value="${d}" ${item.degree === d ? 'selected' : ''}>${d}°</option>`;
+                    selectHtml += `</select>`;
+                } else if (item.type === 'water') {
+                    selectHtml = `<div class="text-[10px] text-stone-500 font-bold px-1 h-8 flex items-center">Densité: 1.0</div>`;
+                }
+
+                let placeholder = item.type === 'aroma' ? 'placeholder="Nommez votre arôme..."' : '';
+
+                html = `
+                <div class="relative focus-within:z-30 flex flex-col p-3 bg-brand-50/20 dark:bg-brand-900/10 rounded-xl border border-brand-200 dark:border-brand-800 shadow-sm gap-2.5 animate-fade-in mb-3">
+                    <div class="text-[10px] font-black text-brand-600 dark:text-brand-500 uppercase tracking-widest flex justify-between items-center">
+                        <span>Édition Ingrédient</span>
+                        <span class="px-1.5 py-0.5 bg-brand-100 dark:bg-brand-900 text-brand-700 dark:text-brand-300 rounded font-black uppercase text-[8px] tracking-wide">${item.type === 'aroma' ? 'Arôme' : item.type === 'water' ? 'Eau' : 'Alcool'}</span>
+                    </div>
+                    <div class="aroma-autocomplete-wrapper relative w-full">
+                        <input type="text" id="${prefix}_edit_name" value="${item.name}" ${placeholder} onfocus="showAromaSuggestions('${prefix}', ${item.id}, this.value)" oninput="showAromaSuggestions('${prefix}', ${item.id}, this.value); updateMulti('${prefix}', ${item.id}, 'name', this.value)" class="w-full bg-stone-50 dark:bg-stone-900 border border-stone-200 dark:border-stone-600 rounded-lg p-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors">
+                        <div id="${prefix}_auto_${item.id}" class="aroma-autocomplete-box hidden absolute top-full left-0 right-0 mt-1 bg-white/95 dark:bg-stone-800/95 border border-stone-205 dark:border-stone-700 rounded-xl shadow-xl z-50 max-h-40 overflow-y-auto hide-scrollbar backdrop-blur-md"></div>
+                    </div>
+                    
+                    <div class="flex gap-2.5 items-center w-full">
+                        <div class="w-[15%] flex justify-start shrink-0">
+                            <button onclick="removeMultiLine('${prefix}', ${item.id})" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/30 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
+                        </div>
+                        
+                        <div class="flex-1 flex flex-col gap-2 min-w-0">
+                            <div class="w-full">
+                                ${selectHtml}
+                            </div>
+                            
+                            <div class="flex items-center bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-600 overflow-hidden w-full h-8">
+                                <button onclick="updateMultiPerc('${prefix}', ${item.id}, -0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">-</button>
+                                
+                                <div class="flex-1 relative flex items-center h-full">
+                                    <input type="number" step="0.1" id="${prefix}_edit_perc" value="${item.perc}" onchange="updateMulti('${prefix}', ${item.id}, 'perc', this.value)" class="w-full text-center bg-transparent font-bold text-xs text-stone-800 dark:text-stone-100 hide-arrows p-0 pl-1 pr-4 border-none outline-none focus:ring-0">
+                                    <span class="absolute right-2.5 text-[10px] font-bold text-stone-400 select-none pointer-events-none">%</span>
+                                </div>
+
+                                <button onclick="updateMultiPerc('${prefix}', ${item.id}, 0.1)" class="w-8 h-full shrink-0 flex items-center justify-center text-brand-600 font-black hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors text-sm">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-2 border-t border-stone-200/50 dark:border-stone-700/50">
+                        <button type="button" onclick="validateMultiIngredient('${prefix}', ${item.id})" class="w-full py-2 bg-brand-500 hover:bg-brand-600 text-white font-bold rounded-xl shadow-sm transition-all text-xs">Valider ingrédient</button>
+                    </div>
+                </div>`;
+                container.innerHTML = html;
+            }
+        } else {
+            container.classList.add('hidden');
+            container.innerHTML = '';
+        }
+    }
     
     let wrapper = document.getElementById(`${prefix}_multi_global_wrapper`);
     let slider = document.getElementById(`${prefix}_multi_global_perc`);
@@ -753,7 +863,6 @@ function renderMultiList(prefix) {
             if (slider) {
                 let oldOriginal = state[prefix].lastOriginalTotal || 0;
                 let currentSliderVal = parseFloat(slider.value) || 0;
-                // Le slider traque la nouvelle valeur originale s'il n'était pas altéré
                 if (currentSliderVal === 0 || currentSliderVal === oldOriginal || state[prefix].resetSlider) {
                     slider.value = total;
                     state[prefix].resetSlider = false;
@@ -781,6 +890,40 @@ function renderMultiList(prefix) {
     checkMultiAddButtons(prefix);
     
     if (typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
+}
+
+function validateMultiIngredient(prefix, id) {
+    let item = state[prefix].editingItem;
+    if (!item) return;
+    if (item.name.trim().length < 2) {
+        showAlert("Veuillez donner un nom valide d'au moins 2 caractères.");
+        return;
+    }
+    
+    let existingIndex = state[prefix].multi.findIndex(x => x.id === id);
+    if (existingIndex >= 0) {
+        state[prefix].multi[existingIndex] = item;
+    } else {
+        state[prefix].multi.push(item);
+    }
+    
+    state[prefix].editingId = null;
+    state[prefix].editingItem = null;
+    
+    renderMultiList(prefix);
+    updateAromaPreview(prefix);
+    triggerCalc();
+}
+
+function editMultiIngredient(prefix, id) {
+    if (prefix === 'edit_compo') return;
+    let item = state[prefix].multi.find(x => x.id === id);
+    if (!item) return;
+    
+    state[prefix].editingId = id;
+    state[prefix].editingItem = JSON.parse(JSON.stringify(item));
+    
+    renderMultiList(prefix);
 }
 
 function checkCompoSave(prefix) {
@@ -838,6 +981,10 @@ function syncCompoSelects() {
 }
 
 function loadCompo(prefix, idStr) {
+    if (prefix !== 'edit_compo') {
+        state[prefix].editingId = null;
+        state[prefix].editingItem = null;
+    }
     if(!idStr) return;
     if(idStr === 'reset_all') {
         openHtmlConfirm(`<strong>Réinitialiser la composition ?</strong><br><br>Tous les arômes et pourcentages actuellement saisis seront effacés de cet écran.`, () => {
@@ -2790,21 +2937,38 @@ function toggleSaveMixBtn() {
     document.getElementById('btn_pdf_mix').disabled = !isValid;
     if(document.getElementById('btn_png_mix')) document.getElementById('btn_png_mix').disabled = !isValid;
     
-    if(currentMixCard) {
-        let titleEl = currentMixCard.querySelector('.font-extrabold.text-stone-800');
-        if(titleEl) {
-            let baseText = "";
-            let cfgStr = currentMixCard.getAttribute('data-config'); 
-            if(cfgStr) {
-                let c = JSON.parse(decodeURIComponent(cfgStr));
-                if(c.type === 't1') baseText = `Liquide Prêt <span class="text-brand-600 dark:text-brand-400">${round1(c.finalVol)} ml</span>`;
-                else if(c.type === 't2') baseText = `Base Shortfill <span class="text-brand-600 dark:text-brand-400">${round1(c.prepVol)} ml</span>`;
-                else if(c.type === 't3') baseText = `Mélange Manuel <span class="text-brand-600 dark:text-brand-400">${round1(c.aVol+c.bVol+c.nVol)} ml</span>`;
-                else if(c.type === 'boost') baseText = `Mélange Boosté <span class="text-brand-600">${round1(c.vol+c.bVol)} ml</span>`;
-            }
-            let displayName = val.length > 0 ? val : "Mix";
-            titleEl.innerHTML = `${displayName}<br><span class="text-sm font-normal text-stone-500">${baseText}</span>`;
+    let updateWrapper = document.getElementById('update_name_wrapper');
+    if (updateWrapper) {
+        if (isSaved && isValid && val !== currentSavedMixInitialName) {
+            updateWrapper.classList.remove('hidden');
+        } else {
+            updateWrapper.classList.add('hidden');
         }
+    }
+    
+    if(currentMixCard) {
+        let targets = [currentMixCard];
+        let modalContent = document.getElementById('recipe_modal_content');
+        if (modalContent) {
+            let modalCard = modalContent.querySelector('.recipe-card-wrapper');
+            if (modalCard) targets.push(modalCard);
+        }
+        targets.forEach(target => {
+            let titleEl = target.querySelector('.font-extrabold.text-stone-800');
+            if(titleEl) {
+                let baseText = "";
+                let cfgStr = target.getAttribute('data-config'); 
+                if(cfgStr) {
+                    let c = JSON.parse(decodeURIComponent(cfgStr));
+                    if(c.type === 't1') baseText = `Liquide Prêt <span class="text-brand-600 dark:text-brand-400">${round1(c.finalVol)} ml</span>`;
+                    else if(c.type === 't2') baseText = `Base Shortfill <span class="text-brand-600 dark:text-brand-400">${round1(c.prepVol)} ml</span>`;
+                    else if(c.type === 't3') baseText = `Mélange Manuel <span class="text-brand-600 dark:text-brand-400">${round1(c.aVol+c.bVol+c.nVol)} ml</span>`;
+                    else if(c.type === 'boost') baseText = `Mélange Boosté <span class="text-brand-600">${round1(c.vol+c.bVol)} ml</span>`;
+                }
+                let displayName = val.length > 0 ? val : "Mix";
+                titleEl.innerHTML = `${displayName}<br><span class="text-sm font-normal text-stone-500">${baseText}</span>`;
+            }
+        });
     }
 }
 
@@ -3234,8 +3398,24 @@ function openModalFromCard(element) {
     clone.classList.remove('hover:shadow-xl', 'hover:-translate-y-1', 'h-full', 'compact-card');
     clone.classList.add('export-card', 'relative', 'w-full', 'shadow-2xl', 'max-h-[85vh]', 'overflow-y-auto', 'hide-scrollbar');
     
-    let isSaved = card.closest('#mes_mixes_list') !== null; let savedName = "";
-    if (isSaved) { let nameBadge = card.parentElement.querySelector('.bg-brand-500'); if (nameBadge) savedName = nameBadge.innerText; }
+    let isSaved = card.closest('#mes_mixes_list') !== null;
+    let savedName = "";
+    currentSavedMixId = null;
+    currentSavedMixInitialName = "";
+    if (isSaved && card.parentElement) {
+        let editBtn = card.parentElement.querySelector("button[onclick*='editMix']");
+        if (editBtn) {
+            let match = editBtn.getAttribute('onclick').match(/editMix\((\d+)\)/);
+            if (match) {
+                currentSavedMixId = parseInt(match[1]);
+                let mix = savedMixes.find(x => x.id === currentSavedMixId);
+                if (mix) {
+                    savedName = mix.name;
+                    currentSavedMixInitialName = savedName;
+                }
+            }
+        }
+    }
 
     let nameInput = document.getElementById('mix_name_input');
     let saveWrapper = document.getElementById('save_mix_wrapper');
@@ -3284,7 +3464,73 @@ function openModalFromCard(element) {
     if (typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
 }
 
-function closeRecipeModal() { document.getElementById('recipe_modal').classList.add('hidden'); currentMixCard = null; }
+function closeRecipeModal() {
+    document.getElementById('recipe_modal').classList.add('hidden');
+    currentMixCard = null;
+    currentSavedMixId = null;
+    currentSavedMixInitialName = "";
+    let updateWrapper = document.getElementById('update_name_wrapper');
+    if (updateWrapper) updateWrapper.classList.add('hidden');
+}
+
+function updateSavedMixName() {
+    let newName = document.getElementById('mix_name_input').value.trim();
+    if (newName.length < 2 || !currentSavedMixId) return;
+    
+    let mix = savedMixes.find(x => x.id === currentSavedMixId);
+    if (!mix) return;
+    
+    mix.name = newName;
+    if (mix.config) {
+        mix.config.globalName = newName;
+    }
+    
+    // Update data-config on the original card
+    if (currentMixCard) {
+        let cfgStr = currentMixCard.getAttribute('data-config');
+        if (cfgStr) {
+            let c = JSON.parse(decodeURIComponent(cfgStr));
+            c.globalName = newName;
+            currentMixCard.setAttribute('data-config', encodeURIComponent(JSON.stringify(c)));
+        }
+    }
+    
+    // Update data-config on the modal clone
+    let modalContent = document.getElementById('recipe_modal_content');
+    if (modalContent) {
+        let modalCard = modalContent.querySelector('.recipe-card-wrapper');
+        if (modalCard) {
+            let cfgStr = modalCard.getAttribute('data-config');
+            if (cfgStr) {
+                let c = JSON.parse(decodeURIComponent(cfgStr));
+                c.globalName = newName;
+                modalCard.setAttribute('data-config', encodeURIComponent(JSON.stringify(c)));
+            }
+        }
+    }
+    
+    // Persist to local storage
+    safeSetItem('jediy_mixes', JSON.stringify(savedMixes));
+    
+    // Update local variables
+    currentSavedMixInitialName = newName;
+    
+    // Hide validation button
+    let updateWrapper = document.getElementById('update_name_wrapper');
+    if (updateWrapper) updateWrapper.classList.add('hidden');
+    
+    // Re-render UI
+    if (typeof renderMesMixes === 'function') {
+        renderMesMixes();
+    }
+    
+    // Mark category modified
+    if(typeof markCategoryModified === 'function') {
+        markCategoryModified('mixes');
+    }
+    
+    showAlert("Nom mis à jour !");
+}
 let currentRecipePngAction = 'download';
 function showPdfOptions() { document.getElementById('export_step_1').classList.add('hidden'); document.getElementById('export_step_2').classList.remove('hidden'); document.getElementById('export_step_2').classList.add('flex'); document.getElementById('btn_back_export').classList.remove('hidden'); }
 function showPngOptions() {
@@ -3529,7 +3775,7 @@ function freezeComputedStyles(element) {
 function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
     let clone = document.getElementById('recipe_modal_content').querySelector('.export-card, .recipe-card-wrapper'); if (!clone) return null;
     let pristineCard = clone.cloneNode(true);
-    let originalWidth = 380;
+    let originalWidth = pngMode !== null ? 380 : (clone.offsetWidth || 560);
     
     // Déplier les compositions / arômes
     clone.querySelectorAll('.hidden, [id$="_aroma_fold_panel"]').forEach(el => {
@@ -3611,12 +3857,20 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
         clone.classList.add('border-stone-200');
     }
 
-    // Convertir inconditionnellement toutes les grilles de 2 colonnes ou adaptatives en colonne unique (superposition verticale)
-    clone.querySelectorAll('.grid-cols-2, .md\\:grid-cols-2, .sm\\:grid-cols-2, .pdf-aroma-grid').forEach(g => {
-        g.classList.remove('grid-cols-2', 'sm:grid-cols-2', 'md:grid-cols-2', 'lg:grid-cols-2', 'xl:grid-cols-2', 'grid-cols-3', 'md:grid-cols-3', 'sm:grid-cols-3');
-        g.classList.add('grid-cols-1');
-        if (g.parentElement.classList.contains('hidden')) g.parentElement.classList.remove('hidden');
-    });
+    // Convertir inconditionnellement toutes les grilles de 2 colonnes ou adaptatives en colonne unique (superposition verticale) uniquement pour l'export PNG
+    if (pngMode !== null) {
+        clone.querySelectorAll('.grid-cols-2, .md\\:grid-cols-2, .sm\\:grid-cols-2, .pdf-aroma-grid').forEach(g => {
+            g.classList.remove('grid-cols-2', 'sm:grid-cols-2', 'md:grid-cols-2', 'lg:grid-cols-2', 'xl:grid-cols-2', 'grid-cols-3', 'md:grid-cols-3', 'sm:grid-cols-3');
+            g.classList.add('grid-cols-1');
+            if (g.parentElement.classList.contains('hidden')) g.parentElement.classList.remove('hidden');
+        });
+    } else {
+        // Pour l'export PDF, on force la grille d'ingrédients en 2 colonnes (tuiles)
+        clone.querySelectorAll('.pdf-aroma-grid').forEach(g => {
+            g.classList.remove('grid-cols-1');
+            g.classList.add('grid-cols-2');
+        });
+    }
 
     let cfgStr = clone.getAttribute('data-config');
     if (cfgStr) {
@@ -3660,7 +3914,8 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
             let bRatioSel = clone.querySelector('.sim-b-ratio'); let bPg = bRatioSel ? parseFloat(bRatioSel.value) : 50;
             generatedSignatures.clear(); 
             
-            cleanSimDiv = document.createElement('div'); cleanSimDiv.className = 'mt-4 grid grid-cols-1 gap-3 w-full pdf-guides';
+            let simGridClass = pngMode !== null ? 'grid-cols-1' : 'grid-cols-2';
+            cleanSimDiv = document.createElement('div'); cleanSimDiv.className = `mt-4 grid ${simGridClass} gap-3 w-full pdf-guides`;
             
             let defaultGuidesHtml = getGuideHtmlForVol(prepVolAttr, `Bidon Complet`, totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
             if (prepVolAttr > 50) defaultGuidesHtml += getGuideHtmlForVol(50, "Prélèvement", totalAroma, prepVolAttr, bStr, maxNic, basePg, bPg);
@@ -3673,8 +3928,9 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
                 if (!generatedSignatures.has(sig)) {
                     let actualNic = (customBCount * 10 * bStr) / (customPreleveVol + customBCount * 10); let aromaVolInSample = customPreleveVol * (totalAroma / prepVolAttr); let finalAromaPerc = (aromaVolInSample / (customPreleveVol + customBCount * 10)) * 100; let customFinalPg = ((customPreleveVol * (basePg/100)) + (customBCount * 10 * (bPg/100))) / (customPreleveVol + customBCount * 10) * 100;
                     let warning = actualNic > maxNic; let customMlText = round1(customBCount * 10); let customBoostWeight = getWeight(customBCount * 10, bPg); let customBaseWeight = getWeight(customPreleveVol, basePg);
+                    let customColSpan = pngMode !== null ? 'col-span-1' : 'col-span-2';
                     let customHtml = `
-                    <div class="col-span-1 p-3 bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 rounded-xl text-stone-700 dark:text-stone-300 leading-tight break-inside-avoid mt-1" style="font-size:10px;">
+                    <div class="${customColSpan} p-3 bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700/50 rounded-xl text-stone-700 dark:text-stone-300 leading-tight break-inside-avoid mt-1" style="font-size:10px;">
                         <div class="font-black uppercase tracking-widest text-stone-500 dark:text-stone-400 mb-2 border-b border-stone-200 dark:border-stone-700/50 pb-1 flex items-center gap-2"><span>💡 Personnalisé</span><span class="bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300 px-1.5 py-0.5 rounded" style="font-size:8px;">${round1(customPreleveVol)} ml (${round2(customBaseWeight)} g)</span></div>
                         <div class="flex justify-between items-center">
                             <div class="flex flex-col">
@@ -5888,7 +6144,12 @@ function showAromaSuggestions(prefix, itemId, val) {
 }
 
 function selectAromaSuggestion(prefix, itemId, name, pg) {
-    let item = state[prefix].multi.find(x => x.id === itemId);
+    let item;
+    if (prefix !== 'edit_compo' && state[prefix].editingId === itemId) {
+        item = state[prefix].editingItem;
+    } else {
+        item = state[prefix].multi.find(x => x.id === itemId);
+    }
     if (item) {
         item.name = name;
         item.pg = pg;
