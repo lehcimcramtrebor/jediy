@@ -479,6 +479,41 @@ function syncMultiVolBreakdown(prefix) {
     }
 }
 
+// Navigation intelligente entre les onglets
+function navigateDataTabs(direction) {
+    const tabs = ['mixes', 'compos', 'aromes', 'builds'];
+    
+    // Trouver l'onglet actuellement actif
+    let currentIndex = 0;
+    for (let i = 0; i < tabs.length; i++) {
+        const container = document.getElementById('mes_' + tabs[i] + '_list');
+        if (container && !container.classList.contains('hidden')) {
+            currentIndex = i;
+            break;
+        }
+    }
+    
+    // Calculer le nouvel index (bloqué aux extrémités)
+    let newIndex = currentIndex;
+    if (direction === 'left' && currentIndex > 0) {
+        newIndex--;
+    } else if (direction === 'right' && currentIndex < tabs.length - 1) {
+        newIndex++;
+    }
+    
+    // Si on a changé d'onglet, on switch et on fait glisser le menu
+    if (newIndex !== currentIndex) {
+        const targetTab = tabs[newIndex];
+        switchDataTab(targetTab);
+        
+        // Centre automatiquement le nouveau bouton au milieu de l'écran
+        const btn = document.getElementById('tab_btn_mes_' + targetTab);
+        if (btn) {
+            btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+    }
+}
+
 /* ========================================== */
 /* 4. GESTION MULTI AROMES                    */
 /* ========================================== */
@@ -3039,8 +3074,8 @@ function switchDataTab(tab) {
     document.getElementById('mes_builds_list').classList.add('hidden');
     
     // Inactivate all buttons
-    let activeBtnClasses = "pb-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap transition-colors";
-    let inactiveBtnClasses = "pb-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap transition-colors";
+    let activeBtnClasses = "py-3 text-sm font-black text-brand-600 dark:text-brand-400 border-b-2 border-brand-600 dark:border-brand-400 whitespace-nowrap shrink-0 transition-colors";
+	let inactiveBtnClasses = "py-3 text-sm font-bold text-stone-400 dark:text-stone-500 hover:text-stone-600 dark:hover:text-stone-300 border-b-2 border-transparent whitespace-nowrap shrink-0 transition-colors";
     document.getElementById('tab_btn_mes_mixes').className = inactiveBtnClasses;
     document.getElementById('tab_btn_mes_compos').className = inactiveBtnClasses;
     document.getElementById('tab_btn_mes_aromes').className = inactiveBtnClasses;
