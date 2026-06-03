@@ -100,7 +100,63 @@ document.addEventListener('touchmove', e => {
     if (window.scrollY === 0 && e.touches[0].pageY > startY) e.preventDefault();
 }, {passive: false});
 
+function triggerHaptic(type = 'light') {
+    if (!navigator.vibrate) return;
+    try {
+        if (type === 'light') {
+            navigator.vibrate(10);
+        } else if (type === 'medium') {
+            navigator.vibrate(20);
+        } else if (type === 'success') {
+            navigator.vibrate([15, 30, 15]);
+        } else if (type === 'warning') {
+            navigator.vibrate([50, 50, 50]);
+        }
+    } catch (e) {
+        // Silently catch any security/permission errors with vibration on some browsers
+    }
+}
+
+function initHapticFeedback() {
+    if (!navigator.vibrate) return;
+
+    // 1. Buttons, adjustments, role="button", optBtn, tabs
+    document.addEventListener('click', (e) => {
+        const target = e.target.closest('button, [role="button"], .btn-adjust, #coil_volts_minus, #coil_volts_plus');
+        if (target) {
+            if (target.id === 'html_confirm_btn_ok' || target.classList.contains('bg-brand-500')) {
+                triggerHaptic('success');
+            } else if (target.classList.contains('bg-red-500') || target.classList.contains('bg-red-600')) {
+                triggerHaptic('warning');
+            } else {
+                triggerHaptic('light');
+            }
+        }
+    }, { passive: true });
+
+    // 2. Text inputs & Selects (focus/click)
+    document.addEventListener('focusin', (e) => {
+        const target = e.target.closest('input[type="text"], input[type="number"], select, textarea');
+        if (target) {
+            triggerHaptic('light');
+        }
+    }, { passive: true });
+
+    // 3. Sliders (input[type="range"]) - vibrating lightly on value change
+    document.addEventListener('input', (e) => {
+        const target = e.target;
+        if (target && target.type === 'range') {
+            const lastVal = target.dataset.lastHapticValue;
+            if (lastVal !== target.value) {
+                target.dataset.lastHapticValue = target.value;
+                triggerHaptic('light');
+            }
+        }
+    }, { passive: true });
+}
+
 function init() {
+    initHapticFeedback();
     applyTheme();
     firstTimeAromaScan();
     updateAromaDatalists();
@@ -2926,7 +2982,10 @@ function setNeedsExport(state) {
             unsavedCategories = { mixes: false, compos: false, aromas: false, builds: false };
             safeSetItem('jediy_unsaved_categories', JSON.stringify(unsavedCategories));
             let container = document.getElementById('unsaved_notifications_container');
-            if (container) container.innerHTML = '';
+            if (container) {
+                container.className = "max-h-0 opacity-0 overflow-hidden flex justify-center transition-all duration-350 ease-out scale-95 mb-0";
+                setTimeout(() => { container.innerHTML = ''; }, 350);
+            }
         }
     }
     updateSettingsBadge();
@@ -2940,7 +2999,7 @@ function openSettingsModal() {
 function closeSettingsModal() { document.getElementById('settings_modal').classList.add('hidden'); }
 function openResetConfirm() { closeSettingsModal(); document.getElementById('reset_confirm_modal').classList.remove('hidden'); }
 function closeResetConfirm() { document.getElementById('reset_confirm_modal').classList.add('hidden'); }
-function showAlert(msg) { let m = document.getElementById('alert_modal'); document.getElementById('alert_text').innerText = msg; m.classList.remove('hidden'); setTimeout(() => m.classList.add('hidden'), 2500); }
+function showAlert(msg) { triggerHaptic('medium'); let m = document.getElementById('alert_modal'); document.getElementById('alert_text').innerText = msg; m.classList.remove('hidden'); setTimeout(() => m.classList.add('hidden'), 2500); }
 function openHtmlConfirm(msg, callback, cancelCallback) {
     document.getElementById('html_confirm_msg').innerHTML = msg;
     let btnOk = document.getElementById('html_confirm_btn_ok');
@@ -5769,7 +5828,7 @@ document.addEventListener('click', function(event) {
 });
 
 /* ========================================== */
-/* 14. GESTION DU STOCK D'ARÔMES             */
+/* 14. GESTION DE LA BASE D'ARÔMES           */
 /* ========================================== */
 
 function firstTimeAromaScan() {
@@ -5857,7 +5916,7 @@ function updateAromaDatalists() {
 function renderMesAromes() {
     let container = document.getElementById('mes_aromes_list'); if(!container) return;
     if(savedAromas.length === 0) {
-        container.innerHTML = '<div class="col-span-full p-6 bg-stone-100 dark:bg-stone-800 text-center text-stone-500 rounded-2xl">Aucun arôme dans le stock pour le moment. Créez-en un ou enregistrez des recettes !</div>';
+        container.innerHTML = '<div class="col-span-full p-6 bg-stone-100 dark:bg-stone-800 text-center text-stone-500 rounded-2xl">Aucun arôme dans la base pour le moment. Créez-en un ou enregistrez des recettes !</div>';
         return;
     }
     
@@ -5965,7 +6024,7 @@ function saveAromaEdit() {
     
     let exists = savedAromas.some(a => a.name.toLowerCase() === name.toLowerCase() && a.id !== currentEditAromaId);
     if (exists) {
-        showAlert("Un arôme portant ce nom existe déjà dans votre stock.");
+        showAlert("Un arôme portant ce nom existe déjà dans votre base.");
         return;
     }
     
@@ -6062,7 +6121,7 @@ function propagateAromaToExistingRecipes() {
     
     let exists = savedAromas.some(a => a.name.toLowerCase() === name.toLowerCase() && a.id !== currentEditAromaId);
     if (exists) {
-        showAlert("Un arôme portant ce nom existe déjà dans votre stock.");
+        showAlert("Un arôme portant ce nom existe déjà dans votre base.");
         return;
     }
     
@@ -6142,7 +6201,7 @@ function propagateAromaToExistingRecipes() {
 function deleteAroma(id) {
     let a = savedAromas.find(x => x.id === id);
     if (!a) return;
-    openHtmlConfirm(`Supprimer l'arôme "${a.name}" de votre stock ? (Vos recettes existantes ne seront pas supprimées).`, () => {
+    openHtmlConfirm(`Supprimer l'arôme "${a.name}" de votre base ? (Vos recettes existantes ne seront pas supprimées).`, () => {
         savedAromas = savedAromas.filter(x => x.id !== id);
         safeSetItem('jediy_aromas', JSON.stringify(savedAromas));
         setNeedsExport(true);
@@ -7510,7 +7569,8 @@ function clearUnsavedCategories() {
     
     let container = document.getElementById('unsaved_notifications_container');
     if (container) {
-        container.innerHTML = '';
+        container.className = "max-h-0 opacity-0 overflow-hidden flex justify-center transition-all duration-350 ease-out scale-95 mb-0";
+        setTimeout(() => { container.innerHTML = ''; }, 350);
     }
 }
 
@@ -7522,7 +7582,10 @@ function triggerNotificationCycle() {
     let categories = Object.keys(unsavedCategories).filter(k => unsavedCategories[k] === true);
     if (categories.length === 0) {
         let container = document.getElementById('unsaved_notifications_container');
-        if (container) container.innerHTML = '';
+        if (container) {
+            container.className = "max-h-0 opacity-0 overflow-hidden flex justify-center transition-all duration-350 ease-out scale-95 mb-0";
+            setTimeout(() => { container.innerHTML = ''; }, 350);
+        }
         return;
     }
     
@@ -7535,7 +7598,10 @@ function triggerNotificationCycle() {
         
         let activeCategories = Object.keys(unsavedCategories).filter(k => unsavedCategories[k] === true);
         if (activeCategories.length === 0) {
-            container.innerHTML = '';
+            container.className = "max-h-0 opacity-0 overflow-hidden flex justify-center transition-all duration-350 ease-out scale-95 mb-0";
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 350);
             if (notificationInterval) clearInterval(notificationInterval);
             return;
         }
@@ -7544,55 +7610,42 @@ function triggerNotificationCycle() {
         currentIdx++;
         
         let text = "";
-        let bgClass = "";
+        let dotColorClass = "";
+        let pingColorClass = "";
         
         if (cat === 'mixes') {
             text = "🧴 Mixes à sauver";
-            bgClass = "bg-indigo-500 hover:bg-indigo-600";
+            dotColorClass = "bg-indigo-500";
+            pingColorClass = "bg-indigo-400";
         } else if (cat === 'compos') {
-            text = "✍️ Recettes à sauver";
-            bgClass = "bg-emerald-500 hover:bg-emerald-600";
+            text = "✍️ Compositions à sauver";
+            dotColorClass = "bg-emerald-500";
+            pingColorClass = "bg-emerald-400";
         } else if (cat === 'aromas') {
-            text = "🧪 Stock à sauver";
-            bgClass = "bg-purple-500 hover:bg-purple-600";
+            text = "🧪 Base d'arômes à sauver";
+            dotColorClass = "bg-purple-500";
+            pingColorClass = "bg-purple-400";
         } else if (cat === 'builds') {
             text = "🌀 Montages à sauver";
-            bgClass = "bg-sky-500 hover:bg-sky-600";
+            dotColorClass = "bg-sky-500";
+            pingColorClass = "bg-sky-400";
         }
         
         container.innerHTML = `
-        <button onclick="openSettingsModal()" class="ml-2 px-3 py-1 text-[10px] font-black text-white ${bgClass} rounded-full shadow-sm animate-bounce flex items-center gap-1 cursor-pointer transition-all duration-300 transform hover:scale-105" style="animation-duration: 2s;">
-            <span>${text}</span>
-            <span class="inline-block w-1.5 h-1.5 bg-white rounded-full animate-ping"></span>
+        <button onclick="openSettingsModal()" class="pointer-events-auto px-4 py-2 bg-white/90 dark:bg-stone-950/95 backdrop-blur-md text-stone-800 dark:text-stone-100 rounded-full shadow-lg border border-stone-200/80 dark:border-stone-850 flex items-center gap-2.5 cursor-pointer transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fade-in">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${pingColorClass} opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 ${dotColorClass}"></span>
+            </span>
+            <span class="text-[10px] font-black tracking-wide uppercase">${text}</span>
+            <span class="text-[9px] font-black text-white bg-brand-500 dark:bg-brand-600 px-2.5 py-0.5 rounded-full shadow-sm">Sauver 💾</span>
         </button>`;
+        container.className = "max-h-16 opacity-100 flex justify-center transition-all duration-350 ease-out scale-100 mb-3";
     }
     
     showNextNotification();
     
     // Alterne toutes les 5 secondes
     notificationInterval = setInterval(showNextNotification, 5000);
-    
-    // Arrête le cycle clignotant actif après 20 secondes pour le confort visuel de l'utilisateur
-    notificationTimeout = setTimeout(() => {
-        clearInterval(notificationInterval);
-        notificationInterval = null;
-        
-        let container = document.getElementById('unsaved_notifications_container');
-        if (container) {
-            let btn = container.querySelector('button');
-            if (btn) {
-                btn.classList.add('opacity-0', 'scale-90');
-                btn.style.transition = 'all 0.5s ease';
-                setTimeout(() => {
-                    if (!notificationCycleActive || !notificationInterval) {
-                        container.innerHTML = '';
-                    }
-                }, 500);
-            }
-        }
-        
-        // Relance doucement un rappel cyclique toutes les 5 minutes
-        notificationTimeout = setTimeout(triggerNotificationCycle, 300000);
-    }, 20000);
 }
 
