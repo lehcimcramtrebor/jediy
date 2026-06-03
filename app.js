@@ -446,7 +446,8 @@ function syncMultiVolBreakdown(prefix) {
         }
         
         let visibleItems = state[prefix].multi.filter(item => prefix === 'edit_compo' ? true : item.id !== state[prefix].editingId);
-        
+        visibleItems.sort((a, b) => b.perc - a.perc);
+		
         if (visibleItems.length > 0) {
             let totalPerc = state[prefix].multi.reduce((acc, v) => acc + v.perc, 0);
             if (totalPerc > 0) {
@@ -1263,7 +1264,7 @@ function generateCompoText() {
     let tPerc = data.items.reduce((acc, v)=>acc+v.perc, 0);
     let text = `🎨 COMPOSITION : ${data.name}\n-----------------\n`;
     text += `Concentration globale: ${round1(tPerc)}%\n\n📝 INGRÉDIENTS :\n`;
-    data.items.forEach(i => {
+    [...data.items].sort((a, b) => b.perc - a.perc).forEach(i => {
         let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : '1.0');
         let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
         text += `${icon} ${i.name} (${i.perc}%) [${details}]\n`;
@@ -1297,6 +1298,7 @@ function copyToClipboard(text) {
 function exportCompoPDF(action) { exportCompoMedia('pdf', action); }
 function exportCompoPNG(action = 'download', mode = 'light') {
     let data = getCompoExportData();
+	let sortedItems = [...data.items].sort((a, b) => b.perc - a.perc);
     let tPerc = data.items.reduce((acc, v)=>acc+v.perc, 0);
     if (tPerc <= 0) tPerc = 1;
     
@@ -1350,7 +1352,7 @@ function exportCompoPNG(action = 'download', mode = 'light') {
     
     // Ingredients Grid
     let gridItemsHtml = "";
-    data.items.forEach(i => {
+    [...data.items].sort((a, b) => b.perc - a.perc).forEach(i => {
         let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : 'Densité 1.0');
         let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
         
@@ -1390,7 +1392,7 @@ function exportCompoPNG(action = 'download', mode = 'light') {
     tableHeadersHtml += `</div>`;
     
     let tableRowsHtml = "";
-    data.items.forEach((i, idx) => {
+    sortedItems.forEach((i, idx) => {
         let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
         
         tableRowsHtml += `
@@ -1512,6 +1514,7 @@ function exportCompoPNG(action = 'download', mode = 'light') {
 // Le moteur commun qui génère le HTML et gère l'export final
 function exportCompoMedia(format, action = 'download') {
     let data = getCompoExportData();
+	let sortedItems = [...data.items].sort((a, b) => b.perc - a.perc);
     
     let wrapper = document.createElement('div');
     wrapper.id = "temp_compo_pdf_wrapper";
@@ -1558,7 +1561,7 @@ function exportCompoMedia(format, action = 'download') {
         <div style="font-size: 12px; font-weight: 900; color: #a8a29e; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">📊 Proportions de la recette</div>
         <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px;">`;
         
-        data.items.forEach(i => {
+        [...data.items].sort((a, b) => b.perc - a.perc).forEach(i => {
             let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : 'Densité 1.0');
             let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
             html += `
@@ -1588,7 +1591,7 @@ function exportCompoMedia(format, action = 'download') {
         html += `</div>`;
 
         // Lignes des ingrédients
-        data.items.forEach((i, idx) => {
+        sortedItems.forEach((i, idx) => {
             let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
             let borderBottom = idx < data.items.length - 1 ? 'border-bottom: 1px solid #f5f5f4;' : '';
             
@@ -2392,7 +2395,7 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
             <div class="hidden mt-2 border-t border-stone-100 dark:border-stone-700 pt-2">
                 <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
         
-        r.multi.forEach(item => {
+        [...r.multi].sort((a, b) => b.perc - a.perc).forEach(item => {
             let vol = totalMultiPerc > 0 ? r.aroma * (item.perc / totalMultiPerc) : 0; 
             let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
@@ -2547,7 +2550,7 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
                 <div class="grid grid-cols-1 gap-2 pdf-aroma-grid">`;
         
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
-        c.multi.forEach(item => {
+        [...c.multi].sort((a, b) => b.perc - a.perc).forEach(item => {
             let vol = tPerc > 0 ? c.aVol * (item.perc/tPerc) : 0; 
             let w = getLiquidWeight(item.type, vol, item.pg, item.degree);
             let icon = item.type === 'water' ? '💧' : (item.type === 'alcohol' ? '🍷' : '✨');
@@ -3104,7 +3107,7 @@ function generateSavedCompoHtml(c) {
 
     // Vue 1 : Fiche standard
     let compoHtml = `<div id="compo_view_${c.id}" class="space-y-2 mb-4 animate-fade-in">`;
-    c.items.forEach(i => {
+    [...c.items].sort((a, b) => b.perc - a.perc).forEach(i => {
         let icon = i.type === 'water' ? '💧' : (i.type === 'alcohol' ? '🍷' : '✨');
         let details = i.type === 'aroma' ? `${i.pg}PG` : (i.type === 'alcohol' ? `${i.degree}°` : '');
         compoHtml += `<div class="flex justify-between items-center bg-white dark:bg-stone-800 p-2.5 rounded-xl shadow-sm border border-stone-100 dark:border-stone-700 text-sm transition-colors">
@@ -3200,6 +3203,7 @@ function setConcVol(id, vol, safeItems) {
 
 function updateConcSim(id, safeItems) {
     let items = JSON.parse(decodeURIComponent(safeItems));
+	items.sort((a, b) => b.perc - a.perc);
     let vol = parseFloat(document.getElementById(`conc_vol_${id}`).value) || 0;
     let listContainer = document.getElementById(`conc_list_${id}`);
     
@@ -3615,7 +3619,7 @@ function getRecipeText() {
         text += `\n📝 COMPOSITION : ${c.compoName || 'Multi-arômes'}${originalText}\n`;
         let tPerc = c.multi.reduce((acc, v)=>acc+v.perc,0);
         let totalAromaVol = (c.type === 't1' || c.type === 't2') ? c.aroma : c.aVol;
-        c.multi.forEach(i => {
+        [...c.multi].sort((a, b) => b.perc - a.perc).forEach(i => {
             let v = tPerc > 0 ? totalAromaVol * (i.perc / tPerc) : 0;
             let w = getLiquidWeight(i.type, v, i.pg, i.degree);
             text += `- ${i.name} (${i.perc}%): ${round1(v)} ml (${round2(w)} g)\n`;
