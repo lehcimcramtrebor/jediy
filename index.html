@@ -26,31 +26,36 @@
     <script src="assets/js/html2canvas.min.js"></script>
     <script src="assets/js/html2pdf.bundle.min.js"></script>
     <link href="assets/css/inter.css" rel="stylesheet">
+    <link href="assets/css/premium-fonts.css" rel="stylesheet">
     
     <script src="tailwind.config.js"></script>
     
     <style type="text/tailwindcss">
         /* --- THÈMES DE COULEURS --- */
         @layer base {
+            h1, h2, h3, h4, h5, h6, .font-display {
+                font-family: 'Outfit', sans-serif;
+            }
             :root, [data-theme="complet"] {
-                --brand-50: 255 251 235; --brand-100: 254 243 199; --brand-200: 253 230 138;
-                --brand-300: 252 211 77; --brand-400: 251 191 36; --brand-500: 245 158 11;
-                --brand-600: 217 119 6; --brand-700: 180 83 9; --brand-800: 146 64 14; --brand-900: 120 53 15;
+                --brand-50: 254 251 240; --brand-100: 254 243 199; --brand-200: 253 230 138;
+                --brand-300: 252 211 77; --brand-400: 251 191 36; --brand-50: 254 251 240;
+                --brand-500: 224 140 10; --brand-600: 194 100 4; --brand-700: 160 70 5;
+                --brand-800: 146 64 14; --brand-900: 120 53 15;
             }
             [data-theme="boost"] {
-                --brand-50: 236 253 245; --brand-100: 209 250 229; --brand-200: 167 243 208;
-                --brand-300: 110 231 183; --brand-400: 52 211 153; --brand-500: 16 185 129;
-                --brand-600: 5 150 105; --brand-700: 4 120 87; --brand-800: 6 95 70; --brand-900: 6 78 59;
+                --brand-50: 240 253 250; --brand-100: 204 251 241; --brand-200: 153 246 228;
+                --brand-300: 94 234 212; --brand-400: 45 212 191; --brand-500: 13 148 136;
+                --brand-600: 15 118 110; --brand-700: 17 94 89; --brand-800: 20 76 72; --brand-900: 20 61 58;
             }
             [data-theme="shortfill"] {
                 --brand-50: 238 242 255; --brand-100: 224 231 255; --brand-200: 199 210 254;
-                --brand-300: 165 180 252; --brand-400: 129 140 248; --brand-500: 99 102 241;
-                --brand-600: 79 70 229; --brand-700: 67 56 202; --brand-800: 55 48 163; --brand-900: 49 46 129;
+                --brand-300: 165 180 252; --brand-400: 129 140 248; --brand-500: 89 92 246;
+                --brand-600: 69 60 229; --brand-700: 57 46 202; --brand-800: 55 48 163; --brand-900: 49 46 129;
             }
             [data-theme="manuel"] {
-                --brand-50: 254 242 242; --brand-100: 254 226 226; --brand-200: 254 202 202;
-                --brand-300: 252 165 165; --brand-400: 248 113 113; --brand-500: 239 68 68;
-                --brand-600: 220 38 38; --brand-700: 185 28 28; --brand-800: 153 27 27; --brand-900: 127 29 29;
+                --brand-50: 255 241 242; --brand-100: 255 228 230; --brand-200: 254 205 211;
+                --brand-300: 253 164 175; --brand-400: 251 113 133; --brand-500: 244 63 94;
+                --brand-600: 225 29 72; --brand-700: 190 24 74; --brand-800: 159 18 57; --brand-900: 136 19 55;
             }
 			[data-theme="assistant"] {
 				--brand-50: 248 245 238; --brand-100: 242 238 225; --brand-200: 230 224 205;
@@ -58,9 +63,9 @@
 				--brand-600: 133 125 108; --brand-700: 105 98 84; --brand-800: 79 74 64; --brand-900: 59 55 48;
 			}
 			[data-theme="coils"] {
-				--brand-50: 245 243 255; --brand-100: 237 233 254; --brand-200: 221 214 254;
-				--brand-300: 196 181 253; --brand-400: 167 139 250; --brand-500: 139 92 246;
-				--brand-600: 124 58 237; --brand-700: 109 40 217; --brand-800: 91 33 182; --brand-900: 76 29 149;
+				--brand-50: 250 245 255; --brand-100: 243 232 255; --brand-200: 233 213 255;
+				--brand-300: 216 180 254; --brand-400: 192 132 252; --brand-500: 168 85 247;
+				--brand-600: 147 51 234; --brand-700: 126 34 206; --brand-800: 107 33 168; --brand-900: 88 28 135;
 			}
         }
 

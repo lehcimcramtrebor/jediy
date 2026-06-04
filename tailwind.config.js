@@ -2,7 +2,11 @@ tailwind.config = {
     darkMode: 'class',
     theme: {
         extend: {
-            fontFamily: { sans: ['Inter', 'sans-serif'] },
+            fontFamily: { 
+                sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                display: ['Outfit', 'sans-serif'],
+                mono: ['JetBrains Mono', 'monospace']
+            },
             colors: { 
                 brand: {
                     50: 'rgb(var(--brand-50) / <alpha-value>)',

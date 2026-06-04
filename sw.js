@@ -1,4 +1,4 @@
-const CACHE_NAME = 'je-diy-v.X.1.09';
+const CACHE_NAME = 'je-diy-v.X.1.10';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -19,7 +19,20 @@ const ASSETS_TO_CACHE = [
   './assets/fonts/inter-v20-latin-600.woff2',
   './assets/fonts/inter-v20-latin-700.woff2',
   './assets/fonts/inter-v20-latin-800.woff2',
-  './assets/fonts/inter-v20-latin-900.woff2'
+  './assets/fonts/inter-v20-latin-900.woff2',
+  './assets/css/premium-fonts.css',
+  './assets/fonts/jetbrains-mono-v1-400.woff2',
+  './assets/fonts/jetbrains-mono-v1-700.woff2',
+  './assets/fonts/outfit-v1-400.woff2',
+  './assets/fonts/outfit-v1-600.woff2',
+  './assets/fonts/outfit-v1-700.woff2',
+  './assets/fonts/outfit-v1-800.woff2',
+  './assets/fonts/outfit-v1-900.woff2',
+  './assets/fonts/plus-jakarta-sans-v1-400.woff2',
+  './assets/fonts/plus-jakarta-sans-v1-500.woff2',
+  './assets/fonts/plus-jakarta-sans-v1-600.woff2',
+  './assets/fonts/plus-jakarta-sans-v1-700.woff2',
+  './assets/fonts/plus-jakarta-sans-v1-800.woff2'
 ];
 
 // Installation du service worker et mise en cache des fichiers
