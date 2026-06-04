@@ -1,4 +1,7 @@
 tailwind.config = {
+    future: {
+        hoverOnlyWhenSupported: true
+    },
     darkMode: 'class',
     theme: {
         extend: {

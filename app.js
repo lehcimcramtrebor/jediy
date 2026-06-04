@@ -663,9 +663,9 @@ function updateMaterialCompact(prefix) {
     
     if (prefix === 't1') {
         if (boosters.length > 0) {
-            text += " | Boosters : " + boosters.join(', ');
+            text += "\nBoosters : " + boosters.join(', ');
         } else {
-            text += " | Aucun booster";
+            text += "\nAucun booster";
         }
     }
     
