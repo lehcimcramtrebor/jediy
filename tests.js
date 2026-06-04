@@ -1818,6 +1818,9 @@ const testCases = [
                 };
             }
 
+            const container = document.createElement('div');
+            container.id = 't2_results_container';
+
             const card1 = document.createElement('div');
             card1.className = 'recipe-card-wrapper';
             card1.innerHTML = `
@@ -1858,8 +1861,9 @@ const testCases = [
                 </div>
             `;
 
-            document.body.appendChild(card1);
-            document.body.appendChild(card2);
+            container.appendChild(card1);
+            container.appendChild(card2);
+            document.body.appendChild(container);
 
             try {
                 const countInp1 = card1.querySelector('.sim-b-count');
@@ -1870,8 +1874,7 @@ const testCases = [
                 const countVal2 = card2.querySelector('.sim-b-count').value;
                 const mlVal2 = card2.querySelector('.sim-ml-count').value;
 
-                card1.remove();
-                card2.remove();
+                container.remove();
 
                 const passed = countVal2 === "4" && mlVal2 === "40";
 
@@ -1882,8 +1885,7 @@ const testCases = [
                     details: `Détails de synchronisation:<br>• Card 2 Count: ${countVal2} (attendu '4')<br>• Card 2 ml: ${mlVal2} (attendu '40')`
                 };
             } catch (err) {
-                card1.remove();
-                card2.remove();
+                container.remove();
                 return {
                     expected: "Propagation de valeur sans erreur",
                     actual: `Erreur: ${err.message}`,
@@ -1906,6 +1908,9 @@ const testCases = [
                     details: "Test passé par défaut en terminal."
                 };
             }
+
+            const container = document.createElement('div');
+            container.id = 't2_results_container';
 
             const card1 = document.createElement('div');
             card1.className = 'recipe-card-wrapper';
@@ -1933,8 +1938,9 @@ const testCases = [
                 </div>
             `;
 
-            document.body.appendChild(card1);
-            document.body.appendChild(card2);
+            container.appendChild(card1);
+            container.appendChild(card2);
+            document.body.appendChild(container);
 
             try {
                 const header1 = card1.querySelector('.sim-header');
@@ -1948,8 +1954,7 @@ const testCases = [
                 const isCollapsed1 = card1.querySelector('.sim-panel').classList.contains('hidden') && !card1.querySelector('svg').classList.contains('rotate-90');
                 const isCollapsed2 = card2.querySelector('.sim-panel').classList.contains('hidden') && !card2.querySelector('svg').classList.contains('rotate-90');
 
-                card1.remove();
-                card2.remove();
+                container.remove();
 
                 const passed = isExpanded1 && isExpanded2 && isCollapsed1 && isCollapsed2;
 
@@ -1960,8 +1965,7 @@ const testCases = [
                     details: `Détails pliage:<br>• Card 1 expanded: ${isExpanded1} (attendu true)<br>• Card 2 expanded: ${isExpanded2} (attendu true)<br>• Card 1 collapsed: ${isCollapsed1} (attendu true)<br>• Card 2 collapsed: ${isCollapsed2} (attendu true)`
                 };
             } catch (err) {
-                card1.remove();
-                card2.remove();
+                container.remove();
                 return {
                     expected: "Mimétisme de pliage sans erreur",
                     actual: `Erreur: ${err.message}`,

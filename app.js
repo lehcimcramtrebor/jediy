@@ -2419,6 +2419,7 @@ function renderMixes(prefix, exact, alt) {
 }
 
 function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
+    let cardId = 'card_' + Math.random().toString(36).substr(2, 9);
     let bColor = isAlt ? 'border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900' : 'border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900';
     let tColor = isAlt ? 'text-amber-700 dark:text-amber-400' : 'text-brand-700 dark:text-brand-400';
     
@@ -2438,21 +2439,34 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
     }
 
     let cfgStr = encodeURIComponent(JSON.stringify(cfg)); let theme = prefix === 't1' ? 'complet' : 'shortfill'; let compactClass = isCompact ? "compact-card" : "";
-    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
+    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="w-9 h-9 flex items-center justify-center text-stone-500 dark:text-stone-400 bg-white/70 dark:bg-stone-900/60 backdrop-blur-md rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)] border border-stone-200/80 dark:border-stone-800/80 hover:border-brand-600 dark:hover:border-brand-500 hover:bg-brand-600 dark:hover:bg-brand-500 hover:text-white dark:hover:text-white hover:scale-110 active:scale-95 hover:shadow-[0_4px_12px_rgba(var(--brand-500)/0.3)] transition-all duration-300 ease-out shrink-0" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
 
     let titleText = r.globalName ? r.globalName : (prefix==='t1'?'Liquide Prêt':'Base Shortfill');
     let titleHtml = `<div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg truncate pr-2" style="line-height:1.2;">${titleText} <span class="text-brand-600 dark:text-brand-400">${round1(totalVol)} ml</span></div>`;
 
     let html = `<div data-theme="${theme}" data-config="${cfgStr}" ${dataAttrs} class="${compactClass} relative animate-fade-in p-5 border ${bColor} rounded-3xl shadow-lg hover:shadow-xl hover:-translate-y-1 duration-300 flex flex-col h-full recipe-card-wrapper transition-all">
-        <div class="flex-1">
+        <div class="flex-1 flex flex-col">
             <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700 transition-colors">
                 <div class="overflow-hidden">
                     ${titleHtml}
                     <div class="mt-1.5"><span class="inline-block font-bold ${tColor} px-2 py-0.5 bg-white dark:bg-stone-800 rounded-lg shadow-sm transition-colors mt-1" style="font-size:11px; line-height:1.2;">${formatRatioStr(r.realPgRatio, true)}</span></div>
                 </div>
                 ${btnHtml}
-            </div>
-            <div class="card-body flex flex-col gap-2 mb-4">`;
+            </div>`;
+
+    if (prefix === 't2') {
+        html += `
+        <div class="tab-switcher-container flex bg-white dark:bg-stone-800 p-1 rounded-xl mb-4 border border-stone-200 dark:border-stone-700 transition-colors shrink-0">
+            <button id="t2_details_btn_${cardId}" onclick="event.stopPropagation(); switchT2Tab(this, 'details')" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all">Fiche</button>
+            <button id="t2_sim_btn_${cardId}" onclick="event.stopPropagation(); switchT2Tab(this, 'sim')" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">Simulation</button>
+        </div>`;
+    }
+
+    if (prefix === 't2') {
+        html += `<div id="t2_details_view_${cardId}" class="flex-1 flex flex-col gap-2 mb-4 animate-fade-in">`;
+    } else {
+        html += `<div class="card-body flex flex-col gap-2 mb-4">`;
+    }
 
     if (r.multi) {
         let compoPgMl = 0;
@@ -2531,52 +2545,105 @@ function buildCard(r, prefix, isAlt, noBtn = false, isCompact = false) {
                 <div class="text-right leading-tight"><span class="font-black text-stone-800 dark:text-stone-100">${round1(r.nic)} ml <span class="text-stone-500 font-bold" style="font-size:10px;">(${round2(r.nic/10)} u.)</span></span><span class="block font-bold text-brand-600 dark:text-brand-400 mt-0.5" style="font-size:10px;">${round2(nicWeight)} g</span></div>
             </div>`;
     }
-    html += `</div></div>`; 
-
-    if(prefix === 't1') {
-        let bStr = r.bStr || parseFloat(document.getElementById('t1_booster_str').value) || 20;
-        let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
-        html += `<div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700 transition-colors">
-            <div class="flex justify-between items-center"><span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span><div class="text-right"><span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(finalAroma)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span> <span class="mx-1 text-stone-300 dark:text-stone-600">|</span> <span class="text-lg font-black ${tColor}">${round1(finalNic)} mg/ml</span></div></div>
-            <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round2(totalWeight)} g</div>
-        </div>`;
-    }
-
-    if(prefix === 't2') {
+    if (prefix === 't2') {
         let surconcentration = (r.aroma / r.prepVol) * 100;
-        html += `<div class="mt-auto border-t border-stone-200 dark:border-stone-700 pt-3 text-right transition-colors"><span class="font-bold text-brand-600 dark:text-brand-400" style="font-size:11px;">Poids total estimé : ${round2(totalWeight)} g</span>`;
-        html += `<br><span class="font-bold text-stone-500 mt-1 block" style="font-size:10px;">Surconcentration arôme : ${round1(surconcentration)}%</span>`;
-        html += `</div>`;
-        
-        html += `<div class="sim-container mt-2 p-3 bg-white dark:bg-stone-800 rounded-xl text-stone-800 dark:text-stone-200 text-xs border border-stone-100 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${r.prepVol}" data-aroma-vol="${r.aroma}" data-max-nic="${r.nicMax}" data-bstr="${r.bStr||(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${r.realPgRatio}">
-            <div class="flex items-center justify-between cursor-pointer select-none text-stone-500 dark:text-stone-400 font-bold uppercase tracking-widest border-b border-stone-200 dark:border-stone-700 pb-1.5 transition-colors" style="font-size:10px;" onclick="event.stopPropagation(); toggleSimFolding(this);">
-                <span class="flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-200"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                    🧪 Simulation d'ajout de boosters
-                </span>
+        html += `<div class="mt-auto border-t border-stone-200 dark:border-stone-700 pt-3 text-right transition-colors">
+            <span class="font-bold text-brand-600 dark:text-brand-400" style="font-size:11px;">Poids total estimé : ${round2(totalWeight)} g</span>
+            <br><span class="font-bold text-stone-500 mt-1 block" style="font-size:10px;">Surconcentration arôme : ${round1(surconcentration)}%</span>
+        </div>`;
+        html += `</div>`; // Close details view / card-body
+
+        html += `<div id="t2_sim_view_${cardId}" class="hidden flex-col gap-3.5 mb-4 animate-fade-in">`;
+        html += `<div class="sim-container p-4 bg-white dark:bg-stone-800 rounded-2xl text-stone-800 dark:text-stone-200 text-xs border border-stone-100 dark:border-stone-700 shadow-sm transition-colors" data-base-vol="${r.prepVol}" data-aroma-vol="${r.aroma}" data-max-nic="${r.nicMax}" data-bstr="${r.bStr||(parseFloat(document.getElementById('t2_booster_str').value)||20)}" data-base-pg="${r.realPgRatio}">
+            
+            <div class="text-center mb-4">
+                <h4 class="font-black text-brand-600 dark:text-brand-400 uppercase tracking-widest text-[10px] mb-1">🧪 Simulateur de Boosters</h4>
+                <p class="text-[10px] text-stone-400 dark:text-stone-500 font-bold">Simulez le prélèvement de base et l'ajout de nicotine.</p>
             </div>
-            <div class="hidden mt-3">
-                <div class="flex flex-col items-center gap-0.5 mb-3">
-                    <span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Je prélève</span>
-                    <select onchange="handlePreleveChange(this)" class="sim-sel-vol w-full max-w-[180px] bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white rounded p-1 text-xs font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-inner transition-colors">`;
+
+            <div class="grid grid-cols-1 gap-3.5">
+                <div class="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800/80 transition-colors">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="flex items-center justify-center w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/60 text-[10px] font-black text-brand-700 dark:text-brand-300">1</span>
+                        <span class="font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider text-[9px]">Base Prélevée</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1.5">
+                        <select onclick="event.stopPropagation();" onchange="handlePreleveChange(this)" class="sim-sel-vol w-full bg-white dark:bg-stone-900 text-stone-800 dark:text-white rounded-lg p-2 text-xs font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors">`;
         [10, 20, 30, 40, 50, 60, 70, 80, 90, 100].forEach(v => { html += `<option value="${v}" ${v===50 ? 'selected' : ''}>${v} ml</option>`; });
-        html += `   <option value="${r.prepVol}">Total (${round1(r.prepVol)}ml)</option><option value="custom">Manuel...</option></select>
-                    <div class="sim-custom-wrapper hidden items-center bg-stone-50 dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-inner mt-1 w-full max-w-[180px] transition-colors"><button onclick="adjustCustomPreleve(this, -1)" class="btn-adjust-xs">-</button><input type="number" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-7 bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors" placeholder="ml" value="50" oninput="updateSim(this)"><button onclick="adjustCustomPreleve(this, 1)" class="btn-adjust-xs">+</button></div>
-                    <div class="sim-preleve-weight text-brand-600 dark:text-brand-400 font-bold mt-1 text-center w-full" style="font-size:10px;"></div>
+        html += `           <option value="${r.prepVol}">Total (${round1(r.prepVol)} ml)</option>
+                            <option value="custom">Manuel...</option>
+                        </select>
+                        <div class="sim-custom-wrapper hidden items-center bg-white dark:bg-stone-900 rounded-lg overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm w-full transition-colors">
+                            <button onclick="event.stopPropagation(); adjustCustomPreleve(this, -1)" class="btn-adjust-xs w-8 h-8 flex items-center justify-center font-bold text-stone-500 border-r border-stone-100 dark:border-stone-800">-</button>
+                            <input type="number" onclick="event.stopPropagation();" class="sim-custom-vol hide-arrows flex-1 min-w-0 w-full h-8 bg-transparent text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none" placeholder="ml" value="50" oninput="updateSim(this)">
+                            <button onclick="event.stopPropagation(); adjustCustomPreleve(this, 1)" class="btn-adjust-xs w-8 h-8 flex items-center justify-center font-bold text-stone-500 border-l border-stone-100 dark:border-stone-800">+</button>
+                        </div>
+                        <div class="sim-preleve-weight text-brand-600 dark:text-brand-400 font-extrabold text-[10px] tracking-wide mt-0.5 text-center"></div>
+                    </div>
                 </div>
-                <div class="flex flex-col items-center mb-3 bg-stone-50 dark:bg-black/20 p-2 rounded-lg border border-stone-200 dark:border-stone-700 w-full max-w-[200px] mx-auto shadow-inner transition-colors">
-                    <div class="w-full flex justify-between items-center mb-2 px-1"><span class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Ratio des boosters:</span><select class="sim-b-ratio bg-white dark:bg-stone-900 text-stone-800 dark:text-white rounded px-1 py-0.5 font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors" style="font-size:10px;" onchange="updateSim(this)"><option value="100">100% PG</option><option value="90">90/10</option><option value="80">80/20</option><option value="70">70/30</option><option value="60">60/40</option><option value="50" selected>50/50</option><option value="40">40/60</option><option value="30">30/70</option><option value="20">20/80</option><option value="10">10/90</option><option value="0">100% VG</option></select></div>
-                    <span class="font-bold text-stone-500 dark:text-stone-400 mb-1" style="font-size:10px;">J'ajoute</span>
-                    <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimBoosters(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimBoosters(this, 1)" class="btn-adjust-xs">+</button></div>
-                    <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">boosters</span><span class="font-black text-stone-400 dark:text-stone-500 uppercase tracking-widest my-1" style="font-size:9px;">ou</span>
-                    <div class="flex items-center bg-white dark:bg-stone-900 rounded overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm transition-colors"><button onclick="adjustSimMl(this, -1)" class="btn-adjust-xs">-</button><input type="number" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows w-12 min-w-0 h-7 bg-white dark:bg-stone-900 text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none transition-colors"><button onclick="adjustSimMl(this, 1)" class="btn-adjust-xs">+</button></div>
-                    <span class="font-bold text-stone-500 dark:text-stone-400 mt-0.5" style="font-size:10px;">ml</span>
+
+                <div class="bg-stone-50 dark:bg-stone-900/50 p-3 rounded-xl border border-stone-100 dark:border-stone-800/80 transition-colors">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="flex items-center justify-center w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/60 text-[10px] font-black text-brand-700 dark:text-brand-300">2</span>
+                            <span class="font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider text-[9px]">Ajout Booster Nicotine</span>
+                        </div>
+                        <select onclick="event.stopPropagation();" class="sim-b-ratio bg-white dark:bg-stone-900 text-stone-800 dark:text-white rounded px-1.5 py-0.5 font-bold focus:outline-none border border-stone-200 dark:border-stone-700 text-center shadow-sm transition-colors text-[9px]" onchange="updateSim(this)">
+                            <option value="100">100% PG</option>
+                            <option value="90">90/10</option>
+                            <option value="80">80/20</option>
+                            <option value="70">70/30</option>
+                            <option value="60">60/40</option>
+                            <option value="50" selected>50/50</option>
+                            <option value="40">40/60</option>
+                            <option value="30">30/70</option>
+                            <option value="20">20/80</option>
+                            <option value="10">10/90</option>
+                            <option value="0">100% VG</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider">Flacons (U.)</span>
+                            <div class="flex items-center bg-white dark:bg-stone-900 rounded-lg overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm w-full transition-colors">
+                                <button onclick="event.stopPropagation(); adjustSimBoosters(this, -1)" class="btn-adjust-xs w-8 h-8 flex items-center justify-center font-bold text-stone-500 border-r border-stone-100 dark:border-stone-800">-</button>
+                                <input type="number" onclick="event.stopPropagation();" value="2" step="0.1" min="0" oninput="syncSimInputs(this, 'boosters')" class="sim-b-count hide-arrows flex-1 min-w-0 h-8 bg-transparent text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none">
+                                <button onclick="event.stopPropagation(); adjustSimBoosters(this, 1)" class="btn-adjust-xs w-8 h-8 flex items-center justify-center font-bold text-stone-500 border-l border-stone-100 dark:border-stone-800">+</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="text-[9px] text-stone-400 dark:text-stone-500 font-bold uppercase tracking-wider">Volume (ml)</span>
+                            <div class="flex items-center bg-white dark:bg-stone-900 rounded-lg overflow-hidden border border-stone-200 dark:border-stone-700 shadow-sm w-full transition-colors">
+                                <button onclick="event.stopPropagation(); adjustSimMl(this, -1)" class="btn-adjust-xs w-8 h-8 flex items-center justify-center font-bold text-stone-500 border-r border-stone-100 dark:border-stone-800">-</button>
+                                <input type="number" onclick="event.stopPropagation();" value="20" step="1" min="0" oninput="syncSimInputs(this, 'ml')" class="sim-ml-count hide-arrows flex-1 min-w-0 h-8 bg-transparent text-stone-800 dark:text-white text-center text-xs font-bold focus:outline-none">
+                                <button onclick="event.stopPropagation(); adjustSimMl(this, 1)" class="btn-adjust-xs w-8 h-8 flex items-center justify-center font-bold text-stone-500 border-l border-stone-100 dark:border-stone-800">+</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-3 text-center bg-stone-100 dark:bg-stone-900 p-2 rounded w-full border border-stone-200 dark:border-stone-700 transition-colors"><div class="font-bold text-stone-500 dark:text-stone-400" style="font-size:10px;">Résultat estimé :</div><div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result">...</div></div>
+            </div>
+            
+            <div class="mt-4 p-3 text-center bg-brand-50/50 dark:bg-stone-900/60 rounded-xl border border-brand-200/50 dark:border-stone-700/80 transition-colors">
+                <div class="text-[9px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest mb-0.5">Résultat Estimé du Mélange</div>
+                <div class="text-sm font-black text-brand-600 dark:text-brand-400 sim-result select-all">...</div>
             </div>
         </div>`;
+        html += `</div>`; // Close t2_sim_view_${cardId}
+    } else {
+        html += `</div>`; // Close card-body
+
+        if(prefix === 't1') {
+            let bStr = r.bStr || parseFloat(document.getElementById('t1_booster_str').value) || 20;
+            let finalNic = r.finalVol > 0 ? (r.nic * bStr) / r.finalVol : 0;
+            html += `<div class="mt-auto pt-4 border-t border-stone-200 dark:border-stone-700 transition-colors">
+                <div class="flex justify-between items-center"><span class="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-widest">Taux finaux</span><div class="text-right"><span class="text-lg font-black text-brand-600 dark:text-brand-400">${round1(finalAroma)}%</span> <span class="text-xs text-stone-400 mr-1">arôme</span> <span class="mx-1 text-stone-300 dark:text-stone-600">|</span> <span class="text-lg font-black ${tColor}">${round1(finalNic)} mg/ml</span></div></div>
+                <div class="text-right font-bold text-brand-600 dark:text-brand-400 mt-1" style="font-size:11px;">Poids total estimé : ${round2(totalWeight)} g</div>
+            </div>`;
+        }
     }
-    html += `</div>`; return html;
+
+    html += `</div></div>`; // Close inner container and outer wrapper
+    return html;
 }
 
 function buildT3CardHtml(c, noBtn = false, isCompact = false) {
@@ -2606,7 +2673,7 @@ function buildT3CardHtml(c, noBtn = false, isCompact = false) {
         pgRatio = (totalPg / tVol) * 100; aRatio = (c.aVol / tVol) * 100; finalNic = (c.nVol * c.str) / tVol;
     }
     let cfgStr = encodeURIComponent(JSON.stringify(c)); let theme = 'manuel'; let compactClass = isCompact ? "compact-card" : "";
-    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
+    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="w-9 h-9 flex items-center justify-center text-stone-500 dark:text-stone-400 bg-white/70 dark:bg-stone-900/60 backdrop-blur-md rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)] border border-stone-200/80 dark:border-stone-800/80 hover:border-brand-600 dark:hover:border-brand-500 hover:bg-brand-600 dark:hover:bg-brand-500 hover:text-white dark:hover:text-white hover:scale-110 active:scale-95 hover:shadow-[0_4px_12px_rgba(var(--brand-500)/0.3)] transition-all duration-300 ease-out shrink-0" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
     
     let titleText = c.globalName ? c.globalName : 'Mélange Manuel';
     
@@ -2698,10 +2765,10 @@ function buildBoostCardHtml(c, noBtn = false, isCompact = false) {
     if (c.advChecked) { let totalPgMl = (c.vol * (c.pg / 100)) + (c.bVol * (c.bPg / 100)); finalPgRatio = finalVol > 0 ? (totalPgMl / finalVol) * 100 : 50; }
     
     let cfgStr = encodeURIComponent(JSON.stringify(c)); let theme = 'boost'; let compactClass = isCompact ? "compact-card" : "";
-    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="p-2 text-stone-400 dark:text-stone-400 hover:text-brand-600 dark:hover:text-brand-400 bg-white dark:bg-stone-700 hover:bg-stone-50 dark:hover:bg-stone-600 rounded-xl transition-all shadow-sm ring-1 ring-stone-200 dark:ring-stone-600" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
+    let btnHtml = !noBtn ? `<button onclick="openModalFromCard(this)" class="w-9 h-9 flex items-center justify-center text-stone-500 dark:text-stone-400 bg-white/70 dark:bg-stone-900/60 backdrop-blur-md rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)] border border-stone-200/80 dark:border-stone-800/80 hover:border-brand-600 dark:hover:border-brand-500 hover:bg-brand-600 dark:hover:bg-brand-500 hover:text-white dark:hover:text-white hover:scale-110 active:scale-95 hover:shadow-[0_4px_12px_rgba(var(--brand-500)/0.3)] transition-all duration-300 ease-out shrink-0" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>` : '';
     let titleText = c.globalName ? c.globalName : 'Mélange Boosté';
 
-    let html = `<div data-theme="${theme}" data-config="${cfgStr}" data-type="boost" data-ratio="${finalPgRatio}" data-aroma-perc="Inconnu" data-nic-mg="${finalNic}" class="${compactClass} recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900 rounded-3xl flex flex-col transition-all w-full h-full">
+    let html = `<div data-theme="${theme}" data-config="${cfgStr}" data-type="boost" data-ratio="${finalPgRatio}" data-aroma-perc="Inconnu" data-nic-mg="${finalNic}" class="${compactClass} recipe-card-wrapper p-5 border border-brand-200 dark:border-brand-700 bg-brand-50 dark:bg-brand-900 rounded-3xl flex flex-col transition-all w-full h-full hover:shadow-xl hover:-translate-y-1 duration-300">
         <div class="flex-1">
             <div class="flex justify-between items-start mb-4 pb-3 border-b border-stone-200 dark:border-stone-700">
                 <div class="overflow-hidden">
@@ -2801,42 +2868,45 @@ function updateSim(el) {
     if (!isSyncingSim) {
         isSyncingSim = true;
         try {
-            document.querySelectorAll('.sim-container').forEach(otherSim => {
-                if (otherSim === simContObj) return; // Skip the active one
-                
-                let otherSel = otherSim.querySelector('.sim-sel-vol');
-                let otherCustom = otherSim.querySelector('.sim-custom-vol');
-                let otherBCount = otherSim.querySelector('.sim-b-count');
-                let otherMlCount = otherSim.querySelector('.sim-ml-count');
-                let otherBRatio = otherSim.querySelector('.sim-b-ratio');
-                
-                if (otherSel) {
-                    otherSel.value = sel.value;
-                    let wrapper = otherSel.parentElement.querySelector('.sim-custom-wrapper');
-                    if (wrapper) {
-                        if (sel.value === 'custom') {
-                            wrapper.classList.remove('hidden');
-                            wrapper.classList.add('flex');
-                        } else {
-                            wrapper.classList.add('hidden');
-                            wrapper.classList.remove('flex');
+            let parentResults = simContObj.closest('#t2_results_container');
+            if (parentResults) {
+                parentResults.querySelectorAll('.sim-container').forEach(otherSim => {
+                    if (otherSim === simContObj) return; // Skip the active one
+                    
+                    let otherSel = otherSim.querySelector('.sim-sel-vol');
+                    let otherCustom = otherSim.querySelector('.sim-custom-vol');
+                    let otherBCount = otherSim.querySelector('.sim-b-count');
+                    let otherMlCount = otherSim.querySelector('.sim-ml-count');
+                    let otherBRatio = otherSim.querySelector('.sim-b-ratio');
+                    
+                    if (otherSel) {
+                        otherSel.value = sel.value;
+                        let wrapper = otherSel.parentElement.querySelector('.sim-custom-wrapper');
+                        if (wrapper) {
+                            if (sel.value === 'custom') {
+                                wrapper.classList.remove('hidden');
+                                wrapper.classList.add('flex');
+                            } else {
+                                wrapper.classList.add('hidden');
+                                wrapper.classList.remove('flex');
+                            }
                         }
                     }
-                }
-                if (otherCustom && customInp) otherCustom.value = customInp.value;
-                if (otherBCount && bCountInp) otherBCount.value = bCountInp.value;
-                if (otherMlCount) {
-                    let mlInp = simContObj.querySelector('.sim-ml-count');
-                    if (mlInp) otherMlCount.value = mlInp.value;
-                }
-                if (otherBRatio && bRatioSel) otherBRatio.value = bRatioSel.value;
-                
-                // Recalculate simulation values for this other card
-                let otherCard = otherSim.closest('.recipe-card-wrapper');
-                if (otherCard) {
-                    updateSim(otherSel || otherBCount);
-                }
-            });
+                    if (otherCustom && customInp) otherCustom.value = customInp.value;
+                    if (otherBCount && bCountInp) otherBCount.value = bCountInp.value;
+                    if (otherMlCount) {
+                        let mlInp = simContObj.querySelector('.sim-ml-count');
+                        if (mlInp) otherMlCount.value = mlInp.value;
+                    }
+                    if (otherBRatio && bRatioSel) otherBRatio.value = bRatioSel.value;
+                    
+                    // Recalculate simulation values for this other card
+                    let otherCard = otherSim.closest('.recipe-card-wrapper');
+                    if (otherCard) {
+                        updateSim(otherSel || otherBCount);
+                    }
+                });
+            }
         } finally {
             isSyncingSim = false;
         }
@@ -2865,47 +2935,49 @@ function toggleCardPanelFolding(headerEl, panelType) {
         isSyncingPanelFolding = true;
         try {
             let activeCard = headerEl.closest('.recipe-card-wrapper');
-            
-            document.querySelectorAll('.recipe-card-wrapper').forEach(otherCard => {
-                if (otherCard === activeCard) return; // Skip current card
-                
-                let targetHeader = null;
-                let targetPanel = null;
-                let targetSvg = null;
-
-                if (panelType === 'compo') {
-                    let compoGrid = otherCard.querySelector('.pdf-aroma-grid');
-                    if (compoGrid) {
-                        targetPanel = compoGrid.parentElement;
-                        if (targetPanel) {
-                            targetHeader = targetPanel.previousElementSibling;
+            let parentResults = activeCard ? activeCard.closest('#t2_results_container') : null;
+            if (parentResults) {
+                parentResults.querySelectorAll('.recipe-card-wrapper').forEach(otherCard => {
+                    if (otherCard === activeCard) return; // Skip current card
+                    
+                    let targetHeader = null;
+                    let targetPanel = null;
+                    let targetSvg = null;
+    
+                    if (panelType === 'compo') {
+                        let compoGrid = otherCard.querySelector('.pdf-aroma-grid');
+                        if (compoGrid) {
+                            targetPanel = compoGrid.parentElement;
+                            if (targetPanel) {
+                                targetHeader = targetPanel.previousElementSibling;
+                                if (targetHeader) {
+                                    targetSvg = targetHeader.querySelector('svg');
+                                }
+                            }
+                        }
+                    } else if (panelType === 'sim') {
+                        let simContainer = otherCard.querySelector('.sim-container');
+                        if (simContainer) {
+                            targetHeader = simContainer.firstElementChild;
                             if (targetHeader) {
+                                targetPanel = targetHeader.nextElementSibling;
                                 targetSvg = targetHeader.querySelector('svg');
                             }
                         }
                     }
-                } else if (panelType === 'sim') {
-                    let simContainer = otherCard.querySelector('.sim-container');
-                    if (simContainer) {
-                        targetHeader = simContainer.firstElementChild;
-                        if (targetHeader) {
-                            targetPanel = targetHeader.nextElementSibling;
-                            targetSvg = targetHeader.querySelector('svg');
+    
+                    // Replicate folding state
+                    if (targetHeader && targetPanel && targetSvg) {
+                        if (isExpanded) {
+                            targetPanel.classList.add('hidden');
+                            targetSvg.classList.remove('rotate-90');
+                        } else {
+                            targetPanel.classList.remove('hidden');
+                            targetSvg.classList.add('rotate-90');
                         }
                     }
-                }
-
-                // Replicate folding state
-                if (targetHeader && targetPanel && targetSvg) {
-                    if (isExpanded) {
-                        targetPanel.classList.add('hidden');
-                        targetSvg.classList.remove('rotate-90');
-                    } else {
-                        targetPanel.classList.remove('hidden');
-                        targetSvg.classList.add('rotate-90');
-                    }
-                }
-            });
+                });
+            }
         } finally {
             isSyncingPanelFolding = false;
         }
@@ -3175,14 +3247,16 @@ function generateSavedMixHtml(m) {
     let c = m.config; let html = ''; let theme = getTheme(c.type);
     c.globalName = m.name;
     
-    // On passe 'true' pour cacher le petit bouton d'agrandissement
-    if(c.type === 't1' || c.type === 't2') html = buildCard(c, c.type, c.isAlt, true, true);
-    else if(c.type === 'boost') html = buildBoostCardHtml(c, true, true);
-    else html = buildT3CardHtml(c, true, true);
+    // On passe 'false' pour afficher le bouton d'agrandissement et 'false' pour afficher les fiches complètes
+    if(c.type === 't1' || c.type === 't2') html = buildCard(c, c.type, c.isAlt, false, false);
+    else if(c.type === 'boost') html = buildBoostCardHtml(c, false, false);
+    else html = buildT3CardHtml(c, false, false);
     
-    // On ajoute cursor-pointer et onclick sur la div mère, et stopPropagation sur les boutons
-    return `<div class="relative group mt-6 h-full w-full cursor-pointer" data-theme="${theme}" onclick="openModalFromCard(this.querySelector('.recipe-card-wrapper'))">
-        <div class="absolute -top-4 right-4 z-10 flex gap-2">
+    // Les fiches de l'Espace DIY conservent désormais leurs animations au survol (hover:shadow-xl hover:-translate-y-1)
+    
+    // On supprime cursor-pointer et le clic global (remplacé par le bouton d'agrandissement)
+    return `<div class="relative group mt-6 h-full w-full" data-theme="${theme}">
+        <div class="absolute -top-4 right-4 z-10 flex gap-2 group-hover:-translate-y-1 transition-all duration-300">
             <button onclick="event.stopPropagation(); editMix(${m.id})" class="w-8 h-8 flex items-center justify-center bg-stone-800 dark:bg-stone-700 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-stone-700 transition-colors" title="Éditer">✏️</button>
             <button onclick="event.stopPropagation(); deleteMix(${m.id})" class="w-8 h-8 flex items-center justify-center bg-red-500 dark:bg-red-600 text-white rounded-lg shadow-sm border-2 border-white dark:border-stone-800 hover:bg-red-600 transition-colors" title="Supprimer">🗑️</button>
         </div>
@@ -3219,21 +3293,21 @@ function generateSavedCompoHtml(c) {
     <div id="conc_view_${c.id}" class="hidden flex-col mb-4 animate-fade-in">
         <label class="block text-xs font-bold text-stone-500 dark:text-stone-400 mb-2">Volume final du concentré</label>
         <div class="flex items-center gap-2 mb-3">
-            <button onclick="adjustConcVol(${c.id}, -5, '${safeItems}')" class="btn-adjust-sm">-</button>
-            <input type="number" id="conc_vol_${c.id}" value="30" class="hide-arrows flex-1 min-w-0 h-10 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-center font-bold text-stone-800 dark:text-stone-100 transition-colors" oninput="updateConcSim(${c.id}, '${safeItems}')">
-            <button onclick="adjustConcVol(${c.id}, 5, '${safeItems}')" class="btn-adjust-sm">+</button>
+            <button onclick="event.stopPropagation(); adjustConcVol(${c.id}, -5, '${safeItems}')" class="btn-adjust-sm">-</button>
+            <input type="number" id="conc_vol_${c.id}" value="30" onclick="event.stopPropagation();" class="hide-arrows flex-1 min-w-0 h-10 bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-lg text-center font-bold text-stone-800 dark:text-stone-100 transition-colors" oninput="updateConcSim(${c.id}, '${safeItems}')">
+            <button onclick="event.stopPropagation(); adjustConcVol(${c.id}, 5, '${safeItems}')" class="btn-adjust-sm">+</button>
             <span class="text-xs font-bold text-stone-500 w-4">ml</span>
         </div>
         <div class="grid grid-cols-4 gap-2 mb-4">
-            <button onclick="setConcVol(${c.id}, 10, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">10ml</button>
-            <button onclick="setConcVol(${c.id}, 30, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">30ml</button>
-            <button onclick="setConcVol(${c.id}, 50, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">50ml</button>
-            <button onclick="setConcVol(${c.id}, 100, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">100ml</button>
+            <button onclick="event.stopPropagation(); setConcVol(${c.id}, 10, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">10ml</button>
+            <button onclick="event.stopPropagation(); setConcVol(${c.id}, 30, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">30ml</button>
+            <button onclick="event.stopPropagation(); setConcVol(${c.id}, 50, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">50ml</button>
+            <button onclick="event.stopPropagation(); setConcVol(${c.id}, 100, '${safeItems}')" class="py-1.5 bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 rounded-lg font-bold text-xs hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors shadow-sm">100ml</button>
         </div>
         <div id="conc_list_${c.id}" class="space-y-2"></div>
     </div>`;
 
-    let html = `<div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col hover:shadow-xl transition-all">
+    let html = `<div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 duration-300">
         <div class="flex justify-between items-start mb-3 border-b border-stone-200 dark:border-stone-700 pb-3">
             <div>
                 <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg">${c.name}</div>
@@ -3281,6 +3355,52 @@ function switchCompoTab(id, tab, safeItems) {
         btnConc.className = activeClass; btnCompo.className = inactiveClass;
         viewConc.classList.remove('hidden'); viewConc.classList.add('flex'); viewCompo.classList.add('hidden');
         updateConcSim(id, safeItems); 
+    }
+}
+
+let isSyncingT2Tab = false;
+function switchT2Tab(btnEl, tab) {
+    let container = btnEl.closest('.recipe-card-wrapper');
+    if (!container) return;
+
+    let btnDetails = container.querySelector('[id^="t2_details_btn_"]');
+    let btnSim = container.querySelector('[id^="t2_sim_btn_"]');
+    let viewDetails = container.querySelector('[id^="t2_details_view_"]');
+    let viewSim = container.querySelector('[id^="t2_sim_view_"]');
+
+    let activeClass = "flex-1 py-1.5 rounded-lg text-xs font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all";
+    let inactiveClass = "flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all";
+
+    if(tab === 'details') {
+        if(btnDetails) btnDetails.className = activeClass; 
+        if(btnSim) btnSim.className = inactiveClass;
+        if(viewDetails) viewDetails.classList.remove('hidden'); 
+        if(viewSim) viewSim.classList.add('hidden');
+    } else {
+        if(btnSim) btnSim.className = activeClass; 
+        if(btnDetails) btnDetails.className = inactiveClass;
+        if(viewSim) viewSim.classList.remove('hidden'); 
+        if(viewDetails) viewDetails.classList.add('hidden');
+        let sel = viewSim ? viewSim.querySelector('.sim-sel-vol') : null;
+        if(sel) updateSim(sel);
+    }
+
+    if (!isSyncingT2Tab) {
+        isSyncingT2Tab = true;
+        try {
+            let parentResults = container.closest('#t2_results_container');
+            if (parentResults) {
+                parentResults.querySelectorAll('.recipe-card-wrapper').forEach(otherCard => {
+                    if (otherCard === container) return;
+                    let otherBtn = tab === 'details' ? otherCard.querySelector('[id^="t2_details_btn_"]') : otherCard.querySelector('[id^="t2_sim_btn_"]');
+                    if (otherBtn) {
+                        switchT2Tab(otherBtn, tab);
+                    }
+                });
+            }
+        } finally {
+            isSyncingT2Tab = false;
+        }
     }
 }
 
@@ -3345,8 +3465,11 @@ function renderMesMixes() {
             }
         }
         container.innerHTML = finalHtml;
-    } else { container.innerHTML = arr.map(m => generateSavedMixHtml(m)).join(''); }
+    } else {
+        container.innerHTML = arr.map(m => generateSavedMixHtml(m)).join('');
+    }
     container.querySelectorAll('select.sim-sel-vol, select.sim-b-ratio').forEach(s => updateSim(s));
+    if (typeof makeAllSelectsCustom === 'function') makeAllSelectsCustom();
 }
 
 function renderMesCompos() {
@@ -3369,13 +3492,13 @@ function editMix(id) {
         document.getElementById('t1_ratio_pg').value = 100 - c.realPgRatio;
         let bStr = c.bStr || parseFloat(document.getElementById('t1_booster_str').value) || 20; document.getElementById('t1_nic_mg').value = round1((c.nic * bStr) / c.finalVol);
         toggleVolMode('t1','defined'); setNicMode('t1','mg');
-        if(c.globalName) document.getElementById('t1_global_name').value = c.globalName;
+        let g1 = document.getElementById('t1_global_name'); if(g1 && c.globalName) g1.value = c.globalName;
     } else if (c.type === 't2') {
         switchTab('tab_booster'); document.getElementById('t2_vol').value = c.prepVol; document.getElementById('t2_max_nic').value = c.nicMax; document.getElementById('t2_ratio_pg').value = 100 - c.realPgRatio;
         if(c.multi) { setAromaMode('t2', 'multi'); state.t2.multi = JSON.parse(JSON.stringify(c.multi)); document.getElementById('t2_compo_name').value = c.compoName || ""; state.t2.resetSlider = true; renderMultiList('t2'); }
         else { setAromaMode('t2', 'mono'); document.getElementById('t2_aroma_perc').value = (c.aroma/c.finalVol)*100; document.getElementById('t2_adv_aroma').checked = c.aromaPg !== 100; document.getElementById('t2_aroma_pg').value = 100 - c.aromaPg; toggleAdvAroma('t2'); }
         toggleVolMode('t2','defined');
-        if(c.globalName) document.getElementById('t2_global_name').value = c.globalName;
+        let g2 = document.getElementById('t2_global_name'); if(g2 && c.globalName) g2.value = c.globalName;
     } else if (c.type === 'boost') {
         switchTab('tab_boost_simple'); document.getElementById('tab_boost_vol').value = c.vol; document.getElementById('tab_boost_ml').value = c.bVol;
         document.getElementById('tab_boost_str').value = c.bStr; document.getElementById('tab_boost_adv').checked = c.advChecked;
@@ -3500,7 +3623,7 @@ function openModalFromCard(element) {
         delete select.refreshCustom;
         select.style.display = '';
         let wrapper = select.nextSibling;
-        if (wrapper && wrapper.classList.contains('custom-select-wrapper')) {
+        if (wrapper && wrapper.classList && wrapper.classList.contains('custom-select-wrapper')) {
             wrapper.remove();
         }
     });
@@ -3887,9 +4010,13 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
     let pristineCard = clone.cloneNode(true);
     let originalWidth = pngMode !== null ? 380 : (clone.offsetWidth || 560);
     
-    // Déplier les compositions / arômes
+    // Déplier les compositions / arômes (à l'exclusion des vues de simulation de boosters et de concentrés)
     clone.querySelectorAll('.hidden, [id$="_aroma_fold_panel"]').forEach(el => {
-        el.classList.remove('hidden');
+        if (el.id && (el.id.startsWith('t2_sim_view_') || el.id.startsWith('conc_view_'))) {
+            // Conserver masqué
+        } else {
+            el.classList.remove('hidden');
+        }
     });
     clone.querySelectorAll('[id$="_aroma_fold_icon"]').forEach(icon => {
         icon.classList.remove('rotate-0');
@@ -3911,6 +4038,23 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
     clone.querySelectorAll('.h-full').forEach(el => {
         el.classList.remove('h-full');
         el.style.setProperty('height', 'auto', 'important');
+    });
+    
+    // S'assurer que les fiches détails sont visibles et les simulations masquées
+    clone.querySelectorAll('[id^="t2_details_view_"]').forEach(el => {
+        el.classList.remove('hidden');
+        el.style.setProperty('display', 'flex', 'important');
+    });
+    clone.querySelectorAll('[id^="compo_view_"]').forEach(el => {
+        el.classList.remove('hidden');
+        el.style.setProperty('display', 'block', 'important');
+    });
+    clone.querySelectorAll('[id^="t2_sim_view_"], [id^="conc_view_"]').forEach(el => {
+        el.classList.add('hidden');
+        el.style.setProperty('display', 'none', 'important');
+    });
+    clone.querySelectorAll('.tab-switcher-container').forEach(el => {
+        el.style.setProperty('display', 'none', 'important');
     });
     
     // Masquage strict de tous les boutons interactifs
@@ -4059,7 +4203,13 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
                     cleanSimDiv.innerHTML += customHtml;
                 }
             }
-            simContainer.style.display = 'none'; simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
+            simContainer.style.display = 'none';
+            let detailsView = clone.querySelector('[id^="t2_details_view_"]') || clone.querySelector('.card-body');
+            if (detailsView) {
+                detailsView.parentNode.insertBefore(cleanSimDiv, detailsView.nextSibling);
+            } else {
+                simContainer.parentNode.insertBefore(cleanSimDiv, simContainer.nextSibling);
+            }
         }
     }
 
@@ -4106,14 +4256,21 @@ function prepareCardForExport(pngMode = null, activeTheme = 'complet') {
             });
             
             if (isBadge) {
-                classListStatic.forEach(cls => {
-                    if (cls.startsWith('bg-') || cls.startsWith('dark:bg-')) {
-                        el.classList.remove(cls);
-                    }
-                });
-                el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
-                el.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.15)', 'important');
-                el.style.setProperty('color', '#f5f5f4', 'important');
+                let isLayoutContainer = el.classList.contains('flex') || el.classList.contains('grid') || 
+                                        el.classList.contains('rounded-xl') || el.classList.contains('rounded-2xl') || 
+                                        el.classList.contains('rounded-3xl') || el.classList.contains('sim-container') ||
+                                        Array.from(el.classList).some(cls => cls.startsWith('p-2') || cls.startsWith('p-3') || cls.startsWith('p-4') || cls.startsWith('p-5'));
+                
+                if (!isLayoutContainer) {
+                    classListStatic.forEach(cls => {
+                        if (cls.startsWith('bg-') || cls.startsWith('dark:bg-')) {
+                            el.classList.remove(cls);
+                        }
+                    });
+                    el.style.setProperty('background-color', 'rgba(255, 255, 255, 0.08)', 'important');
+                    el.style.setProperty('border', '1px solid rgba(255, 255, 255, 0.15)', 'important');
+                    el.style.setProperty('color', '#f5f5f4', 'important');
+                }
             } else if (isBrandText) {
                 classListStatic.forEach(cls => {
                     if (cls.startsWith('text-brand-') || cls.startsWith('dark:text-brand-')) {
@@ -5601,7 +5758,7 @@ function makeAllSelectsCustom() {
         mutations.forEach((mutation) => {
             const select = mutation.target;
             const wrapper = select.nextSibling;
-            if (wrapper && wrapper.classList.contains('custom-select-wrapper')) {
+            if (wrapper && wrapper.classList && wrapper.classList.contains('custom-select-wrapper')) {
                 if (mutation.attributeName === 'class') {
                     const isHidden = select.classList.contains('hidden');
                     wrapper.classList.toggle('hidden', isHidden);
@@ -5929,7 +6086,7 @@ function renderMesAromes() {
     let html = '';
     arr.forEach(a => {
         html += `
-        <div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col hover:shadow-xl transition-all duration-300">
+        <div class="bg-brand-50 dark:bg-brand-900 rounded-3xl p-5 border border-brand-200 dark:border-brand-700 h-full flex flex-col transition-all hover:shadow-xl hover:-translate-y-1 duration-300">
             <div class="flex justify-between items-center mb-3">
                 <div class="truncate pr-2">
                     <div class="font-extrabold text-stone-800 dark:text-stone-100 text-lg truncate" title="${a.name}">🧪 ${a.name}</div>
@@ -6921,13 +7078,14 @@ function renderMesBuilds() {
         let configLabel = b.config === 'double' ? 'Double' : 'Single';
         
         html += `
-        <div class="relative group mt-6 h-full w-full cursor-pointer" data-theme="coils" onclick="openBuildModalFromCardById(${b.id})">
-            <div class="absolute -top-4 right-4 z-10 flex gap-2">
+        <div class="relative group mt-6 h-full w-full" data-theme="coils">
+            <div class="absolute -top-4 right-4 z-10 flex gap-2 items-center group-hover:-translate-y-1 transition-all duration-300">
                 <span class="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-white bg-sky-500 rounded-full shadow-sm">${configLabel}</span>
+                <button onclick="event.stopPropagation(); openBuildModalFromCardById(${b.id})" class="w-9 h-9 flex items-center justify-center text-stone-500 dark:text-stone-400 bg-white/70 dark:bg-stone-900/60 backdrop-blur-md rounded-full shadow-[0_2px_8px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_8px_rgba(0,0,0,0.2)] border border-stone-200/80 dark:border-stone-800/80 hover:border-brand-600 dark:hover:border-brand-500 hover:bg-brand-600 dark:hover:bg-brand-500 hover:text-white dark:hover:text-white hover:scale-110 active:scale-95 hover:shadow-[0_4px_12px_rgba(var(--brand-500)/0.3)] transition-all duration-300 ease-out shrink-0" title="Agrandir la fiche"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg></button>
             </div>
             
             <div class="recipe-card-wrapper bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between h-full group relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-bl-full pointer-events-none transition-transform group-hover:scale-110"></div>
+                <div class="absolute top-0 right-0 w-24 h-24 bg-sky-500/5 rounded-bl-full pointer-events-none transition-transform"></div>
                 
                 <div>
                     <div class="pr-12 mb-3">
@@ -7632,7 +7790,7 @@ function triggerNotificationCycle() {
         }
         
         container.innerHTML = `
-        <button onclick="openSettingsModal()" class="pointer-events-auto px-4 py-2 bg-white/90 dark:bg-stone-950/95 backdrop-blur-md text-stone-800 dark:text-stone-100 rounded-full shadow-lg border border-stone-200/80 dark:border-stone-850 flex items-center gap-2.5 cursor-pointer transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fade-in">
+        <button onclick="openSettingsModal()" class="pointer-events-auto px-4 py-2 bg-stone-200/90 dark:bg-stone-800/95 backdrop-blur-md text-stone-800 dark:text-stone-100 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fade-in shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex items-center gap-2.5 cursor-pointer">
             <span class="relative flex h-2 w-2">
                 <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${pingColorClass} opacity-75"></span>
                 <span class="relative inline-flex rounded-full h-2 w-2 ${dotColorClass}"></span>

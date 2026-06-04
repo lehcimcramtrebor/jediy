@@ -66,8 +66,8 @@
 
         /* --- COMPOSANTS UI --- */
         @layer components {
-            .btn-adjust { @apply w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-brand-100 dark:hover:bg-stone-700 hover:border-brand-300 dark:hover:border-stone-600 font-black text-brand-600 dark:text-brand-400 text-2xl flex items-center justify-center transition-all shadow-sm active:scale-95; }
-            .btn-adjust-sm { @apply w-10 h-10 shrink-0 rounded-lg bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 hover:bg-brand-100 dark:hover:bg-stone-700 hover:border-brand-300 dark:hover:border-stone-600 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all shadow-sm active:scale-95; }
+            .btn-adjust { @apply w-12 h-12 shrink-0 rounded-xl bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-stone-700 hover:border-brand-300 dark:hover:border-stone-600 font-black text-brand-600 dark:text-brand-400 text-2xl flex items-center justify-center transition-all active:scale-95 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_10px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10; }
+            .btn-adjust-sm { @apply w-10 h-10 shrink-0 rounded-lg bg-white dark:bg-stone-800 hover:bg-brand-100 dark:hover:bg-stone-700 hover:border-brand-300 dark:hover:border-stone-600 font-black text-brand-600 dark:text-brand-400 text-xl flex items-center justify-center transition-all active:scale-95 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_10px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10; }
             .btn-adjust-xs { @apply w-8 h-7 shrink-0 rounded-md bg-stone-100 dark:bg-stone-700 border border-stone-200 dark:border-stone-600 hover:bg-brand-100 dark:hover:bg-stone-600 hover:border-brand-300 dark:hover:border-stone-500 font-black text-brand-600 dark:text-brand-400 text-lg flex items-center justify-center transition-all shadow-sm active:scale-95 print:hidden; }
         }
 
@@ -178,40 +178,40 @@
         }
     </style>
 </head>
-<body class="min-h-screen p-2 sm:p-4 md:p-8 bg-stone-100 dark:bg-stone-950 text-stone-800 dark:text-stone-200 transition-colors duration-300">
+<body class="min-h-screen p-2 sm:p-4 md:p-8 bg-gradient-to-br from-stone-100 via-stone-50 to-stone-200 dark:from-stone-950 dark:via-stone-950 dark:to-stone-900 text-stone-800 dark:text-stone-200 transition-colors duration-300">
 
 <div id="main_app_container">
 
     <div class="absolute top-2 left-0 sm:left-2 md:left-4 flex items-center gap-2.5 z-10">
-        <button onclick="openSettingsModal()" id="btn_settings" class="relative w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all shrink-0" title="Réglages & Sauvegardes">
+        <button onclick="openSettingsModal()" id="btn_settings" class="relative w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 shrink-0" title="Réglages & Sauvegardes">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             <span id="gear_badge" class="hidden absolute top-0 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white dark:border-stone-800 shadow-sm"></span>
         </button>
     </div>
 
     <div class="absolute top-2 right-0 sm:right-2 md:right-4 flex gap-2 z-10">
-        <button onclick="openCalcModal()" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Calculatrice Rapide">
+        <button onclick="openCalcModal()" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10" title="Calculatrice Rapide">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="8" y1="6" x2="16" y2="6"></line><line x1="16" y1="14" x2="16" y2="14.01"></line><line x1="16" y1="10" x2="16" y2="10.01"></line><line x1="16" y1="18" x2="16" y2="18.01"></line><line x1="12" y1="14" x2="12" y2="14.01"></line><line x1="12" y1="10" x2="12" y2="10.01"></line><line x1="12" y1="18" x2="12" y2="18.01"></line><line x1="8" y1="14" x2="8" y2="14.01"></line><line x1="8" y1="10" x2="8" y2="10.01"></line><line x1="8" y1="18" x2="8" y2="18.01"></line></svg>
         </button>
-        <button onclick="toggleTheme()" id="theme_toggle_btn" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Mode Sombre/Clair"></button>
-        <button onclick="openHelpModal()" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 shadow-sm border border-stone-200 dark:border-stone-700 transition-all" title="Comment ça marche ?">
+        <button onclick="toggleTheme()" id="theme_toggle_btn" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10" title="Mode Sombre/Clair"></button>
+        <button onclick="openHelpModal()" class="w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10" title="Comment ça marche ?">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
         </button>
     </div>
 
-    <header class="mb-10 text-center pt-14 sm:pt-0 select-none">
+    <header class="mb-2 text-center pt-14 sm:pt-0 select-none">
         <h1 class="text-4xl font-black text-stone-800 dark:text-stone-100 tracking-tight mb-2">Je-<span class="text-brand-600 dark:text-brand-500 transition-colors">DIY</span></h1>
         <p class="text-stone-500 dark:text-stone-400 font-medium text-sm pointer-events-none">Calculateur e-liquide et coils</p>
     </header>
 
      <!-- GLOBAL STICKY HEADER ZONE (NAV TABS + NOTIFICATIONS) -->
-    <div id="global_sticky_nav_container" class="sticky top-0 z-40 -mx-2 px-2 sm:-mx-4 sm:px-4 md:-mx-8 md:px-8 bg-stone-100/95 dark:bg-stone-950/95 backdrop-blur-md pt-2 pb-3 border-b border-stone-200/50 dark:border-stone-800/40 mb-6 transition-all duration-300">
+    <div id="global_sticky_nav_container" class="sticky top-0 z-40 -mx-2 px-2 sm:-mx-4 sm:px-4 md:-mx-8 md:px-8 bg-stone-100/95 dark:bg-stone-950/95 backdrop-blur-md pt-2 pb-3 border-b border-stone-200/50 dark:border-stone-800/40 mb-6 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.015)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.2)]">
         
         <!-- Notification Container (Smooth collapse/expand) -->
         <div id="unsaved_notifications_container" class="max-h-0 opacity-0 overflow-hidden flex justify-center transition-all duration-350 ease-out scale-95 mb-0"></div>
 
         <!-- TABLET & DESKTOP DUAL TAB NAVIGATION -->
-        <div class="hidden sm:grid xl:flex grid-cols-12 xl:flex-row bg-stone-200/70 dark:bg-stone-800 p-1.5 rounded-2xl gap-2 shadow-inner transition-colors">
+        <div class="hidden sm:grid xl:flex grid-cols-12 xl:flex-row bg-stone-200/70 dark:bg-stone-800 p-1.5 rounded-2xl gap-2 transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10">
             <button onclick="switchTab('tab_assistant')" id="btn_tab_assistant" class="col-span-3 xl:grow py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap bg-white dark:bg-stone-700 text-brand-600 dark:text-brand-400 shadow-md transform -translate-y-0.5 ring-1 ring-black/5 dark:ring-white/10">🪄 Assistant</button>
             <button onclick="switchTab('tab_boost_simple')" id="btn_tab_boost_simple" class="col-span-3 xl:grow py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800/50">🚀 Boost simple</button>
             <button onclick="switchTab('tab_complet')" id="btn_tab_complet" class="col-span-3 xl:grow py-2.5 px-2 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-800/50">🎯 Liquide Complet</button>
@@ -225,14 +225,14 @@
         <!-- MOBILE CUSTOM HTML DROPDOWN SELECTOR -->
         <div class="sm:hidden" id="tab_dropdown_container">
             <!-- Trigger Button -->
-            <button onclick="toggleMobileTabDropdown()" id="mobile_tab_trigger" class="w-full py-3.5 px-4 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-2xl shadow-md border border-stone-200 dark:border-stone-800 flex items-center justify-between font-bold text-sm transition-all active:scale-98 relative z-25">
+            <button onclick="toggleMobileTabDropdown()" id="mobile_tab_trigger" class="w-full py-3.5 px-4 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-2xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex items-center justify-between font-bold text-sm active:scale-98 relative z-25">
                 <span id="mobile_tab_trigger_content" class="flex items-center gap-2">🪄 Assistant</span>
                 <svg id="mobile_tab_trigger_arrow" class="w-5 h-5 text-stone-400 dark:text-stone-500 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
             <!-- Floating Option List -->
-            <div id="mobile_tab_dropdown_menu" class="absolute left-0 right-0 mt-2 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-stone-200 dark:border-stone-700 z-50 py-1.5 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top">
+            <div id="mobile_tab_dropdown_menu" class="absolute left-0 right-0 mt-2 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md rounded-2xl shadow-lg border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] z-50 py-1.5 transition-all duration-200 transform scale-95 opacity-0 pointer-events-none origin-top">
                 <button onclick="selectMobileTab('tab_assistant')" class="mobile-tab-opt w-full px-4 py-3 flex items-center justify-between font-semibold text-sm transition-colors text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/50 hover:text-stone-900 dark:hover:text-stone-100 active:bg-stone-200 dark:active:bg-stone-800 rounded-xl" data-tab-id="tab_assistant">
                     <span class="flex items-center gap-2.5">🪄 Assistant</span>
                     <span class="mobile-tab-check text-emerald-500 hidden"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></span>
@@ -266,7 +266,7 @@
     </div>
 
     <div id="tab_assistant" class="tab-content active">
-        <div class="bg-white dark:bg-stone-900 p-6 md:p-10 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-2xl mx-auto w-full transition-colors relative min-h-[450px] flex flex-col">
+        <div class="bg-white dark:bg-stone-900 p-6 md:p-10 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-2xl mx-auto w-full relative min-h-[450px] flex flex-col">
             
             <div id="wiz_progress_container" class="w-full bg-stone-100 dark:bg-stone-800 rounded-full h-2 mb-8 hidden overflow-hidden">
                 <div id="wiz_progress_bar" class="bg-brand-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
@@ -276,7 +276,7 @@
                 <!-- ILLUSTRATION DE YODA (PNG EXTÉRIEURE STOCKÉE À LA RACINE) -->
                 <img src="yoda.png" 
                      alt="Yoda" 
-                     class="w-60 h-auto mx-auto mb-6 object-contain">
+                     class="w-60 h-auto mx-auto mb-3 object-contain">
                 <h2 class="text-3xl font-black text-stone-800 dark:text-stone-100 mb-4">Prêt à concocter ton jus ?</h2>
                 <p class="text-stone-500 dark:text-stone-400 mb-8 font-medium">Je vais te guider étape par étape pour trouver le mix parfait ou juste booster ton liquide. Zéro prise de tête.</p>
                 <button onclick="wizNext()" class="w-full py-4 bg-brand-500 hover:bg-brand-600 text-white rounded-2xl font-bold text-lg shadow-md transition-all active:scale-95">Démarrer</button>
@@ -480,15 +480,7 @@
                 <h2 class="text-2xl font-black text-brand-600 dark:text-brand-400 mb-2 text-center" id="wiz_s7_title">Et voilà le travail ! 🎉</h2>
                 <p class="text-sm text-stone-500 dark:text-stone-400 mb-6 text-center" id="wiz_s7_desc">J'ai calculé les meilleures combinaisons avec ton matériel.</p>
                 
-                <div id="wiz_results_header" class="hidden flex-col w-full mb-4">
-                    <div class="animate-fade-in p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors mb-3 text-left">
-                        <span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p>
-                    </div>
-                    <div class="flex gap-2 w-full">
-                        <input type="text" id="wiz_global_name" placeholder="Nommer l'ensemble des recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') runWizCalculation()">
-                        <button onclick="runWizCalculation()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
-                    </div>
-                </div>
+                <!-- wiz_results_header removed -->
 
                 <div id="wiz_results_container" class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full pb-4"></div>
 
@@ -507,7 +499,7 @@
     </div>
 
     <div id="tab_boost_simple" class="tab-content">
-        <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-2xl mx-auto transition-colors">
+        <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-2xl mx-auto">
             <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                 <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🚀</span> Booster un liquide
             </h2>
@@ -585,7 +577,7 @@
 
     <div id="tab_complet" class="tab-content">
         <div class="space-y-6">
-            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors">
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-3xl mx-auto w-full">
                 <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
                     <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🎯</span> Objectifs
                 </h2>
@@ -743,7 +735,7 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors mb-6">
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-3xl mx-auto w-full mb-6">
                 <div class="flex items-center justify-between cursor-pointer" onclick="toggleFoldMaterial('t1')">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 flex items-center gap-2 select-none">
                         <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">📦</span> Matériel dispo
@@ -767,21 +759,13 @@
             </div>
             </div>
 
-            <div id="t1_results_header" class="hidden flex-col w-full max-w-3xl mx-auto mt-4 mb-2">
-                <div class="animate-fade-in p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors mb-3">
-                    <span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p>
-                </div>
-                <div class="flex gap-2 w-full">
-                    <input type="text" id="t1_global_name" placeholder="Nommer l'ensemble des recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
-                    <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
-                </div>
-            </div>
+            <!-- t1_results_header removed -->
             <div id="t1_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-2"></div>
         </div>
 
     <div id="tab_booster" class="tab-content">
         <div class="space-y-6">
-            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors">
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-3xl mx-auto w-full">
                 <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
                     <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🧪</span> Création Shortfill
                 </h2>
@@ -922,7 +906,7 @@
                 </div>
             </div>
 
-            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-3xl mx-auto w-full transition-colors mb-6">
+            <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-3xl mx-auto w-full mb-6">
                 <div class="flex items-center justify-between cursor-pointer" onclick="toggleFoldMaterial('t2')">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 flex items-center gap-2 select-none">
                         <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">📦</span> Matériel dispo
@@ -942,20 +926,12 @@
             </div>
             </div>
 
-            <div id="t2_results_header" class="hidden flex-col w-full max-w-3xl mx-auto mt-4 mb-2">
-                <div class="animate-fade-in p-4 bg-brand-50/50 dark:bg-brand-900/10 border border-brand-200 dark:border-brand-800/50 rounded-2xl flex items-center gap-3 text-sm text-stone-700 dark:text-stone-300 shadow-sm transition-colors mb-3">
-                    <span class="text-xl">💡</span><p>Clique sur l'icône <svg class="inline w-4 h-4 mx-0.5 text-stone-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"></path><path d="M9 21H3v-6"></path><path d="M21 3l-7 7"></path><path d="M3 21l7-7"></path></svg> pour ouvrir le Mix et accéder aux options (partage, sauvegarde).</p>
-                </div>
-                <div class="flex gap-2 w-full">
-                    <input type="text" id="t2_global_name" placeholder="Nommer l'ensemble des recettes (Optionnel)..." class="flex-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" onkeydown="if(event.key==='Enter') triggerCalc()">
-                    <button onclick="triggerCalc()" class="px-5 py-3 bg-stone-200 dark:bg-stone-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 text-stone-800 dark:text-stone-100 font-bold rounded-xl shadow-sm transition-all">Valider</button>
-                </div>
-            </div>
+            <!-- t2_results_header removed -->
             <div id="t2_results_container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full pt-2"></div>
         </div>
 
     <div id="tab_manuel" class="tab-content">
-        <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 max-w-2xl mx-auto transition-colors">
+        <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-2xl mx-auto">
             <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
                 <span class="w-8 h-8 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 flex items-center justify-center text-lg">🤏</span> Mélange Manuel
             </h2>
@@ -963,13 +939,13 @@
 
             <div class="space-y-6 mb-8">
                 
-                <div class="bg-brand-50/50 dark:bg-brand-900/20 p-4 rounded-xl border border-brand-100 dark:border-brand-800/50 transition-colors w-full">
+                <div class="bg-brand-50/50 dark:bg-brand-900/20 p-4 rounded-xl border border-brand-100 dark:border-brand-500/40 transition-colors w-full">
                     <div class="flex justify-between items-center mb-3">
                         <label class="block text-sm font-bold text-brand-800 dark:text-brand-300">Arôme / Composition</label>
                         <span id="t3_aroma_w" class="text-sm text-brand-600 dark:text-brand-400 font-black">0 g</span>
                     </div>
 
-                    <div class="flex bg-white dark:bg-stone-900 p-1 rounded-xl mb-4 border border-brand-100 dark:border-brand-800/50">
+                    <div class="flex bg-white dark:bg-stone-900 p-1 rounded-xl mb-4 border border-brand-100 dark:border-brand-500/40">
                         <button id="t3_aroma_mode_mono" onclick="setAromaMode('t3', 'mono')" class="flex-1 py-1.5 rounded-lg text-sm font-bold bg-brand-100 dark:bg-brand-800 text-brand-800 dark:text-brand-100 shadow-sm transition-all">Concentré</button>
                         <button id="t3_aroma_mode_multi" onclick="setAromaMode('t3', 'multi')" class="flex-1 py-1.5 rounded-lg text-sm font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">Multi-Arômes</button>
                     </div>
@@ -977,7 +953,7 @@
                     <div id="t3_aroma_mono_panel" class="animate-fade-in">
                         <div class="flex items-center gap-3 mb-3">
                             <button onclick="adjustVal('t3_aroma_vol', -5)" class="btn-adjust">-</button>
-                            <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <input type="number" id="t3_aroma_vol" value="30" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-brand-500/40 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
                             <button onclick="adjustVal('t3_aroma_vol', 5)" class="btn-adjust">+</button>
                             <span class="text-sm font-bold text-stone-500">ml</span>
                         </div>
@@ -993,7 +969,7 @@
 
                     <div id="t3_aroma_multi_panel" class="hidden animate-fade-in w-full">
                         <div class="mb-4">
-                            <select id="t3_compo_select" class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-700 rounded-xl p-3 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" onchange="loadCompo('t3', this.value)">
+                            <select id="t3_compo_select" class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-500/40 rounded-xl p-3 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" onchange="loadCompo('t3', this.value)">
                                 <option value="">-- Charger une composition sauvegardée --</option>
                             </select>
                         </div>
@@ -1006,41 +982,41 @@
 
                         <!-- Boutons d'ajout d'ingrédients -->
                         <div class="grid grid-cols-3 gap-2 mb-4">
-                            <button onclick="addMultiLine('t3', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-700 shadow-sm transition-colors">+ Arôme</button>
+                            <button onclick="addMultiLine('t3', 'aroma')" class="py-2 bg-white dark:bg-stone-900 hover:bg-brand-50 dark:hover:bg-brand-900/30 text-brand-600 dark:text-brand-400 rounded-xl text-xs font-bold border border-brand-200 dark:border-brand-500/40 shadow-sm transition-colors">+ Arôme</button>
                             <button onclick="addMultiLine('t3', 'water')" class="py-2 bg-white dark:bg-stone-900 hover:bg-blue-50 dark:hover:bg-blue-900/30 text-blue-600 text-blue-400 rounded-xl text-xs font-bold border border-blue-200 dark:border-blue-700 shadow-sm transition-colors">+ Eau</button>
-                            <button onclick="addMultiLine('t3', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
+                            <button onclick="addMultiLine('t3', 'alcohol')" class="py-2 bg-white dark:bg-stone-900 hover:bg-purple-50 dark:hover:bg-purple-900/30 text-purple-600 text-purple-400 rounded-xl text-xs font-bold border border-purple-200 dark:border-purple-700 shadow-sm transition-colors">+ Alcool</button>
                         </div>
 
                         <!-- Volume versé (ml) -->
-                        <div class="flex items-center gap-3 mb-4 pt-4 border-t border-brand-200/50 dark:border-brand-800/50">
+                        <div class="flex items-center gap-3 mb-4 pt-4 border-t border-brand-200/50 dark:border-brand-500/40">
                             <div class="text-xs font-bold text-brand-800 dark:text-brand-300 w-1/3">Volume versé (ml)&nbsp;:</div>
                             <button onclick="adjustVal('t3_aroma_vol_multi', -5)" class="btn-adjust-sm">-</button>
-                            <input type="number" id="t3_aroma_vol_multi" value="30" class="hide-arrows flex-1 w-full h-10 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-lg text-center font-bold text-lg text-stone-800 dark:text-stone-100 focus:outline-none transition-colors" oninput="syncMultiVolBreakdown('t3'); triggerCalc()">
+                            <input type="number" id="t3_aroma_vol_multi" value="30" class="hide-arrows flex-1 w-full h-10 bg-white dark:bg-stone-700 border border-stone-200 dark:border-brand-500/40 rounded-lg text-center font-bold text-lg text-stone-800 dark:text-stone-100 focus:outline-none transition-colors" oninput="syncMultiVolBreakdown('t3'); triggerCalc()">
                             <button onclick="adjustVal('t3_aroma_vol_multi', 5)" class="btn-adjust-sm">+</button>
                         </div>
 
                         <!-- Section de sauvegarde de la composition -->
-                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-700 mb-4">
-                            <input type="text" id="t3_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-600 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t3')">
+                        <div class="pt-4 border-t border-brand-200/50 dark:border-brand-500/40 mb-4">
+                            <input type="text" id="t3_compo_name" placeholder="Nom de la composition..." class="w-full bg-white dark:bg-stone-900 border border-brand-200 dark:border-brand-500/40 rounded-xl p-3 mb-2 text-sm text-stone-800 dark:text-stone-100 font-bold focus:outline-none transition-colors" oninput="checkCompoSave('t3')">
                             <button id="t3_btn_save_compo" disabled onclick="saveCompo('t3')" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-sm transition-all text-sm">Sauvegarder la composition</button>
                         </div>
 
                         <!-- Concentration globale (toujours à la fin) -->
-                        <div class="flex justify-between items-center p-3 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-700 mb-4">
+                        <div class="flex justify-between items-center p-3 bg-white dark:bg-stone-900 rounded-xl border border-brand-200 dark:border-brand-500/40 mb-4">
                             <span class="text-sm font-bold text-brand-700 dark:text-brand-300">Concentration de la composition&nbsp;:</span>
                             <span id="t3_multi_total_perc" class="text-lg font-black text-brand-600 dark:text-brand-400">0%</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
+                <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-brand-500/40 transition-colors">
                     <div class="flex justify-between items-center">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Base Neutre (ml)</label>
                         <span id="t3_base_w" class="text-sm text-brand-600 dark:text-brand-400 font-black">0 g</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="adjustVal('t3_base_vol', -5)" class="btn-adjust">-</button>
-                        <input type="number" id="t3_base_vol" value="120" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                        <input type="number" id="t3_base_vol" value="120" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-brand-500/40 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
                         <button onclick="adjustVal('t3_base_vol', 5)" class="btn-adjust">+</button>
                     </div>
                     <div class="mt-2">
@@ -1053,14 +1029,14 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
+                <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-brand-500/40 transition-colors">
                     <div class="flex justify-between items-center">
                         <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Nicotine (ml)</label>
                         <span id="t3_boost_w" class="text-sm text-brand-600 dark:text-brand-400 font-black">0 g</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="adjustVal('t3_boost_vol', -5)" class="btn-adjust">-</button>
-                        <input type="number" id="t3_boost_vol" value="50" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                        <input type="number" id="t3_boost_vol" value="50" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-brand-500/40 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
                         <button onclick="adjustVal('t3_boost_vol', 5)" class="btn-adjust">+</button>
                     </div>
                     <div class="mt-2">
@@ -1073,31 +1049,31 @@
                     </div>
                 </div>
                 
-                <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-stone-700 transition-colors">
+                <div class="flex flex-col gap-3 bg-stone-50 dark:bg-stone-800 p-4 rounded-xl border border-stone-100 dark:border-brand-500/40 transition-colors">
                     <label class="block text-sm font-bold text-stone-600 dark:text-stone-300">Taux des Boosters (mg/ml)</label>
                     <div class="flex items-center gap-3">
                         <button onclick="adjustVal('t3_boost_str', -1)" class="btn-adjust">-</button>
-                        <input type="number" id="t3_boost_str" value="20" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-stone-600 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
-                        <button onclick="adjustVal('t3_boost_str', 1)" class="btn-adjust">+</button>
+                        <input type="number" id="t3_boost_str" value="20" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-white dark:bg-stone-700 border border-stone-200 dark:border-brand-500/40 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="triggerCalc()">
+                            <button onclick="adjustVal('t3_boost_str', 1)" class="btn-adjust">+</button>
                     </div>
                 </div>
             </div>
 
-            <div id="t3_results" class="p-6 bg-brand-50 dark:bg-brand-900/50 rounded-2xl border border-brand-200 dark:border-brand-800/50 text-center transition-colors"></div>
+            <div id="t3_results" class="p-6 bg-brand-50 dark:bg-brand-900/50 rounded-2xl border border-brand-200 dark:border-brand-500/40 text-center transition-colors"></div>
         </div>
     </div>
 
     <div id="tab_coils" class="tab-content">
         <div class="max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-6 items-start lg:items-stretch">
             <!-- CARD 1: FIL & STRUCTURE (lg:col-span-6) -->
-            <div class="lg:col-span-6 lg:order-1 bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 transition-colors">
+            <div class="lg:col-span-6 lg:order-1 bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">🌀</span> Structure & Matériau
+                        <span class="w-8 h-8 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg">🌀</span> Structure & Matériau
                     </h2>
                     
                     <div class="space-y-4">
                         <!-- Sélecteur de type : Fils vs Mesh -->
-                        <div class="flex bg-stone-100 dark:bg-stone-800 p-1 rounded-xl mb-4">
+                        <div class="flex bg-stone-50 dark:bg-stone-800 p-1 rounded-xl border border-stone-100 dark:border-stone-700">
                             <button id="coil_type_wire" onclick="setCoilType('wire');" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-100 shadow-sm transition-all">🧵 Fils (Coils)</button>
                             <button id="coil_type_mesh" onclick="setCoilType('mesh');" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-all">🏁 Mesh (Bandes)</button>
                         </div>
@@ -1107,7 +1083,7 @@
                             <!-- Structure sélecteur -->
                             <div>
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Structure du Fil</label>
-                                <select id="coil_structure" onchange="toggleCoilStructureFields(); calculateCoil();" class="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
+                                <select id="coil_structure" onchange="toggleCoilStructureFields(); calculateCoil();" class="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
                                     <option value="simple">Fil Simple (Rond)</option>
                                     <option value="clapton">Clapton (1 Ame)</option>
                                     <option value="fused2">Fused Clapton (2 Ames)</option>
@@ -1124,7 +1100,7 @@
                         <div id="mesh_structure_only" class="hidden space-y-4">
                             <div>
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Type de Grille Mesh</label>
-                                <select id="mesh_type" onchange="calculateCoil();" class="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
+                                <select id="mesh_type" onchange="calculateCoil();" class="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
                                     <option value="weave_80">Tissé #80 (Gros pores - Vapeur dense)</option>
                                     <option value="weave_150">Tissé #150 (pores moyens)</option>
                                     <option value="weave_200" selected>Tissé #200 (Standard - Ni80/Kanthal/SS)</option>
@@ -1139,7 +1115,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4" id="coil_mat_grid">
                             <div>
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2" id="coil_mat_label">Matériau de l'Ame</label>
-                                <select id="coil_material_core" onchange="calculateCoil();" class="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
+                                <select id="coil_material_core" onchange="calculateCoil();" class="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl p-3 text-sm font-bold text-stone-800 dark:text-stone-100 focus:outline-none transition-colors">
                                     <option value="kanthal">Kanthal A1</option>
                                     <option value="ni80" selected>Nichrome 80 (Ni80)</option>
                                     <option value="ni90">Nichrome 90 (Ni90)</option>
@@ -1156,7 +1132,7 @@
                             <div id="coil_core_size_panel">
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Taille de l'Ame</label>
                                 <div class="flex gap-2">
-                                    <select id="coil_core_awg" onchange="syncCoilSize('core', 'awg'); calculateCoil();" class="flex-1 min-w-0 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
+                                    <select id="coil_core_awg" onchange="syncCoilSize('core', 'awg'); calculateCoil();" class="flex-1 min-w-0 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
                                         <option value="">-- Custom --</option>
                                         <option value="20">20G (0.81mm)</option>
                                         <option value="21">21G (0.72mm)</option>
@@ -1171,7 +1147,7 @@
                                         <option value="30">30G (0.25mm)</option>
                                         <option value="32">32G (0.20mm)</option>
                                     </select>
-                                    <div class="flex items-center gap-1.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl px-3 text-xs font-bold text-stone-500 dark:text-stone-400">
+                                    <div class="flex items-center gap-1.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl px-3 text-xs font-bold text-stone-500 dark:text-stone-400">
                                         <input type="number" id="coil_core_mm" step="0.01" value="0.40" oninput="syncCoilSize('core', 'mm'); calculateCoil();" class="w-12 text-center bg-transparent border-none focus:outline-none focus:ring-0 p-0 font-bold text-stone-800 dark:text-stone-100">
                                         <span>mm</span>
                                     </div>
@@ -1182,14 +1158,14 @@
                             <div id="coil_ribbon_size_panel" class="hidden grid grid-cols-2 gap-2 col-span-2">
                                 <div>
                                     <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Largeur Ruban</label>
-                                    <div class="flex items-center bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm font-bold">
+                                    <div class="flex items-center bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl px-3 py-2 text-sm font-bold">
                                         <input type="number" id="coil_ribbon_w" step="0.1" value="0.5" oninput="calculateCoil();" class="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-0 font-bold text-stone-800 dark:text-stone-100">
                                         <span class="text-xs text-stone-400">mm</span>
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Épaisseur Ruban</label>
-                                    <div class="flex items-center bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl px-3 py-2 text-sm font-bold">
+                                    <div class="flex items-center bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl px-3 py-2 text-sm font-bold">
                                         <input type="number" id="coil_ribbon_h" step="0.01" value="0.1" oninput="calculateCoil();" class="w-full bg-transparent border-none focus:outline-none focus:ring-0 p-0 font-bold text-stone-800 dark:text-stone-100">
                                         <span class="text-xs text-stone-400">mm</span>
                                     </div>
@@ -1204,7 +1180,7 @@
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Nbre de Rubans</label>
                                 <div class="flex items-center gap-3">
                                     <button onclick="adjustVal('coil_ribbon_count', -1)" class="btn-adjust">-</button>
-                                    <input type="number" id="coil_ribbon_count" value="6" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="calculateCoil();">
+                                    <input type="number" id="coil_ribbon_count" value="6" class="hide-arrows flex-1 min-w-0 w-full h-12 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl text-center font-bold text-xl text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-brand-500 transition-colors" oninput="calculateCoil();">
                                     <button onclick="adjustVal('coil_ribbon_count', 1)" class="btn-adjust">+</button>
                                 </div>
                             </div>
@@ -1213,14 +1189,14 @@
                             <div id="coil_frame_size_panel" class="hidden">
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Taille du Cadre</label>
                                 <div class="flex gap-2">
-                                    <select id="coil_frame_awg" onchange="syncCoilSize('frame', 'awg'); calculateCoil();" class="flex-1 min-w-0 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
+                                    <select id="coil_frame_awg" onchange="syncCoilSize('frame', 'awg'); calculateCoil();" class="flex-1 min-w-0 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
                                         <option value="">-- Custom --</option>
                                         <option value="26">26G (0.40mm)</option>
                                         <option value="28" selected>28G (0.32mm)</option>
                                         <option value="30">30G (0.25mm)</option>
                                         <option value="32">32G (0.20mm)</option>
                                     </select>
-                                    <div class="flex items-center gap-1.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl px-3 text-xs font-bold text-stone-500 dark:text-stone-400">
+                                    <div class="flex items-center gap-1.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-brand-500/40 rounded-xl px-3 text-xs font-bold text-stone-500 dark:text-stone-400">
                                         <input type="number" id="coil_frame_mm" step="0.01" value="0.32" oninput="syncCoilSize('frame', 'mm'); calculateCoil();" class="w-12 text-center bg-transparent border-none focus:outline-none focus:ring-0 p-0 font-bold">
                                         <span>mm</span>
                                     </div>
@@ -1229,7 +1205,7 @@
                         </div>
 
                         <!-- Paramètres Enrobage (Wrap) si exotique -->
-                        <div id="coil_wrap_panel" class="hidden bg-stone-50 dark:bg-stone-800/50 p-4 rounded-2xl border border-stone-100 dark:border-stone-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                        <div id="coil_wrap_panel" class="hidden bg-stone-50 dark:bg-stone-800/50 p-4 rounded-2xl border border-stone-100 dark:border-stone-700 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Matériau de l'Enrobage</label>
                                 <select id="coil_material_wrap" onchange="calculateCoil();" class="w-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-xl p-3 text-sm font-bold focus:outline-none text-stone-800 dark:text-stone-100">
@@ -1264,7 +1240,7 @@
                 </div>
 
                 <!-- CARD RÉSULTATS & PREVIEW FUSIONNÉE (lg:col-span-6) -->
-                <div class="lg:col-span-6 lg:order-2 bg-gradient-to-br from-brand-600 to-indigo-700 dark:from-brand-900/90 dark:to-indigo-950/90 p-6 md:p-8 lg:p-5 xl:p-8 rounded-3xl shadow-xl text-white border border-brand-500/20 transition-all relative overflow-hidden flex flex-col justify-between">
+                <div class="lg:col-span-6 lg:order-2 bg-gradient-to-br from-brand-600 to-indigo-700 dark:from-brand-900/90 dark:to-indigo-950/90 p-6 md:p-8 lg:p-5 xl:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 relative overflow-hidden flex flex-col justify-between">
                     <div class="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
                     <div class="absolute -left-10 -top-10 w-40 h-40 bg-brand-400/10 rounded-full blur-2xl"></div>
 
@@ -1275,7 +1251,7 @@
                         <div class="text-center md:text-left lg:text-center xl:text-left space-y-4 lg:space-y-3 xl:space-y-4 flex flex-col justify-center h-full">
                             <div>
                                 <h3 class="text-xs font-black uppercase tracking-widest text-brand-200/80 mb-1">Résistance Estimée</h3>
-                                <div class="text-5xl lg:text-4xl xl:text-5xl font-black tracking-tight mb-2 select-all animate-pulse-slow" id="coil_ohms">0.42 Ω</div>
+                                <div class="text-5xl lg:text-4xl xl:text-5xl font-black tracking-tight mb-2 select-all animate-pulse-slow text-white" id="coil_ohms">0.42 Ω</div>
                                 <div class="text-xs font-bold text-brand-200/90" id="coil_config_sub">Montage Simple Coil</div>
                             </div>
                             
@@ -1306,9 +1282,9 @@
                 </div>
 
                 <!-- CARD 2: DIMENSIONS DU COIL (lg:col-span-6) -->
-                <div class="lg:col-span-6 lg:order-3 bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl shadow-stone-200/50 dark:shadow-black/40 border border-stone-100 dark:border-stone-800 transition-colors">
+                <div class="lg:col-span-6 lg:order-3 bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10">
                     <h2 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-6 flex items-center gap-2">
-                        <span class="w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/50 text-brand-600 dark:text-brand-400 flex items-center justify-center text-lg">📏</span> Dimensions & Montage
+                        <span class="w-8 h-8 rounded-full bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">📏</span> Dimensions & Montage
                     </h2>
                     
                     <div class="space-y-6">
@@ -1390,9 +1366,9 @@
                 </div>
 
                 <!-- CARD 2: HEAT FLUX & OHM LAW (lg:col-span-6) -->
-                <div class="lg:col-span-6 lg:order-4 bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl border border-stone-100 dark:border-stone-800 transition-colors space-y-6">
+                <div class="lg:col-span-6 lg:order-4 bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 space-y-6">
                     <h2 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 flex items-center gap-2">
-                        <span class="w-7 h-7 rounded-full bg-brand-50 dark:bg-stone-800 text-brand-500 dark:text-brand-400 flex items-center justify-center text-sm">💡</span> Puissance & Vapeur
+                        <span class="w-8 h-8 rounded-full bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">💡</span> Puissance & Vapeur
                     </h2>
                     
                     <!-- Mode Électro vs Méca -->
@@ -1475,7 +1451,7 @@
     </div>
 
     <div id="tab_mes_donnees" class="tab-content">
-        <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl shadow-xl max-w-5xl mx-auto w-full border border-stone-100 dark:border-stone-800 transition-colors">
+        <div class="bg-white dark:bg-stone-900 p-6 md:p-8 rounded-3xl transition-all duration-300 shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 max-w-5xl mx-auto w-full">
             
             <div class="relative flex items-center mb-6">
 				<button onclick="navigateDataTabs('left')" class="absolute left-0 z-20 w-8 h-8 flex items-center justify-center bg-white/90 dark:bg-stone-800/90 backdrop-blur-sm rounded-full shadow-md border border-stone-200 dark:border-stone-700 text-stone-500 hover:text-brand-600 transition-all -ml-3 active:scale-95" title="Défiler à gauche">
@@ -1542,7 +1518,7 @@
 
 <div id="html_confirm_modal" class="fixed inset-0 z-[120] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeHtmlConfirm()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-200 dark:border-stone-700 flex flex-col text-center">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-sm border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex flex-col text-center">
         <h3 id="html_confirm_title" class="text-xl font-black text-stone-800 dark:text-stone-100 mb-2">Attention</h3>
         <p id="html_confirm_msg" class="text-sm text-stone-600 dark:text-stone-300 mb-6 font-medium"></p>
         <div class="flex gap-3">
@@ -1554,7 +1530,7 @@
 
 <div id="compo_edit_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="modal-backdrop absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-md cursor-pointer" onclick="closeCompoEditModal()"></div>
-    <div class="relative w-full max-w-lg z-10 bg-white dark:bg-stone-800 rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
+    <div class="relative w-full max-w-lg z-10 bg-white dark:bg-stone-800 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] flex flex-col max-h-[90vh] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10">
         <div class="p-5 border-b border-stone-200 dark:border-stone-700 flex justify-between items-center gap-3">
             <input type="text" id="edit_compo_name" class="font-extrabold text-stone-800 dark:text-stone-100 text-xl bg-transparent border-none outline-none focus:ring-0 w-full" placeholder="Nom de la composition">
 				<div class="flex gap-2 shrink-0">
@@ -1584,7 +1560,7 @@
 
 <div id="export_compo_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeExportCompoPrompt()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-sm border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 transition-colors">
         <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2">Options d'export</h3>
         <p class="text-xs text-stone-500 dark:text-stone-400 mb-4">Exporter cette composition pour la sauvegarder ou la partager.</p>
         
@@ -1647,7 +1623,7 @@
 
 <div id="settings_modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeSettingsModal()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-200 dark:border-stone-700 flex flex-col transition-colors">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-sm border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex flex-col transition-colors">
         <button onclick="closeSettingsModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -1714,7 +1690,7 @@
 
 <div id="reset_confirm_modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeResetConfirm()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-red-200 dark:border-red-800 flex flex-col text-center">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(239,68,68)/0.03)] w-full max-w-sm border-t border-l border-t-red-200/50 border-l-red-200/50 border-b border-r border-b-red-300/30 border-r-red-300/30 dark:border-t-red-800/10 dark:border-l-red-800/10 dark:border-b-red-800/10 dark:border-r-red-800/10 flex flex-col text-center">
         <h3 class="text-xl font-black text-red-600 mb-2">Attention !</h3>
         <p class="text-sm text-stone-600 dark:text-stone-300 mb-6 font-medium">Ceci va effacer TOUTES tes données, tes Mixes sauvegardés, et vider le cache. Es-tu sûr ?</p>
         <div class="flex gap-3">
@@ -1730,7 +1706,7 @@
 
 <div id="calc_modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeCalcModal()"></div>
-    <div class="relative bg-stone-100 dark:bg-stone-800 p-5 rounded-3xl shadow-2xl w-full max-w-xs border border-stone-200 dark:border-stone-700 flex flex-col transition-colors">
+    <div class="relative bg-stone-100 dark:bg-stone-800 p-5 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-xs border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex flex-col transition-colors">
         <button onclick="closeCalcModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -1769,7 +1745,7 @@
 
 <div id="jedi_identity_modal" class="fixed inset-0 z-[95] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/80 backdrop-blur-sm cursor-pointer" onclick="closeJediModal()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-sm border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 transition-colors">
         <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" class="text-brand-600 dark:text-brand-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 9.5L9.5 14.5"></path><path d="M22 2l-7 7"></path><path d="M7 17l-5 5"></path><path d="M9 19l-2-2"></path><path d="M5 15l2 2"></path></svg>
             Mode Jedi
@@ -1786,7 +1762,7 @@
 
 <div id="audit_modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeAuditModal()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-2xl border border-stone-200 dark:border-stone-700 flex flex-col transition-colors max-h-[85vh]">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-2xl border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex flex-col transition-colors max-h-[85vh]">
         <button onclick="closeAuditModal()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -1809,7 +1785,7 @@
 
 <div id="help_modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="modal-backdrop absolute inset-0 bg-stone-900/80 backdrop-blur-md cursor-pointer" onclick="closeHelpModal()"></div>
-    <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-stone-800 rounded-3xl shadow-2xl z-10 p-6 sm:p-10 hide-scrollbar border border-stone-200 dark:border-stone-700">
+    <div class="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-stone-800 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] z-10 p-6 sm:p-10 hide-scrollbar border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10">
         <div class="sticky top-0 float-right -mt-2 -mr-2 bg-white dark:bg-stone-800 rounded-full z-20 shadow-sm border border-stone-100 dark:border-stone-700">
             <button onclick="closeHelpModal()" class="w-10 h-10 flex items-center justify-center hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-stone-600 dark:text-stone-300 transition-colors" title="Fermer l'aide">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -1945,7 +1921,7 @@
 
 <div id="export_prompt_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="cancelExport()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-sm border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 transition-colors">
         <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2">Options de fiche</h3>
         <p class="text-xs text-stone-500 dark:text-stone-400 mb-4" id="export_modal_desc">Donne un nom à ton Mix pour le sauvegarder ou l'exporter.</p>
         
@@ -2023,7 +1999,7 @@
 
 <div id="build_export_modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeBuildExportModal()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl w-full max-w-sm border border-stone-100 dark:border-stone-700 transition-colors">
+    <div class="relative bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-sm border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 transition-colors">
         <h3 class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-2">Options du Montage</h3>
         <p class="text-xs text-stone-500 dark:text-stone-400 mb-4" id="build_export_modal_desc">Donne un nom à ton Montage pour le sauvegarder ou l'exporter.</p>
         
@@ -2103,7 +2079,7 @@
 
 <div id="share_flyer_modal" class="fixed inset-0 z-[90] hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm cursor-pointer" onclick="closeShareFlyerModal()"></div>
-    <div class="relative bg-white dark:bg-stone-800 p-5 rounded-3xl shadow-2xl w-full max-w-md border border-stone-100 dark:border-stone-700 flex flex-col items-center transition-colors">
+    <div class="relative bg-white dark:bg-stone-800 p-5 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] w-full max-w-md border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex flex-col items-center transition-colors">
         <button onclick="closeShareFlyerModal()" class="absolute top-4 right-4 bg-white/50 dark:bg-stone-800/50 rounded-full p-1.5 text-stone-600 dark:text-stone-300 hover:text-stone-800 dark:hover:text-stone-100 transition-colors z-10 backdrop-blur-sm">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
@@ -2120,7 +2096,7 @@
 
 <div id="arome_edit_modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 animate-fade-in">
     <div class="modal-backdrop absolute inset-0 bg-stone-900/70 dark:bg-black/80 backdrop-blur-md cursor-pointer" onclick="closeAromaEditModal()"></div>
-    <div class="relative w-full max-w-sm z-10 bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-2xl flex flex-col border border-stone-200 dark:border-stone-700">
+    <div class="relative w-full max-w-sm z-10 bg-white dark:bg-stone-800 p-6 rounded-3xl shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] flex flex-col border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10">
         <h3 id="arome_modal_title" class="text-xl font-extrabold text-stone-800 dark:text-stone-100 mb-4">Éditer l'Arôme</h3>
         <div class="space-y-5 mb-6">
             <div>
