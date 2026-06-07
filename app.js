@@ -155,7 +155,26 @@ function initHapticFeedback() {
     }, { passive: true });
 }
 
+function requestPersistentStorage() {
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persisted().then(isPersisted => {
+            if (!isPersisted) {
+                navigator.storage.persist().then(granted => {
+                    if (granted) {
+                        console.log("Stockage persistant accordé par le navigateur.");
+                    } else {
+                        console.log("Stockage persistant refusé (mode temporaire/best-effort).");
+                    }
+                });
+            } else {
+                console.log("Le stockage est déjà persistant.");
+            }
+        });
+    }
+}
+
 function init() {
+    requestPersistentStorage();
     initHapticFeedback();
     applyTheme();
     firstTimeAromaScan();
