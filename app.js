@@ -3676,11 +3676,7 @@ async function quickExportJSON() {
         }
         
         // Pas de handle ou autorisation refusée -> export complet avec sélecteur de fichier
-        let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
-        let start = new Date(now.getFullYear(), 0, 0); let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
-        let ddd = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(3, '0');
-        let hh = String(now.getHours()).padStart(2, '0'); let mm = String(now.getMinutes()).padStart(2, '0');
-        let filename = `jediy_${yy}${ddd}_${hh}${mm}.json`;
+        let filename = "JEDIY-BACKUP.json";
 
         const newHandle = await window.showSaveFilePicker({
             suggestedName: filename,
@@ -3703,11 +3699,7 @@ async function quickExportJSON() {
         if (err.name !== 'AbortError') {
             console.error("Erreur lors de la sauvegarde rapide :", err);
             // Fallback download
-            let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
-            let start = new Date(now.getFullYear(), 0, 0); let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
-            let ddd = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(3, '0');
-            let hh = String(now.getHours()).padStart(2, '0'); let mm = String(now.getMinutes()).padStart(2, '0');
-            let filename = `jediy_${yy}${ddd}_${hh}${mm}.json`;
+            let filename = "JEDIY-BACKUP.json";
             fallbackDownload(jsonString, filename);
             setNeedsExport(false);
         }
@@ -3717,11 +3709,6 @@ async function quickExportJSON() {
 function updateQuickSaveUI() {
     const btn = document.getElementById("btn_quick_save");
     if (!btn) return;
-
-    if (!('showSaveFilePicker' in window)) {
-        btn.classList.add("hidden");
-        return;
-    }
 
     btn.classList.remove("hidden");
 
@@ -3751,11 +3738,7 @@ async function exportSettingsJson() {
         hw_boosts: JSON.parse(safeGetItem('jediy_hw_boosts') || '[50]')
     };
     let jsonStr = JSON.stringify(data, null, 2);
-    let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
-    let start = new Date(now.getFullYear(), 0, 0); let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
-    let ddd = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(3, '0');
-    let hh = String(now.getHours()).padStart(2, '0'); let mm = String(now.getMinutes()).padStart(2, '0');
-    let filename = `jediy_${yy}${ddd}_${hh}${mm}.json`;
+    let filename = "JEDIY-BACKUP.json";
 
     try {
         if(window.showSaveFilePicker) {
@@ -7937,77 +7920,6 @@ function clearUnsavedCategories() {
 }
 
 function triggerNotificationCycle() {
-    // Annule tout cycle existant pour éviter les conflits
-    if (notificationInterval) clearInterval(notificationInterval);
-    if (notificationTimeout) clearTimeout(notificationTimeout);
-    
-    let categories = Object.keys(unsavedCategories).filter(k => unsavedCategories[k] === true);
-    if (categories.length === 0) {
-        let container = document.getElementById('unsaved_notifications_container');
-        if (container) {
-            container.className = "max-h-0 opacity-0 overflow-hidden flex justify-center transition-all duration-350 ease-out scale-95 mb-0";
-            setTimeout(() => { container.innerHTML = ''; }, 350);
-        }
-        return;
-    }
-    
-    notificationCycleActive = true;
-    let currentIdx = 0;
-    
-    function showNextNotification() {
-        let container = document.getElementById('unsaved_notifications_container');
-        if (!container) return;
-        
-        let activeCategories = Object.keys(unsavedCategories).filter(k => unsavedCategories[k] === true);
-        if (activeCategories.length === 0) {
-            container.className = "max-h-0 opacity-0 overflow-hidden flex justify-center transition-all duration-350 ease-out scale-95 mb-0";
-            setTimeout(() => {
-                container.innerHTML = '';
-            }, 350);
-            if (notificationInterval) clearInterval(notificationInterval);
-            return;
-        }
-        
-        let cat = activeCategories[currentIdx % activeCategories.length];
-        currentIdx++;
-        
-        let text = "";
-        let dotColorClass = "";
-        let pingColorClass = "";
-        
-        if (cat === 'mixes') {
-            text = "🧴 Mixes à sauver";
-            dotColorClass = "bg-indigo-500";
-            pingColorClass = "bg-indigo-400";
-        } else if (cat === 'compos') {
-            text = "✍️ Compositions à sauver";
-            dotColorClass = "bg-emerald-500";
-            pingColorClass = "bg-emerald-400";
-        } else if (cat === 'aromas') {
-            text = "🧪 Base d'arômes à sauver";
-            dotColorClass = "bg-purple-500";
-            pingColorClass = "bg-purple-400";
-        } else if (cat === 'builds') {
-            text = "🌀 Montages à sauver";
-            dotColorClass = "bg-sky-500";
-            pingColorClass = "bg-sky-400";
-        }
-        
-        container.innerHTML = `
-        <button onclick="openSettingsModal()" class="pointer-events-auto px-4 py-2 bg-stone-200/90 dark:bg-stone-800/95 backdrop-blur-md text-stone-800 dark:text-stone-100 rounded-2xl transition-all duration-300 transform hover:scale-105 active:scale-95 animate-fade-in shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 flex items-center gap-2.5 cursor-pointer">
-            <span class="relative flex h-2 w-2">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full ${pingColorClass} opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 ${dotColorClass}"></span>
-            </span>
-            <span class="text-[10px] font-black tracking-wide uppercase">${text}</span>
-            <span class="text-[9px] font-black text-white bg-brand-500 dark:bg-brand-600 px-2.5 py-0.5 rounded-full shadow-sm">Sauver 💾</span>
-        </button>`;
-        container.className = "max-h-16 opacity-100 flex justify-center transition-all duration-350 ease-out scale-100 mb-3";
-    }
-    
-    showNextNotification();
-    
-    // Alterne toutes les 5 secondes
-    notificationInterval = setInterval(showNextNotification, 5000);
+    // Annulations de sauvegarde dynamique désactivées au profit de la disquette pulsante
 }
 
