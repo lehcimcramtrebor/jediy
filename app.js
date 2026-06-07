@@ -3670,7 +3670,7 @@ async function quickExportJSON() {
                 await writable.write(jsonString);
                 await writable.close();
                 setNeedsExport(false);
-                showAlert(`Sauvegarde rapide réussie !<br>📁 <strong>${handle.name}</strong>`);
+                showAlert("Sauvegarde rapide réussie !");
                 return;
             }
         }
@@ -3694,7 +3694,7 @@ async function quickExportJSON() {
             console.error("Erreur lors de la sauvegarde du handle :", saveErr);
         }
         setNeedsExport(false);
-        showAlert(`Fichier sauvegardé et lié !<br>📁 <strong>${newHandle.name}</strong>`);
+        showAlert("Fichier sauvegardé et lié !");
     } catch (err) {
         if (err.name !== 'AbortError') {
             console.error("Erreur lors de la sauvegarde rapide :", err);
