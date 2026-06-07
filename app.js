@@ -205,6 +205,8 @@ function init() {
                 if (el) el.innerText = `Version ${version}`;
             }
         }).catch(err => console.log("Erreur chargement version:", err));
+
+    if (typeof initQuickSave === 'function') initQuickSave();
 }
 window.onload = () => { init(); };
 
@@ -3080,6 +3082,9 @@ function setNeedsExport(state) {
         }
     }
     updateSettingsBadge();
+    if (typeof updateQuickSaveUI === 'function') {
+        updateQuickSaveUI();
+    }
 }
 
 function openSettingsModal() { 
@@ -3560,6 +3565,180 @@ function deleteCompo(id) {
     });
 }
 
+// --- INDEXEDDB HELPERS FOR QUICK BACKUP ---
+const DB_NAME = "jediy_backup_files";
+const STORE_NAME = "handles";
+const KEY_NAME = "last_backup_handle";
+
+function getDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            db.createObjectStore(STORE_NAME);
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function saveFileHandle(handle) {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.put(handle, KEY_NAME);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.error("Erreur IndexedDB lors du stockage du handle :", e);
+    }
+}
+
+async function getFileHandle() {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readonly");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.get(KEY_NAME);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.error("Erreur IndexedDB lors de la récupération du handle :", e);
+        return null;
+    }
+}
+
+async function clearFileHandle() {
+    try {
+        const db = await getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_NAME, "readwrite");
+            const store = tx.objectStore(STORE_NAME);
+            const req = store.delete(KEY_NAME);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    } catch (e) {
+        console.error("Erreur IndexedDB lors de la suppression du handle :", e);
+    }
+}
+
+async function verifyPermission(fileHandle, readWrite) {
+    const options = {};
+    if (readWrite) {
+        options.mode = 'readwrite';
+    }
+    if ((await fileHandle.queryPermission(options)) === 'granted') {
+        return true;
+    }
+    if ((await fileHandle.requestPermission(options)) === 'granted') {
+        return true;
+    }
+    return false;
+}
+
+// --- QUICK BACKUP ACTION ---
+async function quickExportJSON() {
+    if (!('showSaveFilePicker' in window)) {
+        exportSettingsJson();
+        return;
+    }
+
+    let data = { 
+        jediIdentity: safeGetItem('jediIdentity') || "", 
+        theme: safeGetItem('theme') || "", 
+        mixes: savedMixes, 
+        compos: savedCompos,
+        aromas: savedAromas,
+        builds: savedBuilds,
+        hw_bases: JSON.parse(safeGetItem('jediy_hw_bases') || '[100, 0]'),
+        hw_boosts: JSON.parse(safeGetItem('jediy_hw_boosts') || '[50]')
+    };
+    let jsonString = JSON.stringify(data, null, 2);
+
+    try {
+        const handle = await getFileHandle();
+        if (handle) {
+            const hasPermission = await verifyPermission(handle, true);
+            if (hasPermission) {
+                const writable = await handle.createWritable();
+                await writable.write(jsonString);
+                await writable.close();
+                setNeedsExport(false);
+                showAlert(`Sauvegarde rapide réussie !<br>📁 <strong>${handle.name}</strong>`);
+                return;
+            }
+        }
+        
+        // Pas de handle ou autorisation refusée -> export complet avec sélecteur de fichier
+        let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
+        let start = new Date(now.getFullYear(), 0, 0); let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+        let ddd = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(3, '0');
+        let hh = String(now.getHours()).padStart(2, '0'); let mm = String(now.getMinutes()).padStart(2, '0');
+        let filename = `jediy_${yy}${ddd}_${hh}${mm}.json`;
+
+        const newHandle = await window.showSaveFilePicker({
+            suggestedName: filename,
+            types: [{
+                description: 'JSON',
+                accept: { 'application/json': ['.json'] }
+            }]
+        });
+        const writable = await newHandle.createWritable();
+        await writable.write(jsonString);
+        await writable.close();
+        try {
+            await saveFileHandle(newHandle);
+        } catch (saveErr) {
+            console.error("Erreur lors de la sauvegarde du handle :", saveErr);
+        }
+        setNeedsExport(false);
+        showAlert(`Fichier sauvegardé et lié !<br>📁 <strong>${newHandle.name}</strong>`);
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error("Erreur lors de la sauvegarde rapide :", err);
+            // Fallback download
+            let now = new Date(); let yy = now.getFullYear().toString().slice(-2);
+            let start = new Date(now.getFullYear(), 0, 0); let diff = (now - start) + ((start.getTimezoneOffset() - now.getTimezoneOffset()) * 60 * 1000);
+            let ddd = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(3, '0');
+            let hh = String(now.getHours()).padStart(2, '0'); let mm = String(now.getMinutes()).padStart(2, '0');
+            let filename = `jediy_${yy}${ddd}_${hh}${mm}.json`;
+            fallbackDownload(jsonString, filename);
+            setNeedsExport(false);
+        }
+    }
+}
+
+function updateQuickSaveUI() {
+    const btn = document.getElementById("btn_quick_save");
+    if (!btn) return;
+
+    if (!('showSaveFilePicker' in window)) {
+        btn.classList.add("hidden");
+        return;
+    }
+
+    btn.classList.remove("hidden");
+
+    let needsExport = localStorage.getItem('jediy_needs_export') === 'true';
+    if (needsExport) {
+        btn.classList.add("animate-unsaved");
+        btn.setAttribute("title", "Sauvegarde rapide disponible (Modifications non sauvegardées dans le fichier JSON)");
+    } else {
+        btn.classList.remove("animate-unsaved");
+        btn.setAttribute("title", "Sauvegarde rapide (À jour)");
+    }
+}
+
+function initQuickSave() {
+    updateQuickSaveUI();
+}
+
 async function exportSettingsJson() {
     let data = { 
         jediIdentity: safeGetItem('jediIdentity') || "", 
@@ -3582,8 +3761,13 @@ async function exportSettingsJson() {
         if(window.showSaveFilePicker) {
             const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: 'JSON', accept: {'application/json': ['.json']} }] });
             const writable = await handle.createWritable(); await writable.write(jsonStr); await writable.close(); 
+            try {
+                await saveFileHandle(handle);
+            } catch (saveErr) {
+                console.error("Erreur lors de la sauvegarde du handle :", saveErr);
+            }
             setNeedsExport(false);
-            showAlert("Fichier sauvegardé !");
+            showAlert("Fichier sauvegardé et lié !");
         } else {
             fallbackDownload(jsonStr, filename);
             setNeedsExport(false);
@@ -3620,6 +3804,7 @@ function handleImport(e) {
                     if(data.theme) safeSetItem('theme', data.theme);
                     if(data.hw_bases) safeSetItem('jediy_hw_bases', JSON.stringify(data.hw_bases));
                     if(data.hw_boosts) safeSetItem('jediy_hw_boosts', JSON.stringify(data.hw_boosts));
+                    if(typeof clearFileHandle === 'function') clearFileHandle();
                     showAlert("Importation réussie !"); setTimeout(() => window.location.reload(), 1000);
                 } catch(err) { showAlert("Fichier invalide !"); }
             };

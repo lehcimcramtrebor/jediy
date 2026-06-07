@@ -181,6 +181,28 @@
             .print\:hidden { display: none !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
+
+        @keyframes unsaved-pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+                border-color: rgba(245, 158, 11, 0.5) !important;
+                box-shadow: 0 0 10px rgba(245, 158, 11, 0.3) !important;
+            }
+        }
+        .animate-unsaved {
+            animation: unsaved-pulse 1.6s infinite ease-in-out !important;
+            border-color: #f59e0b !important;
+            background-color: rgba(245, 158, 11, 0.1) !important;
+            color: #d97706 !important;
+        }
+        .dark .animate-unsaved {
+            border-color: #b45309 !important;
+            background-color: rgba(245, 158, 11, 0.15) !important;
+            color: #fbbf24 !important;
+        }
     </style>
     
     <!-- Structured Data (JSON-LD) for Search Engine Optimization -->
@@ -216,6 +238,9 @@
         <button onclick="openSettingsModal()" id="btn_settings" class="relative w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 shrink-0" title="Réglages & Sauvegardes">
             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             <span id="gear_badge" class="hidden absolute top-0 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white dark:border-stone-800 shadow-sm"></span>
+        </button>
+        <button onclick="quickExportJSON()" id="btn_quick_save" class="group w-12 h-12 flex items-center justify-center bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-full text-brand-600 dark:text-brand-400 transition-all shadow-[2px_2px_5px_rgba(0,0,0,0.02),-2px_-2px_5px_rgba(255,255,255,0.5)] dark:shadow-[0_0_12px_rgba(var(--brand-500)/0.03)] border-t border-l border-t-stone-200/50 border-l-stone-200/50 border-b border-r border-b-stone-300/30 border-r-stone-300/30 dark:border-t-brand-500/10 dark:border-l-brand-500/10 dark:border-b-brand-500/10 dark:border-r-brand-500/10 shrink-0 hidden" title="Sauvegarde rapide (écrase le dernier fichier)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="transition-transform duration-300 group-hover:scale-110"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
         </button>
     </div>
 
@@ -1916,6 +1941,15 @@
                 </h3>
                 <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
                     Cachée dans les paramètres (la roue crantée), cette option te permet de renseigner ton pseudo qui apparaîtra sur tes partages.
+                </p>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-extrabold text-stone-800 dark:text-stone-100 mb-2 flex items-center gap-2">
+                    <span class="text-amber-500 dark:text-amber-400">💾</span> Sauvegarde Rapide (Disquette)
+                </h3>
+                <p class="text-sm text-stone-600 dark:text-stone-300 leading-relaxed mb-3">
+                    Une icône de disquette s'affiche en haut à gauche à côté de la roue de réglages. Elle s'anime d'une pulsation orange dès que vous modifiez vos données (mixes, arômes, montages). Cliquez dessus pour enregistrer instantanément vos changements dans votre fichier de sauvegarde JSON lié sans avoir à choisir son dossier à chaque fois !
                 </p>
             </div>
 
