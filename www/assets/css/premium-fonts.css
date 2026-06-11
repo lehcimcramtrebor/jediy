@@ -1,0 +1,107 @@
+/* jetbrains mono - latin - 400 */
+@font-face {
+  font-display: swap;
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/jetbrains-mono-v1-400.woff2') format('woff2');
+}
+
+/* jetbrains mono - latin - 700 */
+@font-face {
+  font-display: swap;
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/jetbrains-mono-v1-700.woff2') format('woff2');
+}
+
+/* outfit - latin - 400 */
+@font-face {
+  font-display: swap;
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/outfit-v1-400.woff2') format('woff2');
+}
+
+/* outfit - latin - 600 */
+@font-face {
+  font-display: swap;
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 600;
+  src: url('../fonts/outfit-v1-600.woff2') format('woff2');
+}
+
+/* outfit - latin - 700 */
+@font-face {
+  font-display: swap;
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/outfit-v1-700.woff2') format('woff2');
+}
+
+/* outfit - latin - 800 */
+@font-face {
+  font-display: swap;
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 800;
+  src: url('../fonts/outfit-v1-800.woff2') format('woff2');
+}
+
+/* outfit - latin - 900 */
+@font-face {
+  font-display: swap;
+  font-family: 'Outfit';
+  font-style: normal;
+  font-weight: 900;
+  src: url('../fonts/outfit-v1-900.woff2') format('woff2');
+}
+
+/* plus jakarta sans - latin - 400 */
+@font-face {
+  font-display: swap;
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/plus-jakarta-sans-v1-400.woff2') format('woff2');
+}
+
+/* plus jakarta sans - latin - 500 */
+@font-face {
+  font-display: swap;
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 500;
+  src: url('../fonts/plus-jakarta-sans-v1-500.woff2') format('woff2');
+}
+
+/* plus jakarta sans - latin - 600 */
+@font-face {
+  font-display: swap;
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 600;
+  src: url('../fonts/plus-jakarta-sans-v1-600.woff2') format('woff2');
+}
+
+/* plus jakarta sans - latin - 700 */
+@font-face {
+  font-display: swap;
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/plus-jakarta-sans-v1-700.woff2') format('woff2');
+}
+
+/* plus jakarta sans - latin - 800 */
+@font-face {
+  font-display: swap;
+  font-family: 'Plus Jakarta Sans';
+  font-style: normal;
+  font-weight: 800;
+  src: url('../fonts/plus-jakarta-sans-v1-800.woff2') format('woff2');
+}

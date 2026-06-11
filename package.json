@@ -1,0 +1,22 @@
+{
+  "name": "jediy",
+  "version": "1.18.0",
+  "description": "Calculateur expert pour e-liquide DIY et coils",
+  "main": "index.html",
+  "scripts": {
+    "build": "node build.js",
+    "cap-sync": "npx cap sync",
+    "build-apk": "npm run build && npx cap sync && cd android && cmd /c \"set JAVA_HOME=C:\\\\Program Files\\\\Android\\\\Android Studio\\\\jbr&& gradlew.bat assembleDebug\""
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.0.0",
+    "@capacitor/app": "^6.0.0",
+    "@capacitor/core": "^6.0.0",
+    "@capacitor/filesystem": "^6.0.4",
+    "@capacitor/share": "^6.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.0.0",
+    "sharp": "^0.33.2"
+  }
+}
