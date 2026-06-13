@@ -8,6 +8,9 @@ www/
 *.apk
 *.zip
 *.tar.gz
+*.exe
+electron/dist/
+electron/icon.ico
 
 # Logs
 npm-debug.log*

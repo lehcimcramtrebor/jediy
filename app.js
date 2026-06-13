@@ -177,6 +177,10 @@ function init() {
     if (window.Capacitor) {
         document.body.classList.add('is-apk');
     }
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    if (isElectron) {
+        document.body.classList.add('electron-mode');
+    }
     requestPersistentStorage();
     initHapticFeedback();
     applyTheme();
@@ -212,6 +216,7 @@ function init() {
     if (typeof initQuickSave === 'function') initQuickSave();
     if (typeof initStoragePersistence === 'function') initStoragePersistence();
     if (typeof initApkDownload === 'function') initApkDownload();
+    if (typeof initWinDownload === 'function') initWinDownload();
     if (typeof initAndroidBackButton === 'function') initAndroidBackButton();
 }
 window.onload = () => { init(); };
@@ -1275,6 +1280,13 @@ let currentCompoPngAction = 'download';
 function showCompoPngOptions() {
     document.getElementById('compo_export_step_1').classList.add('hidden');
     document.getElementById('btn_back_compo_export').classList.remove('hidden');
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    if (isElectron) {
+        currentCompoPngAction = 'download';
+        document.getElementById('compo_export_step_png_style').classList.remove('hidden');
+        document.getElementById('compo_export_step_png_style').classList.add('flex');
+        return;
+    }
     if (window.Capacitor) {
         selectCompoPngAction('share');
         return;
@@ -1296,8 +1308,19 @@ function executeCompoPngExport(mode) {
 }
 
 function handleCompoExportBack() {
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
     let styleEl = document.getElementById('compo_export_step_png_style');
     let actionEl = document.getElementById('compo_export_step_png_action');
+    
+    if (isElectron) {
+        if (styleEl && !styleEl.classList.contains('hidden')) {
+            styleEl.classList.add('hidden');
+            styleEl.classList.remove('flex');
+        }
+        document.getElementById('compo_export_step_1').classList.remove('hidden');
+        document.getElementById('btn_back_compo_export').classList.add('hidden');
+        return;
+    }
     
     if (window.Capacitor) {
         if (styleEl && !styleEl.classList.contains('hidden')) {
@@ -4099,6 +4122,13 @@ function showPdfOptions() { document.getElementById('export_step_1').classList.a
 function showPngOptions() {
     document.getElementById('export_step_1').classList.add('hidden');
     document.getElementById('btn_back_export').classList.remove('hidden');
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    if (isElectron) {
+        currentRecipePngAction = 'download';
+        document.getElementById('export_step_png_style').classList.remove('hidden');
+        document.getElementById('export_step_png_style').classList.add('flex');
+        return;
+    }
     if (window.Capacitor) {
         selectRecipePngAction('share');
         return;
@@ -4117,9 +4147,20 @@ function executeRecipePngExport(mode) {
     exportRecipePNG(currentRecipePngAction, mode);
 }
 function handleRecipeExportBack() {
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
     let styleEl = document.getElementById('export_step_png_style');
     let actionEl = document.getElementById('export_step_png_action');
     let pdfEl = document.getElementById('export_step_2');
+    
+    if (isElectron) {
+        if (styleEl && !styleEl.classList.contains('hidden')) {
+            styleEl.classList.add('hidden');
+            styleEl.classList.remove('flex');
+        }
+        document.getElementById('export_step_1').classList.remove('hidden');
+        document.getElementById('btn_back_export').classList.add('hidden');
+        return;
+    }
     
     if (window.Capacitor) {
         if (styleEl && !styleEl.classList.contains('hidden')) {
@@ -4154,6 +4195,19 @@ function hidePdfOptions() {
     document.getElementById('btn_back_export').classList.add('hidden');
 }
 function openExportPrompt() {
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    const pdfBtn = document.getElementById('btn_pdf_mix');
+    if (pdfBtn) {
+        if (isElectron) {
+            pdfBtn.setAttribute('onclick', "exportRecipePDF('download')");
+            const labelSpan = pdfBtn.querySelector('span');
+            if (labelSpan) labelSpan.innerText = "Exporter PDF";
+        } else {
+            pdfBtn.setAttribute('onclick', "showPdfOptions()");
+            const labelSpan = pdfBtn.querySelector('span');
+            if (labelSpan) labelSpan.innerText = "Options PDF";
+        }
+    }
     if (pendingNewMix) { 
         document.getElementById('mix_name_input').value = lastTypedMixName || (currentMixCard ? (JSON.parse(decodeURIComponent(currentMixCard.getAttribute('data-config'))).globalName || '') : ''); 
         pendingNewMix = false; 
@@ -7319,8 +7373,20 @@ function loadBuildIntoCalculatorFromModal(id) {
     }
 }
 
-// Ouvre l'invite d'export/sauvegarde du montage
 function openBuildExportPromptFromModal(id) {
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    const pdfBtn = document.getElementById('btn_pdf_build');
+    if (pdfBtn) {
+        if (isElectron) {
+            pdfBtn.setAttribute('onclick', "exportBuildPDF('download')");
+            const labelSpan = pdfBtn.querySelector('span');
+            if (labelSpan) labelSpan.innerText = "Exporter PDF";
+        } else {
+            pdfBtn.setAttribute('onclick', "showBuildPdfOptions()");
+            const labelSpan = pdfBtn.querySelector('span');
+            if (labelSpan) labelSpan.innerText = "Options PDF";
+        }
+    }
     let nameInput = document.getElementById('build_name_input');
     let desc = document.getElementById('build_export_modal_desc');
     
@@ -7522,6 +7588,13 @@ function showBuildPdfOptions() {
 function showBuildPngOptions() {
     document.getElementById('build_export_step_1').classList.add('hidden');
     document.getElementById('btn_back_build_export').classList.remove('hidden');
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    if (isElectron) {
+        currentBuildPngAction = 'download';
+        document.getElementById('build_export_step_png_style').classList.remove('hidden');
+        document.getElementById('build_export_step_png_style').classList.add('flex');
+        return;
+    }
     if (window.Capacitor) {
         selectBuildPngAction('share');
         return;
@@ -7543,9 +7616,20 @@ function executeBuildPngExport(mode) {
 }
 
 function handleBuildExportBack() {
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
     let styleEl = document.getElementById('build_export_step_png_style');
     let actionEl = document.getElementById('build_export_step_png_action');
     let pdfEl = document.getElementById('build_export_step_2');
+    
+    if (isElectron) {
+        if (styleEl && !styleEl.classList.contains('hidden')) {
+            styleEl.classList.add('hidden');
+            styleEl.classList.remove('flex');
+        }
+        document.getElementById('build_export_step_1').classList.remove('hidden');
+        document.getElementById('btn_back_build_export').classList.add('hidden');
+        return;
+    }
     
     if (window.Capacitor) {
         if (styleEl && !styleEl.classList.contains('hidden')) {
@@ -8348,6 +8432,46 @@ function showApkDownloadPrompt() {
             const dlLink = document.createElement("a");
             dlLink.href = "./JE-DIY.apk";
             dlLink.download = "JE-DIY.apk";
+            document.body.appendChild(dlLink);
+            dlLink.click();
+            document.body.removeChild(dlLink);
+        }
+    );
+}
+
+// Gestion du téléchargement de la version Windows Portable (PWA mode uniquement)
+function initWinDownload() {
+    const isWindows = /win/i.test(navigator.userAgentData?.platform || navigator.platform || "");
+    const isElectron = navigator.userAgent.toLowerCase().includes('electron');
+    const isNative = !!window.Capacitor;
+    const winBtn = document.getElementById("win_download_btn");
+    const modalWinBtn = document.getElementById("modal_win_download_btn");
+    
+    if (winBtn) {
+        if (isWindows && !isNative && !isElectron) {
+            winBtn.classList.remove("hidden");
+        } else {
+            winBtn.classList.add("hidden");
+        }
+    }
+    if (modalWinBtn) {
+        if (isWindows && !isNative && !isElectron) {
+            modalWinBtn.classList.remove("hidden");
+            modalWinBtn.classList.add("flex");
+        } else {
+            modalWinBtn.classList.add("hidden");
+            modalWinBtn.classList.remove("flex");
+        }
+    }
+}
+
+function showWinDownloadPrompt() {
+    openHtmlConfirm(
+        "Le navigateur web peut parfois vider votre cache et supprimer vos recettes enregistrées sans votre accord.<br><br>Télécharger la <strong>version Windows Portable (.exe)</strong> résout ce problème en s'exécutant de façon 100% autonome et sécurisée sur votre ordinateur.<br><br>Voulez-vous télécharger <strong>Je-DIY_portable.exe</strong> maintenant ?",
+        () => {
+            const dlLink = document.createElement("a");
+            dlLink.href = "https://github.com/lehcimcramtrebor/jediy/releases/download/v1.18.0/Je-DIY_portable.exe";
+            dlLink.target = "_blank";
             document.body.appendChild(dlLink);
             dlLink.click();
             document.body.removeChild(dlLink);

@@ -1,0 +1,14 @@
+{
+  "name": "jediy-desktop",
+  "version": "1.18.0",
+  "description": "Je-DIY Desktop Client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "package": "node build-ico.js && node build-app.js"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "rcedit": "^3.1.0"
+  }
+}
