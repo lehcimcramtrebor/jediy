@@ -8470,7 +8470,7 @@ function showWinDownloadPrompt() {
         "Le navigateur web peut parfois vider votre cache et supprimer vos recettes enregistrées sans votre accord.<br><br>Télécharger la <strong>version Windows Portable (.exe)</strong> résout ce problème en s'exécutant de façon 100% autonome et sécurisée sur votre ordinateur.<br><br>Voulez-vous télécharger <strong>Je-DIY_portable.exe</strong> maintenant ?",
         () => {
             const dlLink = document.createElement("a");
-            dlLink.href = "https://github.com/lehcimcramtrebor/jediy/releases/download/v1.18.0/Je-DIY_portable.exe";
+            dlLink.href = "https://github.com/lehcimcramtrebor/jediy/releases/download/v1.18v0/Je-DIY_portable.exe";
             dlLink.target = "_blank";
             document.body.appendChild(dlLink);
             dlLink.click();
