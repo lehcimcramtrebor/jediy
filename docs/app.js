@@ -177,7 +177,7 @@ function initHapticFeedback() {
                 triggerHaptic('click');
             }
         }
-    }, { passive: true });
+    });
 
     // 2. Text inputs & Selects (focus/click)
     document.addEventListener('focusin', (e) => {
@@ -198,6 +198,36 @@ function initHapticFeedback() {
             }
         }
     }, { passive: true });
+
+    // 4. Vertical scrolling (tactile gear/notch tick feeling on scroll)
+    document.addEventListener('scroll', (e) => {
+        const target = e.target;
+        if (!target) return;
+
+        let currentScroll = 0;
+        let scrollTarget = target;
+
+        if (target === document || target === window) {
+            currentScroll = window.scrollY;
+            scrollTarget = window;
+        } else if (target.scrollTop !== undefined) {
+            currentScroll = target.scrollTop;
+        } else {
+            return;
+        }
+
+        if (scrollTarget._lastHapticScrollY === undefined) {
+            scrollTarget._lastHapticScrollY = currentScroll;
+            return;
+        }
+
+        const diff = Math.abs(currentScroll - scrollTarget._lastHapticScrollY);
+        // Trigger a light tick every 45 pixels of vertical scroll
+        if (diff >= 45) {
+            triggerHaptic('scroll');
+            scrollTarget._lastHapticScrollY = currentScroll;
+        }
+    }, { capture: true, passive: true });
 }
 
 function requestPersistentStorage() {
