@@ -135,7 +135,7 @@ async function main() {
         console.log("\n=== COMPILATION DE LA VERSION AUTONOME ET PORTABLE ===");
         try {
             const zipDest = path.join(distDir, 'app_temp.zip');
-            const portableExe = path.join(projectDir, 'Je-DIY_portable.exe');
+            const portableExe = path.join(distDir, 'Je-DIY_portable.exe');
             const iconPath = path.join(electronDir, 'icon.ico');
             const launcherCs = path.join(electronDir, 'launcher.cs');
             

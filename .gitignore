@@ -6,10 +6,12 @@ www/
 
 # Compiled APKs and packages
 *.apk
+!src/JE-DIY.apk
+!docs/JE-DIY.apk
 *.zip
 *.tar.gz
 *.exe
-electron/dist/
+electron/dist/*/
 electron/icon.ico
 
 # Logs

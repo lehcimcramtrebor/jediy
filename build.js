@@ -17,7 +17,8 @@ const filesToCopy = [
     'Audit_Electric.md',
     'Audit_Liquide.md',
     'test_runner.html',
-    'tests.js'
+    'tests.js',
+    'JE-DIY.apk'
 ];
 
 const dirsToCopy = [
