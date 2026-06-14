@@ -24,24 +24,31 @@ const dirsToCopy = [
     'assets'
 ];
 
-const destDir = path.join(__dirname, 'www');
+const srcDir = path.join(__dirname, 'src');
+const destDirs = [
+    path.join(__dirname, 'www'),
+    path.join(__dirname, 'docs')
+];
 
-// Clean and create destDir
-if (fs.existsSync(destDir)) {
-    fs.rmSync(destDir, { recursive: true, force: true });
-}
-fs.mkdirSync(destDir);
-
-// Copy files
-filesToCopy.forEach(file => {
-    const src = path.join(__dirname, file);
-    const dest = path.join(destDir, file);
-    if (fs.existsSync(src)) {
-        fs.copyFileSync(src, dest);
-        console.log(`Copied ${file}`);
-    } else {
-        console.warn(`Warning: file ${file} not found!`);
+// Clean and create destination directories
+destDirs.forEach(destDir => {
+    if (fs.existsSync(destDir)) {
+        fs.rmSync(destDir, { recursive: true, force: true });
     }
+    fs.mkdirSync(destDir, { recursive: true });
+});
+
+// Copy files to all destinations
+destDirs.forEach(destDir => {
+    filesToCopy.forEach(file => {
+        const src = path.join(srcDir, file);
+        const dest = path.join(destDir, file);
+        if (fs.existsSync(src)) {
+            fs.copyFileSync(src, dest);
+        } else {
+            console.warn(`Warning: file ${file} not found in src!`);
+        }
+    });
 });
 
 // Helper function to copy folder recursively
@@ -65,15 +72,16 @@ function copyFolderRecursiveSync(source, target) {
     }
 }
 
-// Copy directories
-dirsToCopy.forEach(dir => {
-    const src = path.join(__dirname, dir);
-    if (fs.existsSync(src)) {
-        copyFolderRecursiveSync(src, destDir);
-        console.log(`Copied directory ${dir}`);
-    } else {
-        console.warn(`Warning: directory ${dir} not found!`);
-    }
+// Copy directories to all destinations
+destDirs.forEach(destDir => {
+    dirsToCopy.forEach(dir => {
+        const src = path.join(srcDir, dir);
+        if (fs.existsSync(src)) {
+            copyFolderRecursiveSync(src, destDir);
+        } else {
+            console.warn(`Warning: directory ${dir} not found in src!`);
+        }
+    });
 });
 
 console.log('Build completed successfully.');

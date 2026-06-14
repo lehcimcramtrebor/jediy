@@ -55,7 +55,7 @@ async function main() {
     ];
 
     for (const file of filesToCopy) {
-        const srcPath = path.join(projectDir, file);
+        const srcPath = path.join(projectDir, 'src', file);
         if (fs.existsSync(srcPath)) {
             fs.copyFileSync(srcPath, path.join(resourcesAppDir, file));
         } else {
@@ -70,7 +70,7 @@ async function main() {
     }
 
     // Copy assets recursively
-    const srcAssets = path.join(projectDir, 'assets');
+    const srcAssets = path.join(projectDir, 'src', 'assets');
     const destAssets = path.join(resourcesAppDir, 'assets');
     
     function copyDirSync(src, dest) {

@@ -3,7 +3,7 @@ const path = require('path');
 const sharp = require('../node_modules/sharp');
 
 async function main() {
-    const svgPath = path.join(__dirname, '..', 'icon.svg');
+    const svgPath = path.join(__dirname, '..', 'src', 'icon.svg');
     const pngPath = path.join(__dirname, 'icon-512.png');
     const icoPath = path.join(__dirname, 'icon.ico');
 

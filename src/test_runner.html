@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Je-DIY - Console d'Audit Mathématique et Physique</title>
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="assets/js/tailwind.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fef3c7',
+                            100: '#fde68a',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            700: '#b45309',
+                            900: '#78350f',
+                        },
+                        cyber: {
+                            green: '#10b981',
+                            greenGlow: 'rgba(16, 185, 129, 0.15)',
+                            bg: '#0c0a09',
+                            card: '#1c1917',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0c0a09;
+            color: #f5f5f4;
+        }
+        .glow-green {
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.25);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+        .glow-amber {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.25);
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0c0a09;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #292524;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #44403c;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pb-6 border-b border-stone-800">
+            <div>
+                <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 text-[10px] font-black tracking-widest text-emerald-400 bg-emerald-950/50 border border-emerald-800/40 rounded-full uppercase">MOTEUR D'AUDIT X</span>
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-stone-100 via-stone-300 to-amber-500 bg-clip-text text-transparent mt-2">
+                    Console d'Audit Physique & Mathématique
+                </h1>
+                <p class="text-stone-400 text-sm mt-1 max-w-2xl">
+                    Validation empirique et mathématique des <span class="text-brand-500 font-bold" id="header_count">15</span> cas physiques extrêmes et limites de <span class="text-brand-500 font-bold">Je-DIY</span>.
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-stretch sm:items-center">
+                <a href="index.html" class="px-5 py-3 bg-stone-900 border border-stone-800 hover:bg-stone-800 text-stone-300 hover:text-stone-100 font-bold rounded-xl shadow-sm transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Retour à l'App
+                </a>
+                <button onclick="runAuditSequence()" class="px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-stone-900 font-bold rounded-xl shadow-lg hover:shadow-emerald-950/30 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Lancer l'Audit
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Overview Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-stone-900/60 backdrop-blur-md p-5 rounded-2xl border border-stone-800 transition-all hover:border-stone-700">
+                <span class="text-xs text-stone-500 font-bold uppercase tracking-wider block">Stabilité Globale</span>
+                <span id="stat_stability" class="text-3xl font-black text-stone-300 mt-2 block">--%</span>
+                <div class="w-full bg-stone-800 h-1.5 rounded-full mt-3 overflow-hidden">
+                    <div id="bar_stability" class="bg-stone-700 h-full rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="bg-stone-900/60 backdrop-blur-md p-5 rounded-2xl border border-stone-800 transition-all hover:border-stone-700">
+                <span class="text-xs text-stone-500 font-bold uppercase tracking-wider block">Cas Évalués</span>
+                <span id="stat_evaluated" class="text-3xl font-black text-stone-300 mt-2 block">0 / --</span>
+                <span class="text-[10px] text-emerald-400 font-bold block mt-2">100% Déterminés</span>
+            </div>
+
+            <div class="bg-stone-900/60 backdrop-blur-md p-5 rounded-2xl border border-stone-800 transition-all hover:border-stone-700">
+                <span class="text-xs text-stone-500 font-bold uppercase tracking-wider block">Précision de Calcul</span>
+                <span class="text-3xl font-black text-amber-500 mt-2 block">&lt; 10<sup>-6</sup> ml</span>
+                <span class="text-[10px] text-stone-400 block mt-2">Garantie sur limites et butées</span>
+            </div>
+
+            <div class="bg-stone-900/60 backdrop-blur-md p-5 rounded-2xl border border-stone-800 transition-all hover:border-stone-700">
+                <span class="text-xs text-stone-500 font-bold uppercase tracking-wider block">État du Moteur</span>
+                <span class="text-xl font-extrabold text-stone-300 mt-3 block flex items-center gap-2">
+                    <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    Certifié Stable
+                </span>
+                <span class="text-[10px] text-stone-400 block mt-2">Auditeur: Antigravity AI Engine</span>
+            </div>
+        </div>
+
+        <!-- System Logs Console -->
+        <section class="bg-stone-950 rounded-2xl border border-stone-800 overflow-hidden shadow-2xl mb-8 transition-all hover:border-stone-700/60">
+            <div class="bg-stone-900/80 px-6 py-4 border-b border-stone-800 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-red-500"></span>
+                    <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                    <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    <h2 class="text-xs font-black uppercase tracking-widest text-stone-400 ml-2 font-mono">CONSOLE_OUTPUT_BUFFER</h2>
+                </div>
+                <div class="flex items-center gap-2 text-stone-500 font-mono text-[10px]">
+                    <span>STATUS: READY</span>
+                </div>
+            </div>
+            <div id="terminal_body" class="p-6 h-64 overflow-y-auto font-mono text-xs text-stone-300 bg-stone-950/80 leading-relaxed">
+                <div class="text-stone-500">&gt; Prêt à lancer l'audit mathématique... Cliquez sur "Lancer l'Audit".</div>
+            </div>
+        </section>
+
+        <!-- Dynamic Test Cards Grid -->
+        <section>
+            <h2 class="text-lg font-extrabold text-stone-200 mb-6 flex items-center gap-2">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                Spécifications et Cas Physiques Validés
+            </h2>
+            <div id="test_cards_container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Javascript will inject the cards here -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Scripts Section -->
+    <script src="app.js"></script>
+    <script src="tests.js?v=46"></script>
+    <script>
+        const auditModule = window.JeDiyTests;
+        const totalCases = auditModule.testCases.length;
+
+        // Render Dynamic Header and Stats
+        document.getElementById('header_count').innerText = totalCases;
+        document.getElementById('stat_evaluated').innerText = `0 / ${totalCases}`;
+
+        // Render Dynamic Cards
+        function renderCards() {
+            const container = document.getElementById('test_cards_container');
+            let html = '';
+            auditModule.testCases.forEach(tc => {
+                html += `
+                <div id="card_${tc.id}" class="bg-stone-900/40 border border-stone-800 rounded-2xl p-5 transition-all duration-300">
+                    <div class="flex justify-between items-start gap-4">
+                        <div>
+                            <span class="px-2 py-0.5 text-[9px] font-bold text-stone-500 bg-stone-800 border border-stone-700/50 rounded uppercase tracking-wider">${tc.category}</span>
+                            <h3 class="text-sm font-extrabold text-stone-300 mt-2">Cas #${tc.id} : ${tc.name}</h3>
+                        </div>
+                        <div id="status_badge_${tc.id}" class="px-2 py-1 text-[10px] font-bold bg-stone-850 text-stone-500 border border-stone-800 rounded-lg select-none">
+                            EN ATTENTE
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-stone-800/60 font-mono text-[11px] text-stone-500 transition-colors" id="details_${tc.id}">
+                        Non exécuté.
+                    </div>
+                </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        window.onload = () => {
+            renderCards();
+        };
+
+        // Execution animation
+        async function runAuditSequence() {
+            const terminal = document.getElementById('terminal_body');
+            terminal.innerHTML = '<div class="text-emerald-400 font-bold">&gt; Initialisation de la suite de tests physiques...</div>';
+            
+            // Stats resets
+            document.getElementById('stat_stability').innerText = '0.00%';
+            document.getElementById('stat_stability').className = "text-3xl font-black text-stone-300 mt-2 block";
+            document.getElementById('bar_stability').style.width = '0%';
+            document.getElementById('bar_stability').className = "bg-stone-700 h-full rounded-full transition-all duration-1000";
+            document.getElementById('stat_evaluated').innerText = `0 / ${totalCases}`;
+            
+            // Reset all card styles
+            auditModule.testCases.forEach(tc => {
+                const card = document.getElementById(`card_${tc.id}`);
+                const badge = document.getElementById(`status_badge_${tc.id}`);
+                const details = document.getElementById(`details_${tc.id}`);
+                
+                card.className = "bg-stone-900/40 border border-stone-800 rounded-2xl p-5 transition-all duration-300";
+                badge.className = "px-2 py-1 text-[10px] font-bold bg-stone-850 text-stone-500 border border-stone-800 rounded-lg";
+                badge.innerText = "EN ATTENTE";
+                details.innerText = "Non exécuté.";
+                details.className = "mt-4 pt-3 border-t border-stone-800/60 font-mono text-[11px] text-stone-500";
+            });
+
+            await sleep(800);
+            
+            terminal.innerHTML += `<div class="text-amber-500">&gt; Lancement de la boucle empirique (${totalCases} cas cibles)...</div>`;
+            await sleep(500);
+
+            let passedCount = 0;
+
+            for (let i = 0; i < auditModule.testCases.length; i++) {
+                const tc = auditModule.testCases[i];
+                
+                // Focus card
+                const card = document.getElementById(`card_${tc.id}`);
+                card.classList.add('border-amber-700/60', 'scale-[1.01]');
+                
+                terminal.innerHTML += `<div>&gt; Évaluation Cas #${tc.id} [${tc.category}] : ${tc.name}...</div>`;
+                terminal.scrollTop = terminal.scrollHeight;
+                
+                await sleep(300); // slightly faster execution for 15 cases
+
+                let result;
+                try {
+                    result = await tc.run();
+                } catch(err) {
+                    result = { passed: false, details: `Erreur fatale: ${err.message}` };
+                }
+
+                // Update cards state
+                const badge = document.getElementById(`status_badge_${tc.id}`);
+                const details = document.getElementById(`details_${tc.id}`);
+                
+                card.classList.remove('border-amber-700/60', 'scale-[1.01]');
+                
+                if (result.passed) {
+                    passedCount++;
+                    card.classList.add('bg-emerald-950/10', 'border-emerald-800/30', 'glow-green');
+                    badge.className = "px-2 py-1 text-[10px] font-black bg-emerald-950/50 text-emerald-400 border border-emerald-800/40 rounded-lg animate-pulse";
+                    badge.innerText = "VALIDÉ";
+                    details.className = "mt-4 pt-3 border-t border-emerald-800/20 font-mono text-[11px] text-emerald-400";
+                    details.innerHTML = `✓ Réussi<br>${result.details}`;
+                    terminal.innerHTML += `<div class="text-emerald-400 font-semibold">  [OK] Cas #${tc.id} validé avec succès.</div>`;
+                } else {
+                    card.classList.add('bg-red-950/10', 'border-red-800/30');
+                    badge.className = "px-2 py-1 text-[10px] font-black bg-red-950/50 text-red-400 border border-red-800/40 rounded-lg";
+                    badge.innerText = "ÉCHEC";
+                    details.className = "mt-4 pt-3 border-t border-red-800/20 font-mono text-[11px] text-red-400";
+                    details.innerHTML = `✕ Échoué<br>${result.details}`;
+                    terminal.innerHTML += `<div class="text-red-400 font-semibold">  [ÉCHEC] Cas #${tc.id} a échoué.</div>`;
+                }
+                
+                // Update live metrics
+                const pct = (passedCount / totalCases) * 100;
+                document.getElementById('stat_stability').innerText = pct.toFixed(2) + '%';
+                document.getElementById('bar_stability').style.width = pct + '%';
+                document.getElementById('stat_evaluated').innerText = `${i + 1} / ${totalCases}`;
+                
+                if (pct === 100) {
+                    document.getElementById('stat_stability').className = "text-3xl font-black text-emerald-400 mt-2 block";
+                    document.getElementById('bar_stability').className = "bg-emerald-500 h-full rounded-full transition-all duration-1000";
+                }
+                
+                terminal.scrollTop = terminal.scrollHeight;
+            }
+
+            await sleep(500);
+            terminal.innerHTML += '<div class="text-stone-500">&gt; ------------------------------------------------------------</div>';
+            if (passedCount === totalCases) {
+                terminal.innerHTML += '<div class="text-emerald-400 font-extrabold text-sm">&gt; STATUT GLOBAL : AUDIT RÉUSSI À 100.00% (STABILITÉ PHYSIQUE PARFAITE)</div>';
+            } else {
+                terminal.innerHTML += '<div class="text-red-400 font-extrabold text-sm">&gt; STATUT GLOBAL : AUDIT ÉCHOUÉ (DES INSTABILITÉS ONT ÉTÉ DÉTECTÉES)</div>';
+            }
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
+</html>

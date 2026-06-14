@@ -3,7 +3,7 @@ const path = require('path');
 const sharp = require('sharp');
 
 const resDir = path.join(__dirname, 'android', 'app', 'src', 'main', 'res');
-const svgPath = path.join(__dirname, 'icon.svg');
+const svgPath = path.join(__dirname, 'src', 'icon.svg');
 
 if (!fs.existsSync(resDir)) {
     console.error('Android resource directory not found. Make sure to run "npx cap add android" first.');

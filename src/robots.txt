@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lehcimcramtrebor.github.io/jediy/sitemap.xml
+
