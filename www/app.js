@@ -100,25 +100,70 @@ document.addEventListener('touchmove', e => {
     if (window.scrollY === 0 && e.touches[0].pageY > startY) e.preventDefault();
 }, {passive: false});
 
-function triggerHaptic(type = 'light') {
-    if (!navigator.vibrate) return;
-    try {
-        if (type === 'light') {
-            navigator.vibrate(10);
-        } else if (type === 'medium') {
-            navigator.vibrate(20);
-        } else if (type === 'success') {
-            navigator.vibrate([15, 30, 15]);
-        } else if (type === 'warning') {
-            navigator.vibrate([50, 50, 50]);
+async function triggerHaptic(typeOrDuration = 'click') {
+    let duration = typeof typeOrDuration === 'number' ? typeOrDuration : 40;
+    let type = typeof typeOrDuration === 'string' ? typeOrDuration : 'click';
+
+    // Compatibility mappings for legacy calls
+    if (type === 'light') type = 'click';
+    if (type === 'medium') type = 'confirm';
+    if (type === 'warning') type = 'success';
+
+    // 1. Utiliser le plugin natif Capacitor Haptics si disponible
+    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics) {
+        try {
+            const haptics = window.Capacitor.Plugins.Haptics;
+            if (type === 'success') {
+                // Sensation de dessin d'un "V" de validation : MEDIUM -> LIGHT (après 120ms) -> HEAVY (après 120ms)
+                await haptics.impact({ style: 'MEDIUM' });
+                setTimeout(async () => {
+                    await haptics.impact({ style: 'LIGHT' });
+                    setTimeout(async () => {
+                        await haptics.impact({ style: 'HEAVY' });
+                    }, 120);
+                }, 120);
+            } else if (type === 'confirm') {
+                // Double vibration successive légère espacée de 120ms (évite la sensation de vibration continue longue)
+                await haptics.impact({ style: 'LIGHT' });
+                setTimeout(async () => {
+                    await haptics.impact({ style: 'LIGHT' });
+                }, 120);
+            } else if (type === 'focus') {
+                await haptics.impact({ style: 'LIGHT' }); // Retour d'activation de zone de saisie
+            } else if (type === 'scroll') {
+                await haptics.vibrate({ duration: 12 }); // Micro-vibration de défilement ultra-courte (12ms)
+            } else { // 'click'
+                await haptics.impact({ style: 'LIGHT' }); // Clic standard très discret
+            }
+            return;
+        } catch (e) {
+            console.warn("Capacitor Haptics non disponible, bascule sur l'API Web standard", e);
         }
-    } catch (e) {
-        // Silently catch any security/permission errors with vibration on some browsers
+    }
+
+    // 2. Fallback sur l'API Vibrations HTML5 classique
+    if (navigator.vibrate) {
+        try {
+            if (type === 'success') {
+                navigator.vibrate([50, 120, 20, 120, 150]); // Profil V
+            } else if (type === 'confirm') {
+                navigator.vibrate([20, 120, 20]); // Double impulsion de 20ms
+            } else if (type === 'focus') {
+                navigator.vibrate(35); // Impulsion intermédiaire (35ms)
+            } else if (type === 'scroll') {
+                navigator.vibrate(12); // Micro-impulsion de 12ms
+            } else { // 'click'
+                navigator.vibrate(20); // Impulsion légère de 20ms
+            }
+        } catch (e) {
+            // Silently catch security/permission issues on some browsers
+        }
     }
 }
 
 function initHapticFeedback() {
-    if (!navigator.vibrate) return;
+    const hasCapacitorHaptics = !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Haptics);
+    if (!navigator.vibrate && !hasCapacitorHaptics) return;
 
     // 1. Buttons, adjustments, role="button", optBtn, tabs
     document.addEventListener('click', (e) => {
@@ -127,9 +172,9 @@ function initHapticFeedback() {
             if (target.id === 'html_confirm_btn_ok' || target.classList.contains('bg-brand-500')) {
                 triggerHaptic('success');
             } else if (target.classList.contains('bg-red-500') || target.classList.contains('bg-red-600')) {
-                triggerHaptic('warning');
+                triggerHaptic('confirm');
             } else {
-                triggerHaptic('light');
+                triggerHaptic('click');
             }
         }
     }, { passive: true });
@@ -138,7 +183,7 @@ function initHapticFeedback() {
     document.addEventListener('focusin', (e) => {
         const target = e.target.closest('input[type="text"], input[type="number"], select, textarea');
         if (target) {
-            triggerHaptic('light');
+            triggerHaptic('focus');
         }
     }, { passive: true });
 
@@ -149,7 +194,7 @@ function initHapticFeedback() {
             const lastVal = target.dataset.lastHapticValue;
             if (lastVal !== target.value) {
                 target.dataset.lastHapticValue = target.value;
-                triggerHaptic('light');
+                triggerHaptic('scroll');
             }
         }
     }, { passive: true });
