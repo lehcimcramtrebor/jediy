@@ -379,19 +379,74 @@ function switchTheme(theme) { document.documentElement.dataset.theme = theme; }
 const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
 const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
 
-function applyTheme() {
-    let themeVal = safeGetItem('theme');
-    if (themeVal === 'dark' || (!themeVal && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        document.documentElement.classList.add('dark'); document.getElementById('theme_toggle_btn').innerHTML = sunIcon;
-        let metaTheme = document.getElementById('meta-theme-color'); if(metaTheme) metaTheme.content = '#0c0a09';
-    } else {
-        document.documentElement.classList.remove('dark'); document.getElementById('theme_toggle_btn').innerHTML = moonIcon;
-        let metaTheme = document.getElementById('meta-theme-color'); if(metaTheme) metaTheme.content = '#f5f5f4';
+function updateSystemBars(isDarkMode) {
+    if (!window.Capacitor || !window.Capacitor.Plugins) return;
+
+    const statusBarColor = isDarkMode ? '#0c0a09' : '#f5f5f4';
+    const navigationBarColor = isDarkMode ? '#0c0a09' : '#f5f5f4';
+
+    // 1. StatusBar
+    if (window.Capacitor.Plugins.StatusBar) {
+        try {
+            const StatusBar = window.Capacitor.Plugins.StatusBar;
+            StatusBar.setBackgroundColor({ color: statusBarColor });
+            StatusBar.setStyle({ style: isDarkMode ? 'DARK' : 'LIGHT' });
+        } catch (e) {
+            console.warn("StatusBar error:", e);
+        }
+    }
+
+    // 2. NavigationBar
+    if (window.Capacitor.Plugins.NavigationBar) {
+        try {
+            const NavigationBar = window.Capacitor.Plugins.NavigationBar;
+            NavigationBar.setNavigationBarColor({
+                color: navigationBarColor,
+                darkButtons: !isDarkMode
+            });
+        } catch (e) {
+            console.warn("NavigationBar error:", e);
+        }
     }
 }
+
+function applyTheme() {
+    let themeVal = safeGetItem('theme');
+    let isDark = false;
+    if (themeVal === 'dark' || (!themeVal && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('theme_toggle_btn').innerHTML = sunIcon;
+        let metaTheme = document.getElementById('meta-theme-color');
+        if (metaTheme) metaTheme.content = '#0c0a09';
+        isDark = true;
+    } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('theme_toggle_btn').innerHTML = moonIcon;
+        let metaTheme = document.getElementById('meta-theme-color');
+        if (metaTheme) metaTheme.content = '#f5f5f4';
+        isDark = false;
+    }
+    updateSystemBars(isDark);
+}
+
 function toggleTheme() {
-    if (document.documentElement.classList.contains('dark')) { document.documentElement.classList.remove('dark'); safeSetItem('theme', 'light'); document.getElementById('theme_toggle_btn').innerHTML = moonIcon; } 
-    else { document.documentElement.classList.add('dark'); safeSetItem('theme', 'dark'); document.getElementById('theme_toggle_btn').innerHTML = sunIcon; }
+    let isDark = false;
+    if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        safeSetItem('theme', 'light');
+        document.getElementById('theme_toggle_btn').innerHTML = moonIcon;
+        let metaTheme = document.getElementById('meta-theme-color');
+        if (metaTheme) metaTheme.content = '#f5f5f4';
+        isDark = false;
+    } else {
+        document.documentElement.classList.add('dark');
+        safeSetItem('theme', 'dark');
+        document.getElementById('theme_toggle_btn').innerHTML = sunIcon;
+        let metaTheme = document.getElementById('meta-theme-color');
+        if (metaTheme) metaTheme.content = '#0c0a09';
+        isDark = true;
+    }
+    updateSystemBars(isDark);
 }
 
 function switchTab(tabId) {
